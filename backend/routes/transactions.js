@@ -1,0 +1,176 @@
+const express = require('express');
+const router = express.Router();
+const Transaction = require('../models/Transaction');
+
+// @route   GET /api/transactions/:userId
+// @desc    Get transactions for user
+// @access  Public (should be protected in production)
+router.get('/:userId', async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.json({
+      success: true,
+      transactions: transactions.map(t => ({
+        id: t._id.toString(),
+        type: t.type,
+        amount: t.amount,
+        currency: t.currency,
+        status: t.status,
+        address: t.address,
+        cryptoAddress: t.cryptoAddress,
+        notes: t.notes,
+        createdAt: t.createdAt
+      }))
+    });
+  } catch (error) {
+    console.error('Get transactions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching transactions',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/transactions
+// @desc    Create a new transaction
+// @access  Public (should be protected in production)
+router.post('/', async (req, res) => {
+  try {
+    const { userId, type, amount, currency, address, cryptoAddress, notes } = req.body;
+
+    if (!userId || !type || !amount || !currency) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields'
+      });
+    }
+
+    const transaction = new Transaction({
+      userId,
+      type,
+      amount,
+      currency,
+      address: address || null,
+      cryptoAddress: cryptoAddress || null,
+      notes: notes || null,
+      status: 'pending'
+    });
+
+    await transaction.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Transaction created successfully',
+      transaction: {
+        id: transaction._id.toString(),
+        type: transaction.type,
+        amount: transaction.amount,
+        currency: transaction.currency,
+        status: transaction.status,
+        address: transaction.address,
+        cryptoAddress: transaction.cryptoAddress,
+        notes: transaction.notes,
+        createdAt: transaction.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Create transaction error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating transaction',
+      error: error.message
+    });
+  }
+});
+
+// @route   PUT /api/transactions/:id/status
+// @desc    Update transaction status (admin function)
+// @access  Public (should be protected and admin-only in production)
+router.put('/:id/status', async (req, res) => {
+  try {
+    const { status, adminNotes } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status is required'
+      });
+    }
+
+    const transaction = await Transaction.findByIdAndUpdate(
+      req.params.id,
+      {
+        status,
+        adminNotes: adminNotes || null,
+        processedAt: status === 'completed' ? new Date() : null
+      },
+      { new: true }
+    );
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Transaction status updated',
+      transaction: {
+        id: transaction._id.toString(),
+        status: transaction.status,
+        adminNotes: transaction.adminNotes
+      }
+    });
+  } catch (error) {
+    console.error('Update transaction status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating transaction',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/transactions/pending/all
+// @desc    Get all pending transactions (admin)
+// @access  Public (should be protected and admin-only in production)
+router.get('/pending/all', async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
+      .populate('userId', 'email referralCode')
+      .limit(100);
+
+    res.json({
+      success: true,
+      transactions: transactions.map(t => ({
+        id: t._id.toString(),
+        userId: t.userId._id.toString(),
+        userEmail: t.userId.email,
+        type: t.type,
+        amount: t.amount,
+        currency: t.currency,
+        address: t.address,
+        cryptoAddress: t.cryptoAddress,
+        notes: t.notes,
+        createdAt: t.createdAt
+      }))
+    });
+  } catch (error) {
+    console.error('Get pending transactions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching pending transactions',
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;
+
