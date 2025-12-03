@@ -124,13 +124,12 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-const HOST = process.env.HOST || '0.0.0.0';
 
 // Start server
 const startServer = async () => {
   await connectDB();
-  app.listen(PORT, HOST, () => {
-    console.log(`🚀 Backend server running on ${HOST}:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Backend server running on 0.0.0.0:${PORT}`);
     console.log(`📍 API endpoint: http://localhost:${PORT}/api`);
     console.log(`📍 Health check: http://localhost:${PORT}/`);
   });
