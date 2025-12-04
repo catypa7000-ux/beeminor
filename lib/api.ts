@@ -455,6 +455,51 @@ export const leaderboardAPI = {
       }>;
     }>(`/api/leaderboard/top-honey?limit=${limit}`);
   },
+
+  getTopReferrers: async (limit: number = 10) => {
+    return apiRequest<{
+      success: boolean;
+      leaderboard: Array<{
+        rank: number;
+        userId: string;
+        email: string;
+        referralCode: string;
+        totalReferralEarnings: number;
+        invitedFriends: number;
+      }>;
+    }>(`/api/leaderboard/top-referrers?limit=${limit}`);
+  },
+
+  getUserRank: async (userId: string) => {
+    return apiRequest<{
+      success: boolean;
+      ranks: {
+        diamonds: { rank: number; total: number; value: number };
+        honey: { rank: number; total: number; value: number };
+        referrals: {
+          rank: number;
+          total: number;
+          totalEarnings: number;
+          invitedFriends: number;
+        };
+      };
+    }>(`/api/leaderboard/user-rank/${userId}`);
+  },
+
+  getGlobalStats: async () => {
+    return apiRequest<{
+      success: boolean;
+      stats: {
+        totalUsers: number;
+        totalDiamonds: number;
+        totalHoney: number;
+        totalFlowers: number;
+        totalBees: number;
+        totalReferrals: number;
+        totalReferralEarnings: number;
+      };
+    }>('/api/leaderboard/stats');
+  },
 };
 
 // Transactions API
