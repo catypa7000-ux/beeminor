@@ -203,15 +203,29 @@ router.put('/:id/status', async (req, res) => {
     if ((transaction.type === 'withdrawal' || transaction.type === 'withdrawal_diamond' || transaction.type === 'withdrawal_bvr') && 
         transaction.status === 'pending' && 
         (status === 'cancelled' || status === 'failed')) {
+      console.log('=== REFUND DEBUG ===');
+      console.log('Transaction type:', transaction.type);
+      console.log('Transaction currency:', transaction.currency);
+      console.log('Transaction amount:', transaction.amount);
+      
       const gameState = await GameState.findOne({ userId: transaction.userId });
       if (gameState) {
+        console.log('Before refund - bvrCoins:', gameState.bvrCoins, 'flowers:', gameState.flowers);
+        
         // Refund based on currency type
         if (transaction.currency === 'BVR') {
           gameState.bvrCoins += transaction.amount;
+          console.log('Refunding BVR:', transaction.amount);
         } else {
           gameState.flowers += transaction.amount;
+          console.log('Refunding flowers:', transaction.amount);
         }
+        
         await gameState.save();
+        console.log('After refund - bvrCoins:', gameState.bvrCoins, 'flowers:', gameState.flowers);
+        console.log('=== REFUND COMPLETE ===');
+      } else {
+        console.log('ERROR: GameState not found for refund');
       }
     }
 

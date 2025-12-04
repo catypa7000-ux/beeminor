@@ -25,37 +25,16 @@ export default function ShopScreen() {
 
   const handleBuyFlowers = (amount: number, price: number) => {
     if (!hasPendingFunds) {
-      if (Platform.OS === 'web') {
-        const confirmed = confirm('Vous devez d\'abord envoyer les fonds nécessaires. Voulez-vous accéder à la page Wallet pour envoyer des fonds ?');
-        if (confirmed) {
-          router.push('/menu/wallet');
-        }
-      } else {
-        Alert.alert(
-          'Fonds non envoyés',
-          'Vous devez d\'abord envoyer les fonds nécessaires. Voulez-vous accéder à la page Wallet pour envoyer des fonds ?',
-          [
-            {
-              text: 'Annuler',
-              style: 'cancel',
-            },
-            {
-              text: 'Accéder au Wallet',
-              onPress: () => router.push('/menu/wallet'),
-            },
-          ]
-        );
+      const confirmed = window.confirm('Vous devez d\'abord envoyer les fonds nécessaires. Voulez-vous accéder à la page Wallet pour envoyer des fonds ?');
+      if (confirmed) {
+        router.push('/menu/wallet');
       }
       return;
     }
     const success = buyFlowers(amount, price);
     if (success) {
       console.log(`Purchased ${amount} flowers for ${price}$ and received tickets`);
-      if (Platform.OS === 'web') {
-        alert(`${amount} fleurs achetées avec succès!`);
-      } else {
-        Alert.alert('Succès', `${amount} fleurs achetées avec succès!`);
-      }
+      window.alert(`Succès: ${amount} fleurs achetées avec succès!`);
     }
   };
 

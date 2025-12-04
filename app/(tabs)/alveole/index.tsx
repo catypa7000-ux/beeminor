@@ -34,7 +34,7 @@ export default function AlveoleScreen() {
   const handleQuickSell = (percentage: number) => {
     const amount = Math.floor(honey * percentage);
     if (amount < 300) {
-      Alert.alert(t.insufficientHoney, t.needMinHoney);
+      window.alert(`${t.insufficientHoney}\n\n${t.needMinHoney}`);
       return;
     }
 
@@ -42,24 +42,19 @@ export default function AlveoleScreen() {
     const flowersEarned = diamondsEarned;
     const bvrEarned = diamondsEarned * 2;
 
-    Alert.alert(
-      t.sellHoney,
-      `${t.sellHoney} ${formatNumber(amount)} ${t.honey.toLowerCase()} (${percentage * 100}%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n🌸 ${flowersEarned} ${t.flowers.toLowerCase()}\n🐝 ${bvrEarned} BVR`,
-      [
-        { text: t.cancel, style: 'cancel' },
-        {
-          text: t.sellHoney,
-          onPress: async () => {
-            const success = await sellHoney(amount);
-            if (success) {
-              Alert.alert(t.sold, t.transactionSuccess);
-            } else {
-              Alert.alert(t.error, t.transactionFailed || 'Transaction failed');
-            }
-          },
-        },
-      ]
+    const confirmed = window.confirm(
+      `${t.sellHoney} ${formatNumber(amount)} ${t.honey.toLowerCase()} (${percentage * 100}%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n🌸 ${flowersEarned} ${t.flowers.toLowerCase()}\n🐝 ${bvrEarned} BVR\n\nConfirmer?`
     );
+    
+    if (confirmed) {
+      sellHoney(amount).then((success) => {
+        if (success) {
+          window.alert(`${t.sold}\n\n${t.transactionSuccess}`);
+        } else {
+          window.alert(`${t.error}\n\n${t.transactionFailed || 'Transaction failed'}`);
+        }
+      });
+    }
   };
 
   return (
@@ -156,9 +151,9 @@ export default function AlveoleScreen() {
                     onPress={async () => {
                       const success = await buyAlveole(alveole.level);
                       if (success) {
-                        Alert.alert(t.success, t.alveoleUnlocked.replace('{level}', alveole.level.toString()));
+                        window.alert(`${t.success}\n\n${t.alveoleUnlocked.replace('{level}', alveole.level.toString())}`);
                       } else {
-                        Alert.alert(t.insufficientFlowers, t.needFlowers.replace('{amount}', formatNumber(alveole.cost)));
+                        window.alert(`${t.insufficientFlowers}\n\n${t.needFlowers.replace('{amount}', formatNumber(alveole.cost))}`);
                       }
                     }}
                     disabled={flowers < alveole.cost}

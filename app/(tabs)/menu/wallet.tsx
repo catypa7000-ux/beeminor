@@ -54,11 +54,7 @@ export default function WalletScreen() {
 
   const copyToClipboard = async (address: string) => {
     await ExpoClipboard.setStringAsync(address);
-    if (Platform.OS === 'web') {
-      alert('Adresse copiée dans le presse-papier');
-    } else {
-      Alert.alert('Copié', 'Adresse copiée dans le presse-papier');
-    }
+    window.alert('Adresse copiée dans le presse-papier');
   };
 
   const calculateFlowersEarned = (usdValue: number): number => {
@@ -69,33 +65,18 @@ export default function WalletScreen() {
 
   const handleExchange = () => {
     if (!selectedNetwork || !usdAmount) {
-      if (Platform.OS === 'web') {
-        alert(t.selectNetworkError || 'Veuillez sélectionner un réseau et entrer un montant');
-      } else {
-        Alert.alert(t.error, t.selectNetworkError || 'Veuillez sélectionner un réseau et entrer un montant');
-      }
+      window.alert(t.error + ': ' + (t.selectNetworkError || 'Veuillez sélectionner un réseau et entrer un montant'));
       return;
     }
 
     const usdValue = parseFloat(usdAmount);
     if (isNaN(usdValue) || usdValue <= 0) {
-      if (Platform.OS === 'web') {
-        alert(t.invalidAmount);
-      } else {
-        Alert.alert(t.error, t.invalidAmount);
-      }
+      window.alert(t.error + ': ' + t.invalidAmount);
       return;
     }
     
     if (usdValue < 5) {
-      if (Platform.OS === 'web') {
-        alert(`${t.minAmountWarning}\n\nLes envois en dessous de 5$ ne seront pas comptabilisés.`);
-      } else {
-        Alert.alert(
-          t.error,
-          `${t.minAmountWarning}\n\nLes envois en dessous de 5$ ne seront pas comptabilisés.`
-        );
-      }
+      window.alert(`${t.error}\n\n${t.minAmountWarning}\n\nLes envois en dessous de 5$ ne seront pas comptabilisés.`);
       return;
     }
 
@@ -104,82 +85,37 @@ export default function WalletScreen() {
 
     const cryptoSymbol = selectedNetworkData?.symbol || selectedNetwork.toUpperCase();
     
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm(
-        `Confirmer l'envoi:\n\n` +
-        `Réseau: ${cryptoSymbol}\n` +
-        `Montant envoyé: ${usdValue.toFixed(2)}$\n` +
-        `Taxe: 1.00$\n` +
-        `Net: ${(usdValue - 1).toFixed(2)}$\n\n` +
-        `Vous recevrez: ${flowersToAdd.toLocaleString()} fleurs\n\n` +
-        `Votre dépôt sera soumis pour validation par l'administrateur. Vous recevrez une notification une fois validé.`
-      );
-      if (confirmed) {
-        const transaction: Omit<Transaction, 'id' | 'status' | 'createdAt'> = {
-          userId: currentUser?.id || 'unknown',
-          userEmail: currentUser?.email || 'unknown',
-          type: 'deposit_crypto',
-          amount: usdValue,
-          network: selectedNetworkData?.name || selectedNetwork,
-          walletAddress: selectedNetworkData?.address || '',
-          usdAmount: usdValue,
-          fees: 1,
-          receivedAmount: usdValue - 1,
-          flowersAmount: flowersToAdd,
-        };
-        
-        submitWithdrawal(transaction);
-        setUsdAmount('');
-        setSelectedNetwork('');
-        alert(
-          `Demande envoyée!\n\n` +
-          `Votre dépôt de ${usdValue.toFixed(2)}$ en ${cryptoSymbol} a été soumis.\n\n` +
-          `Les ${flowersToAdd.toLocaleString()} fleurs seront ajoutées après validation par l'admin.\n\n` +
-          `Vous recevrez une notification une fois la transaction validée ou rejetée.`
-        );
-      }
-    } else {
-      Alert.alert(
-        t.confirmation,
-        `Réseau: ${cryptoSymbol}\n` +
-        `Montant envoyé: ${usdValue.toFixed(2)}$\n` +
-        `Taxe: 1.00$\n` +
-        `Net: ${(usdValue - 1).toFixed(2)}$\n\n` +
-        `Vous recevrez: ${flowersToAdd.toLocaleString()} fleurs\n\n` +
-        `Votre dépôt sera soumis pour validation. Vous recevrez une notification une fois validé.`,
-        [
-          {
-            text: t.cancel,
-            style: 'cancel',
-          },
-          {
-            text: t.confirm,
-            onPress: () => {
-              const transaction: Omit<Transaction, 'id' | 'status' | 'createdAt'> = {
-                userId: currentUser?.id || 'unknown',
-                userEmail: currentUser?.email || 'unknown',
-                type: 'deposit_crypto',
-                amount: usdValue,
-                network: selectedNetworkData?.name || selectedNetwork,
-                walletAddress: selectedNetworkData?.address || '',
-                usdAmount: usdValue,
-                fees: 1,
-                receivedAmount: usdValue - 1,
-                flowersAmount: flowersToAdd,
-              };
-              
-              submitWithdrawal(transaction);
-              setUsdAmount('');
-              setSelectedNetwork('');
-              Alert.alert(
-                t.success, 
-                `Votre dépôt de ${usdValue.toFixed(2)}$ en ${cryptoSymbol} a été soumis.\n\n` +
-                `Les ${flowersToAdd.toLocaleString()} fleurs seront ajoutées après validation.\n\n` +
-                `Vous recevrez une notification une fois la transaction validée.`
-              );
-            },
-          },
-        ]
+    const confirmed = window.confirm(
+      `Confirmer l'envoi:\n\n` +
+      `Réseau: ${cryptoSymbol}\n` +
+      `Montant envoyé: ${usdValue.toFixed(2)}$\n` +
+      `Taxe: 1.00$\n` +
+      `Net: ${(usdValue - 1).toFixed(2)}$\n\n` +
+      `Vous recevrez: ${flowersToAdd.toLocaleString()} fleurs\n\n` +
+      `Votre dépôt sera soumis pour validation par l'administrateur. Vous recevrez une notification une fois validé.`
+    );
+    if (confirmed) {
+      const transaction: Omit<Transaction, 'id' | 'status' | 'createdAt'> = {
+        userId: currentUser?.id || 'unknown',
+        userEmail: currentUser?.email || 'unknown',
+        type: 'deposit_crypto',
+        amount: usdValue,
+        network: selectedNetworkData?.name || selectedNetwork,
+        walletAddress: selectedNetworkData?.address || '',
+        usdAmount: usdValue,
+        fees: 1,
+        receivedAmount: usdValue - 1,
+        flowersAmount: flowersToAdd,
+      };
+      
+      submitWithdrawal(transaction);
+      setUsdAmount('');
+      setSelectedNetwork('');
+      window.alert(
+        `Demande envoyée!\n\n` +
+        `Votre dépôt de ${usdValue.toFixed(2)}$ en ${cryptoSymbol} a été soumis.\n\n` +
+        `Les ${flowersToAdd.toLocaleString()} fleurs seront ajoutées après validation par l'admin.\n\n` +
+        `Vous recevrez une notification une fois la transaction validée ou rejetée.`
       );
     }
   };

@@ -41,7 +41,7 @@ export default function TachesScreen() {
 
       if (result.action === Share.sharedAction) {
         inviteFriend();
-        Alert.alert(t.success, `${t.inviteFriendBonus} +200 ${t.flowers.toLowerCase()} ${t.perFriend}`);
+        window.alert(`${t.success}\n\n${t.inviteFriendBonus} +200 ${t.flowers.toLowerCase()} ${t.perFriend}`);
       }
     } catch (error) {
       console.error('Error sharing:', error);
@@ -50,25 +50,24 @@ export default function TachesScreen() {
 
   const handleCopyReferralCode = () => {
     Clipboard.setString(referralCode);
-    Alert.alert(t.copyReferralCode, t.copied);
+    window.alert(`${t.copyReferralCode}\n\n${t.copied}`);
   };
 
   const handleCopyInviteLink = () => {
     const inviteLink = `https://beegame.app/invite/${referralCode}`;
     Clipboard.setString(inviteLink);
-    Alert.alert(t.copyReferralCode, `${t.inviteLink} ${t.copied.toLowerCase()}`);
+    window.alert(`${t.copyReferralCode}\n\n${t.inviteLink} ${t.copied.toLowerCase()}`);
   };
 
   const handleClaimReward = async (mission: Mission) => {
     if (claimedMissions.includes(mission.id)) {
-      Alert.alert(t.claimed, t.alreadyClaimed);
+      window.alert(`${t.claimed}\n\n${t.alreadyClaimed}`);
       return;
     }
 
     if (invitedFriends < mission.friendsRequired) {
-      Alert.alert(
-        t.missionIncomplete,
-        `${mission.friendsRequired - invitedFriends} ${t.friendsInvited.toLowerCase()} ${t.inProgress.toLowerCase()}`
+      window.alert(
+        `${t.missionIncomplete}\n\n${mission.friendsRequired - invitedFriends} ${t.friendsInvited.toLowerCase()} ${t.inProgress.toLowerCase()}`
       );
       return;
     }
@@ -79,9 +78,9 @@ export default function TachesScreen() {
       if (mission.ticketsReward > 0) {
         message += ` et +${mission.ticketsReward} ticket${mission.ticketsReward > 1 ? 's' : ''} roulette`;
       }
-      Alert.alert(t.rewardClaimed, message);
+      window.alert(`${t.rewardClaimed}\n\n${message}`);
     } else {
-      Alert.alert(t.error, t.claimFailed || 'Failed to claim mission');
+      window.alert(`${t.error}\n\n${t.claimFailed || 'Failed to claim mission'}`);
     }
   };
 
