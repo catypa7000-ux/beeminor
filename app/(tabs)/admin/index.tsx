@@ -861,8 +861,15 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
               <Text style={styles.transactionValue}>
                 {txn.type === 'deposit_crypto' && txn.flowersAmount 
                   ? `${txn.flowersAmount.toLocaleString()} fleurs`
-                  : txn.amount.toLocaleString()}
+                  : txn.type === 'withdrawal_bvr'
+                  ? `${txn.amount.toLocaleString()} BVR`
+                  : `${txn.amount.toLocaleString()} fleurs`}
               </Text>
+            </View>
+
+            <View style={styles.transactionDetail}>
+              <Text style={styles.transactionLabel}>Devise:</Text>
+              <Text style={styles.transactionValue}>{txn.network || 'USD'}</Text>
             </View>
 
             {txn.usdAmount && (

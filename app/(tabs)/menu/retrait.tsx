@@ -42,15 +42,23 @@ export default function RetraitScreen() {
   };
 
   const handleWithdraw = () => {
+    console.log('=== WITHDRAWAL DEBUG ===');
+    console.log('withdrawType:', withdrawType);
+    console.log('withdrawAmount:', withdrawAmount);
+    console.log('walletAddress:', walletAddress);
+    console.log('bvrCoins:', bvrCoins);
+    console.log('currentUser:', currentUser);
+    
     const amount = parseFloat(withdrawAmount);
+    console.log('parsed amount:', amount);
 
     if (!walletAddress.trim()) {
-      Alert.alert('Erreur', 'Veuillez entrer une adresse de portefeuille');
+      window.alert('Erreur: Veuillez entrer une adresse de portefeuille');
       return;
     }
 
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Erreur', 'Veuillez entrer un montant valide');
+      window.alert('Erreur: Veuillez entrer un montant valide');
       return;
     }
 
@@ -58,85 +66,104 @@ export default function RetraitScreen() {
       const selectedNetworkInfo = NETWORKS.find(n => n.id === selectedNetwork);
 
       if (!selectedNetwork) {
-        Alert.alert('Erreur', 'Veuillez sélectionner un réseau');
+        window.alert('Erreur: Veuillez sélectionner un réseau');
         return;
       }
 
       if (selectedNetworkInfo && amount < selectedNetworkInfo.minWithdraw) {
-        Alert.alert('Erreur', `Le montant minimum de retrait est de ${selectedNetworkInfo.minWithdraw.toLocaleString()} diamants (${(selectedNetworkInfo.minWithdraw * DIAMOND_TO_USD).toFixed(2)}$)`);
+        window.alert(`Erreur: Le montant minimum de retrait est de ${selectedNetworkInfo.minWithdraw.toLocaleString()} diamants (${(selectedNetworkInfo.minWithdraw * DIAMOND_TO_USD).toFixed(2)}$)`);
         return;
       }
 
       if (diamonds < amount) {
-        Alert.alert('Erreur', 'Vous n\'avez pas assez de diamants');
+        window.alert('Erreur: Vous n\'avez pas assez de diamants');
         return;
       }
 
       const usdAmount = amount * DIAMOND_TO_USD;
       const fees = calculateFees(usdAmount);
       const received = calculateReceived(usdAmount);
-      Alert.alert(
-        'Confirmation',
+      
+      // Use window.confirm for web compatibility
+      const confirmed = window.confirm(
         `Vous allez retirer ${amount.toLocaleString()} diamants (${usdAmount.toFixed(2)}$)\n` +
         `Frais: ${fees.toFixed(2)}$\n` +
         `Vous recevrez: ${received.toFixed(2)}$\n` +
         `Réseau: ${selectedNetwork}\n` +
-        `Adresse: ${walletAddress.substring(0, 10)}...`,
-        [
-          { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Confirmer',
-            onPress: () => {
-              game.submitWithdrawal({
-                userId: currentUser?.id || 'unknown',
-                userEmail: currentUser?.email || 'unknown',
-                type: 'withdrawal_diamond',
-                amount: amount,
-                network: selectedNetwork,
-                walletAddress: walletAddress,
-                usdAmount: usdAmount,
-                fees: fees,
-                receivedAmount: received,
-              });
-              Alert.alert('Succès', 'Votre demande de retrait a été soumise. L\'administrateur va valider votre transaction sous 24-48h.');
-              setWithdrawAmount('');
-              setWalletAddress('');
-            },
-          },
-        ]
+        `Adresse: ${walletAddress.substring(0, 10)}...\n\n` +
+        `Confirmer le retrait?`
       );
+      
+      if (confirmed) {
+        game.submitWithdrawal({
+          userId: currentUser?.id || 'unknown',
+          userEmail: currentUser?.email || 'unknown',
+          type: 'withdrawal_diamond',
+          amount: amount,
+          network: selectedNetwork,
+          walletAddress: walletAddress,
+          usdAmount: usdAmount,
+          fees: fees,
+          receivedAmount: received,
+        }).then(() => {
+          window.alert('Succès: Votre demande de retrait a été soumise. L\'administrateur va valider votre transaction sous 24-48h.');
+          setWithdrawAmount('');
+          setWalletAddress('');
+        }).catch((error) => {
+          console.error('Withdrawal error:', error);
+          window.alert('Erreur lors de la soumission du retrait');
+        });
+      }
     } else {
+      console.log('=== BVR WITHDRAWAL BRANCH ===');
+      console.log('bvrCoins:', bvrCoins);
+      console.log('amount:', amount);
+      
       if (bvrCoins < amount) {
-        Alert.alert('Erreur', 'Vous n\'avez pas assez de BVR');
+        console.log('Insufficient BVR');
+        window.alert('Erreur: Vous n\'avez pas assez de BVR');
         return;
       }
 
-      Alert.alert(
-        'Confirmation',
+      console.log('Showing confirmation dialog');
+      
+      // Use window.confirm for web compatibility
+      const confirmed = window.confirm(
         `Vous allez retirer ${amount.toLocaleString()} BVR\n` +
         `Réseau: Solana\n` +
         `Aucun frais\n` +
-        `Adresse: ${walletAddress.substring(0, 10)}...`,
-        [
-          { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Confirmer',
-            onPress: () => {
-              game.submitWithdrawal({
-                userId: currentUser?.id || 'unknown',
-                userEmail: currentUser?.email || 'unknown',
-                type: 'withdrawal_bvr',
-                amount: amount,
-                network: 'SOL',
-                walletAddress: walletAddress,
-              });
-              Alert.alert('Succès', 'Votre demande de retrait BVR a été soumise. L\'administrateur va valider votre transaction sur Solana sous 24-48h.');
-              setWithdrawAmount('');
-              setWalletAddress('');
-            },
-          },
-        ]
+        `Adresse: ${walletAddress.substring(0, 10)}...\n\n` +
+        `Confirmer le retrait?`
       );
+      
+      if (confirmed) {
+        console.log('Confirmed! Submitting withdrawal...');
+        console.log('Withdrawal data:', {
+          userId: currentUser?.id || 'unknown',
+          userEmail: currentUser?.email || 'unknown',
+          type: 'withdrawal_bvr',
+          amount: amount,
+          network: 'SOL',
+          walletAddress: walletAddress,
+        });
+        
+        game.submitWithdrawal({
+          userId: currentUser?.id || 'unknown',
+          userEmail: currentUser?.email || 'unknown',
+          type: 'withdrawal_bvr',
+          amount: amount,
+          network: 'SOL',
+          walletAddress: walletAddress,
+        }).then((result) => {
+          console.log('Withdrawal result:', result);
+          window.alert('Succès: Votre demande de retrait BVR a été soumise. L\'administrateur va valider votre transaction sur Solana sous 24-48h.');
+          setWithdrawAmount('');
+          setWalletAddress('');
+        }).catch((error) => {
+          console.error('Withdrawal error:', error);
+          window.alert('Erreur lors de la soumission du retrait');
+        });
+      }
     }
   };
 

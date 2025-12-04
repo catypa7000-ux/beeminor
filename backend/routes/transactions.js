@@ -37,11 +37,11 @@ router.get('/:userId', async (req, res) => {
 });
 
 // @route   POST /api/transactions/withdraw
-// @desc    Create withdrawal request and deduct flowers
+// @desc    Create withdrawal request and deduct flowers or BVR
 // @access  Public (should be protected in production)
 router.post('/withdraw', async (req, res) => {
   try {
-    const { userId, amount, currency, address, cryptoAddress } = req.body;
+    const { userId, amount, currency, address, cryptoAddress, type } = req.body;
 
     if (!userId || !amount || !currency || (!address && !cryptoAddress)) {
       return res.status(400).json({
@@ -50,7 +50,7 @@ router.post('/withdraw', async (req, res) => {
       });
     }
 
-    // Get game state to check balance and deduct flowers
+    // Get game state to check balance and deduct resources
     const gameState = await GameState.findOne({ userId });
     if (!gameState) {
       return res.status(404).json({
@@ -59,24 +59,37 @@ router.post('/withdraw', async (req, res) => {
       });
     }
 
-    // Check if user has enough flowers
-    if (gameState.flowers < amount) {
-      return res.status(400).json({
-        success: false,
-        message: 'Insufficient flowers',
-        current: gameState.flowers,
-        required: amount
-      });
+    // Determine what to deduct based on currency
+    if (currency === 'BVR') {
+      // For BVR withdrawals, deduct bvrCoins
+      if (gameState.bvrCoins < amount) {
+        return res.status(400).json({
+          success: false,
+          message: 'Insufficient BVR coins',
+          current: gameState.bvrCoins,
+          required: amount
+        });
+      }
+      gameState.bvrCoins -= amount;
+    } else {
+      // For USD/crypto withdrawals, deduct flowers
+      if (gameState.flowers < amount) {
+        return res.status(400).json({
+          success: false,
+          message: 'Insufficient flowers',
+          current: gameState.flowers,
+          required: amount
+        });
+      }
+      gameState.flowers -= amount;
     }
 
-    // Deduct flowers from game state
-    gameState.flowers -= amount;
     await gameState.save();
 
     // Create withdrawal transaction
     const transaction = new Transaction({
       userId,
-      type: 'withdrawal',
+      type: type || 'withdrawal',
       amount,
       currency,
       address: address || null,
@@ -186,13 +199,18 @@ router.put('/:id/status', async (req, res) => {
       });
     }
 
-    // If withdrawal is being cancelled/failed, refund the flowers
-    if (transaction.type === 'withdrawal' && 
+    // If withdrawal is being cancelled/failed, refund the resources
+    if ((transaction.type === 'withdrawal' || transaction.type === 'withdrawal_diamond' || transaction.type === 'withdrawal_bvr') && 
         transaction.status === 'pending' && 
         (status === 'cancelled' || status === 'failed')) {
       const gameState = await GameState.findOne({ userId: transaction.userId });
       if (gameState) {
-        gameState.flowers += transaction.amount;
+        // Refund based on currency type
+        if (transaction.currency === 'BVR') {
+          gameState.bvrCoins += transaction.amount;
+        } else {
+          gameState.flowers += transaction.amount;
+        }
         await gameState.save();
       }
     }

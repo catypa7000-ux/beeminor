@@ -1037,14 +1037,17 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const submitWithdrawal = useCallback(async (transaction: Omit<Transaction, 'id' | 'status' | 'createdAt'>) => {
     // Create withdrawal via backend
     try {
-      // Map transaction type to backend format
-      const amount = transaction.type === 'withdrawal_diamond' ? transaction.amount : transaction.amount;
+      // Determine currency and amount based on transaction type
+      const isBVR = transaction.type === 'withdrawal_bvr';
+      const currency = isBVR ? 'BVR' : 'USD';
+      const amount = transaction.amount;
       
       const response = await transactionsAPI.createWithdrawal({
         userId: transaction.userId,
         amount: amount,
-        currency: 'USD',
-        cryptoAddress: transaction.walletAddress
+        currency: currency,
+        cryptoAddress: transaction.walletAddress,
+        type: transaction.type
       });
 
       if (response.success) {
@@ -1057,7 +1060,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
         };
         setTransactions((current) => [newTransaction, ...current]);
         
-        // Sync game state to get updated flowers/diamonds
+        // Sync game state to get updated balance (flowers or bvrCoins)
         if (currentUserId) {
           await syncGameStateFromBackend(currentUserId);
         }

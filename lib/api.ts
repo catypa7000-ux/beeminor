@@ -546,6 +546,7 @@ export const transactionsAPI = {
     currency: string;
     address?: string;
     cryptoAddress?: string;
+    type?: string;
   }) => {
     return apiRequest<{
       success: boolean;
