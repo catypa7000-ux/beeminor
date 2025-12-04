@@ -128,6 +128,11 @@ const PORT = process.env.PORT || 3001;
 // Start server
 const startServer = async () => {
   await connectDB();
+  
+  // Verify email configuration
+  const { verifyEmailConfig } = require('./config/email');
+  await verifyEmailConfig();
+  
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Backend server running on 0.0.0.0:${PORT}`);
     console.log(`📍 API endpoint: http://localhost:${PORT}/api`);

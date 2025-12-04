@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Transaction = require('../models/Transaction');
 const GameState = require('../models/GameState');
+const User = require('../models/User');
+const { 
+  sendWithdrawalSubmittedNotification
+} = require('../services/notificationService');
 
 // @route   GET /api/transactions/:userId
 // @desc    Get transactions for user
@@ -98,6 +102,21 @@ router.post('/withdraw', async (req, res) => {
     });
 
     await transaction.save();
+
+    // Send email notification to admin (not user)
+    try {
+      const user = await User.findById(userId);
+      const adminEmail = process.env.ADMIN_EMAIL || 'martinremy100@gmail.com'; // Admin email from env or default
+      
+      if (user && user.email) {
+        await sendWithdrawalSubmittedNotification(adminEmail, transaction, user.email);
+        console.log('📧 Withdrawal notification email sent to admin:', adminEmail);
+        console.log('📧 For user:', user.email);
+      }
+    } catch (emailError) {
+      console.error('📧 Failed to send withdrawal notification email:', emailError.message);
+      // Don't fail the withdrawal if email fails
+    }
 
     res.status(201).json({
       success: true,
@@ -199,6 +218,10 @@ router.put('/:id/status', async (req, res) => {
       });
     }
 
+    // Track refund details for email notification
+    let refundedAmount = 0;
+    let refundedCurrency = '';
+
     // If withdrawal is being cancelled/failed, refund the resources
     if ((transaction.type === 'withdrawal' || transaction.type === 'withdrawal_diamond' || transaction.type === 'withdrawal_bvr') && 
         transaction.status === 'pending' && 
@@ -215,9 +238,13 @@ router.put('/:id/status', async (req, res) => {
         // Refund based on currency type
         if (transaction.currency === 'BVR') {
           gameState.bvrCoins += transaction.amount;
+          refundedAmount = transaction.amount;
+          refundedCurrency = 'BVR';
           console.log('Refunding BVR:', transaction.amount);
         } else {
           gameState.flowers += transaction.amount;
+          refundedAmount = transaction.amount;
+          refundedCurrency = 'USD';
           console.log('Refunding flowers:', transaction.amount);
         }
         
@@ -236,6 +263,8 @@ router.put('/:id/status', async (req, res) => {
       transaction.processedAt = new Date();
     }
     await transaction.save();
+
+    // No email notifications on approval/rejection - only on withdrawal request submission
 
     res.json({
       success: true,
