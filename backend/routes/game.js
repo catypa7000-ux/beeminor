@@ -1003,6 +1003,117 @@ router.post('/:userId/purchase-flowers', async (req, res) => {
   }
 });
 
+// @route   POST /api/game/:userId/exchange
+// @desc    Exchange diamonds or BVR for flowers
+// @access  Public (should be protected in production)
+router.post('/:userId/exchange', async (req, res) => {
+  try {
+    const { type, amount } = req.body;
+
+    if (!type || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Type and amount are required'
+      });
+    }
+
+    if (amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Amount must be positive'
+      });
+    }
+
+    const gameState = await GameState.findOne({ userId: req.params.userId });
+    if (!gameState) {
+      return res.status(404).json({
+        success: false,
+        message: 'Game state not found'
+      });
+    }
+
+    let flowersReceived = 0;
+    let exchangedResource = '';
+
+    if (type === 'DIAMONDS_TO_FLOWERS') {
+      if (gameState.diamonds < amount) {
+        return res.status(400).json({
+          success: false,
+          message: 'Insufficient diamonds',
+          current: gameState.diamonds,
+          required: amount
+        });
+      }
+
+      // 10% bonus: 1 diamond = 1.1 flowers
+      flowersReceived = amount * 1.1;
+      gameState.diamonds -= amount;
+      gameState.flowers += flowersReceived;
+      exchangedResource = `${amount} diamonds`;
+    } else if (type === 'BVR_TO_FLOWERS') {
+      if (gameState.bvrCoins < amount) {
+        return res.status(400).json({
+          success: false,
+          message: 'Insufficient BVR',
+          current: gameState.bvrCoins,
+          required: amount
+        });
+      }
+
+      if (amount < 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'Minimum 100 BVR required',
+          current: amount
+        });
+      }
+
+      // 100 BVR = 1 flower
+      flowersReceived = amount / 100;
+      gameState.bvrCoins -= amount;
+      gameState.flowers += flowersReceived;
+      exchangedResource = `${amount} BVR`;
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid exchange type'
+      });
+    }
+
+    gameState.lastUpdated = new Date();
+    await gameState.save();
+
+    console.log('✅ Exchange completed:', {
+      type,
+      amount,
+      flowersReceived,
+      newBalances: {
+        diamonds: gameState.diamonds,
+        bvrCoins: gameState.bvrCoins,
+        flowers: gameState.flowers
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Exchanged ${exchangedResource} for ${flowersReceived} flowers`,
+      flowersReceived,
+      newBalances: {
+        diamonds: gameState.diamonds,
+        bvrCoins: gameState.bvrCoins,
+        flowers: gameState.flowers
+      }
+    });
+  } catch (error) {
+    console.error('Exchange error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing exchange',
+      error: error.message
+    });
+  }
+});
+
 // @route   POST /api/game/:userId/set-pending-funds
 // @desc    Mark that user has sent payment and funds are pending verification
 // @access  Public (should be protected in production)

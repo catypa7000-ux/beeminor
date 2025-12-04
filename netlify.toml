@@ -1,0 +1,55 @@
+# Netlify Configuration for Beeminor
+# Manual Deploy Only - Auto-publish disabled for safety
+
+[build]
+  # Build command for Expo web
+  command = "npx expo export:web"
+  
+  # Output directory where built files are stored
+  publish = "dist/"
+  
+  # Base directory (project root)
+  base = "."
+
+[build.environment]
+  # Node version
+  NODE_VERSION = "18"
+  
+  # Environment variables (configure in Netlify dashboard)
+  # EXPO_PUBLIC_API_BASE_URL = "https://your-backend-url.com"
+  # NODE_ENV = "production"
+
+# Disable auto-publishing - manual deploy only
+[build.processing]
+  skip_processing = false
+
+# Manual deploy configuration
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+
+# Redirect rules for SPA (Single Page Application)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Note: To enable manual deploy only:
+# 1. Go to Netlify Dashboard → Site Settings → Build & deploy
+# 2. Under "Build settings", set "Auto publishing" to "Off"
+# 3. Deploy manually using: netlify deploy --prod
+#    or via Netlify dashboard "Deploy site" button

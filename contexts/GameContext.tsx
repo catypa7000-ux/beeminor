@@ -976,6 +976,62 @@ export const [GameProvider, useGame] = createContextHook(() => {
     setIsLoaded(false);
   }, []);
 
+  const exchangeResource = useCallback(async (type: 'DIAMONDS_TO_FLOWERS' | 'BVR_TO_FLOWERS', amount: number) => {
+    // Validate amount
+    if (amount <= 0) {
+      return { success: false, message: 'Invalid amount' };
+    }
+
+    // Validate sufficient balance
+    if (type === 'DIAMONDS_TO_FLOWERS' && diamonds < amount) {
+      return { success: false, message: 'Insufficient diamonds' };
+    }
+    if (type === 'BVR_TO_FLOWERS' && bvrCoins < amount) {
+      return { success: false, message: 'Insufficient BVR' };
+    }
+    if (type === 'BVR_TO_FLOWERS' && amount < 100) {
+      return { success: false, message: 'Minimum 100 BVR required' };
+    }
+
+    // If user is authenticated, use backend
+    if (currentUserId) {
+      try {
+        const response = await gameAPI.exchangeResource(currentUserId, type, amount);
+        if (response.success && response.newBalances) {
+          console.log('💱 Exchange successful, updating state:', response.newBalances);
+          
+          // Update state with backend response
+          setDiamonds(response.newBalances.diamonds);
+          setBvrCoins(response.newBalances.bvrCoins);
+          setFlowers(response.newBalances.flowers);
+          
+          // Force immediate sync from backend to ensure consistency
+          await syncGameStateFromBackend(currentUserId);
+          
+          return { success: true, flowersReceived: response.flowersReceived };
+        }
+        return { success: false, message: response.message || 'Exchange failed' };
+      } catch (error) {
+        console.error('Failed to exchange from backend:', error);
+        return { success: false, message: 'Failed to connect to server' };
+      }
+    }
+
+    // Fallback: local-only update (should not happen in production)
+    let flowersReceived = 0;
+    if (type === 'DIAMONDS_TO_FLOWERS') {
+      flowersReceived = amount * 1.1;
+      setDiamonds((current) => current - amount);
+      setFlowers((current) => current + flowersReceived);
+    } else if (type === 'BVR_TO_FLOWERS') {
+      flowersReceived = amount / 100;
+      setBvrCoins((current) => current - amount);
+      setFlowers((current) => current + flowersReceived);
+    }
+
+    return { success: true, flowersReceived };
+  }, [diamonds, bvrCoins, currentUserId, syncGameStateFromBackend]);
+
   const claimMission = useCallback(async (missionId: number, flowersReward: number, ticketsReward: number) => {
     // Optimistic check - validate locally first
     if (claimedMissions.includes(missionId)) return false;
@@ -1241,6 +1297,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     claimedMissions,
     inviteFriend,
     claimMission,
+    exchangeResource,
     referralCode,
     referrals,
     totalReferralEarnings,

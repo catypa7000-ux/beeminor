@@ -40,6 +40,10 @@ const formatTransactionType = (type) => {
  * Send withdrawal submission notification to admin
  */
 const sendWithdrawalSubmittedNotification = async (adminEmail, transaction, userEmail) => {
+  // Get frontend URL from environment variable
+  const frontendUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:8081';
+  const adminPanelUrl = `${frontendUrl}/admin`;
+  
   const subject = '🔔 New Withdrawal Request - Beeminor Admin';
   
   const html = `
@@ -119,7 +123,7 @@ const sendWithdrawalSubmittedNotification = async (adminEmail, transaction, user
           </ul>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="http://localhost:8081/admin" class="button">
+            <a href="${adminPanelUrl}" class="button">
               Open Admin Panel →
             </a>
           </div>
@@ -158,7 +162,7 @@ Required Actions:
 - Verify the user's account and payment address
 - Approve or Reject the request in the admin panel
 
-Admin Panel: http://localhost:8081/admin
+Admin Panel: ${adminPanelUrl}
 
 💡 Tip: Go to Admin Panel → Transactions Tab to process this request.
 

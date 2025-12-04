@@ -32,9 +32,16 @@ export default function TachesScreen() {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'missions' | 'referrals'>('missions');
 
+  // Get the app URL from environment or use default
+  const getInviteLink = () => {
+    // In production, this should be your deployed frontend URL
+    const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'https://beegame.app';
+    return `${appUrl}/invite/${referralCode}`;
+  };
+
   const handleInviteFriend = async () => {
     try {
-      const inviteLink = `https://beegame.app/invite/${referralCode}`;
+      const inviteLink = getInviteLink();
       const result = await Share.share({
         message: `🐝 Rejoins-moi dans Bee Game et gagne des fleurs ! 🌸\n\nUtilise mon code de parrainage: ${referralCode}\n${inviteLink}\n\n🎁 Bonus: 200 fleurs à chaque invitation !`,
       });
@@ -54,7 +61,7 @@ export default function TachesScreen() {
   };
 
   const handleCopyInviteLink = () => {
-    const inviteLink = `https://beegame.app/invite/${referralCode}`;
+    const inviteLink = getInviteLink();
     Clipboard.setString(inviteLink);
     window.alert(`${t.copyReferralCode}\n\n${t.inviteLink} ${t.copied.toLowerCase()}`);
   };

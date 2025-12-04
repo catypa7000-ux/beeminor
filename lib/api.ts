@@ -347,6 +347,22 @@ export const gameAPI = {
     });
   },
 
+  exchangeResource: async (userId: string, type: 'DIAMONDS_TO_FLOWERS' | 'BVR_TO_FLOWERS', amount: number) => {
+    return apiRequest<{
+      success: boolean;
+      message: string;
+      flowersReceived: number;
+      newBalances: {
+        diamonds: number;
+        bvrCoins: number;
+        flowers: number;
+      };
+    }>(`/api/game/${userId}/exchange`, {
+      method: 'POST',
+      body: JSON.stringify({ type, amount }),
+    });
+  },
+
   processReferral: async (userId: string, purchaseAmount: number, purchaseType: string) => {
     return apiRequest<{
       success: boolean;

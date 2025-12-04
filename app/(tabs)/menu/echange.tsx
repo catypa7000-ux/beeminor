@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 type ExchangeType = 'DIAMONDS_TO_FLOWERS' | 'BVR_TO_FLOWERS';
 
 export default function EchangeScreen() {
-  const { diamonds, bvrCoins, flowers, setDiamonds, setBvrCoins, setFlowers } = useGame();
+  const { diamonds, bvrCoins, flowers, exchangeResource } = useGame();
   const [selectedExchange, setSelectedExchange] = useState<ExchangeType | null>(null);
   const [exchangeAmount, setExchangeAmount] = useState<string>('');
   const insets = useSafeAreaInsets();
@@ -20,7 +20,7 @@ export default function EchangeScreen() {
     return 0;
   };
 
-  const handleExchange = () => {
+  const handleExchange = async () => {
     const amount = parseFloat(exchangeAmount);
 
     if (!selectedExchange) {
@@ -45,10 +45,13 @@ export default function EchangeScreen() {
       );
       
       if (confirmed) {
-        setDiamonds((current: number) => current - amount);
-        setFlowers((current: number) => current + received);
-        window.alert(`Succès: Vous avez reçu ${received.toLocaleString()} fleurs!`);
-        setExchangeAmount('');
+        const result = await exchangeResource('DIAMONDS_TO_FLOWERS', amount);
+        if (result.success) {
+          window.alert(`Succès: Vous avez reçu ${result.flowersReceived.toLocaleString()} fleurs!`);
+          setExchangeAmount('');
+        } else {
+          window.alert(`Erreur: ${result.message}`);
+        }
       }
     } else if (selectedExchange === 'BVR_TO_FLOWERS') {
       if (bvrCoins < amount) {
@@ -67,10 +70,13 @@ export default function EchangeScreen() {
       );
       
       if (confirmed) {
-        setBvrCoins((current: number) => current - amount);
-        setFlowers((current: number) => current + received);
-        window.alert(`Succès: Vous avez reçu ${received.toLocaleString()} fleurs!`);
-        setExchangeAmount('');
+        const result = await exchangeResource('BVR_TO_FLOWERS', amount);
+        if (result.success) {
+          window.alert(`Succès: Vous avez reçu ${result.flowersReceived.toLocaleString()} fleurs!`);
+          setExchangeAmount('');
+        } else {
+          window.alert(`Erreur: ${result.message}`);
+        }
       }
     }
   };
