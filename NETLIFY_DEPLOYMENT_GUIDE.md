@@ -224,6 +224,17 @@ This ensures:
 
 ### Build Fails on Netlify
 
+**Error:** `npm ERESOLVE could not resolve` - React peer dependency conflict
+```bash
+# Solution: The .npmrc file is already configured with legacy-peer-deps=true
+# This is needed because lucide-react-native requires React 18, but we use React 19
+# If you removed .npmrc, recreate it with:
+echo "legacy-peer-deps=true" > .npmrc
+git add .npmrc
+git commit -m "Add .npmrc for peer dependency resolution"
+git push
+```
+
 **Error:** `Module not found` or dependency errors
 ```bash
 # Solution: Ensure package.json has all dependencies
