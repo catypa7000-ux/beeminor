@@ -243,6 +243,39 @@ export const gameAPI = {
       body: JSON.stringify({ amount }),
     });
   },
+
+  buyAlveole: async (userId: string, level: number) => {
+    return apiRequest<{
+      success: boolean;
+      message: string;
+      alveole: {
+        level: number;
+        capacity: number;
+        cost: number;
+      };
+      gameState: {
+        userId: string;
+        honey: number;
+        flowers: number;
+        diamonds: number;
+        tickets: number;
+        bvrCoins: number;
+        bees: Record<string, number>;
+        alveoles: Record<number, boolean>;
+        invitedFriends: number;
+        claimedMissions: number[];
+        referrals: any[];
+        totalReferralEarnings: number;
+        hasPendingFunds: boolean;
+        transactions: any[];
+        diamondsThisYear: number;
+        yearStartDate: string;
+      };
+    }>(`/api/game/${userId}/upgrade-alveole`, {
+      method: 'POST',
+      body: JSON.stringify({ level }),
+    });
+  },
 };
 
 // Leaderboard API

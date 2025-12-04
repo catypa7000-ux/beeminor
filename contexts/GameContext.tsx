@@ -709,17 +709,37 @@ export const [GameProvider, useGame] = createContextHook(() => {
     return Object.values(bees).reduce((sum, count) => sum + count, 0);
   }, [bees]);
 
-  const buyAlveole = useCallback((level: number) => {
+  const buyAlveole = useCallback(async (level: number) => {
     const alveoleInfo = ALVEOLE_LEVELS.find((a) => a.level === level);
     if (!alveoleInfo || alveoles[level]) return false;
 
-    if (flowers >= alveoleInfo.cost) {
-      setFlowers((current) => current - alveoleInfo.cost);
-      setAlveoles((current) => ({ ...current, [level]: true }));
-      return true;
+    // Optimistic check - validate locally first
+    if (flowers < alveoleInfo.cost) {
+      return false;
     }
-    return false;
-  }, [flowers, alveoles]);
+
+    // If user is authenticated, use backend validation
+    if (currentUserId) {
+      try {
+        const response = await gameAPI.buyAlveole(currentUserId, level);
+        if (response.success && response.gameState) {
+          // Update state with backend response
+          setFlowers(response.gameState.flowers);
+          setAlveoles(response.gameState.alveoles);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Failed to buy alveole from backend:', error);
+        // Fallback to local update if backend fails
+      }
+    }
+
+    // Fallback: local-only update (for offline or unauthenticated users)
+    setFlowers((current) => current - alveoleInfo.cost);
+    setAlveoles((current) => ({ ...current, [level]: true }));
+    return true;
+  }, [flowers, alveoles, currentUserId]);
 
   const updateLeaderboard = useCallback((userId: string, totalDiamonds: number) => {
     setAllUsersLeaderboard((current) => {

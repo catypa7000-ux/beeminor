@@ -282,13 +282,105 @@ router.post('/:userId/sell-honey', async (req, res) => {
 });
 
 // @route   POST /api/game/:userId/upgrade-alveole
-// @desc    Upgrade alveole (placeholder)
+// @desc    Upgrade/unlock alveole with flowers
 // @access  Public
 router.post('/:userId/upgrade-alveole', async (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Upgrade alveole feature not implemented yet'
-  });
+  try {
+    const { level } = req.body;
+
+    // Validation
+    if (!level || level < 1 || level > 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Level must be between 1 and 6'
+      });
+    }
+
+    // Alveole levels with costs and capacities
+    const ALVEOLE_LEVELS = [
+      { level: 1, capacity: 1000000, cost: 0 },
+      { level: 2, capacity: 3000000, cost: 200000 },
+      { level: 3, capacity: 6000000, cost: 500000 },
+      { level: 4, capacity: 14000000, cost: 1250000 },
+      { level: 5, capacity: 30000000, cost: 3500000 },
+      { level: 6, capacity: 48000000, cost: 8000000 }
+    ];
+
+    const alveoleInfo = ALVEOLE_LEVELS.find(a => a.level === level);
+    if (!alveoleInfo) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid alveole level'
+      });
+    }
+
+    // Get current game state
+    let gameState = await GameState.findOne({ userId: req.params.userId });
+    if (!gameState) {
+      return res.status(404).json({
+        success: false,
+        message: 'Game state not found'
+      });
+    }
+
+    // Check if alveole is already unlocked
+    if (gameState.alveoles.get(level.toString())) {
+      return res.status(400).json({
+        success: false,
+        message: `Alveole level ${level} is already unlocked`
+      });
+    }
+
+    // Check if user has enough flowers
+    if (gameState.flowers < alveoleInfo.cost) {
+      return res.status(400).json({
+        success: false,
+        message: `Not enough flowers. Need ${alveoleInfo.cost}, have ${gameState.flowers}`
+      });
+    }
+
+    // Deduct flowers and unlock alveole
+    gameState.flowers -= alveoleInfo.cost;
+    gameState.alveoles.set(level.toString(), true);
+    gameState.lastUpdated = new Date();
+
+    await gameState.save();
+
+    res.json({
+      success: true,
+      message: `Successfully unlocked alveole level ${level}`,
+      alveole: {
+        level: level,
+        capacity: alveoleInfo.capacity,
+        cost: alveoleInfo.cost
+      },
+      gameState: {
+        userId: gameState.userId.toString(),
+        honey: gameState.honey,
+        flowers: gameState.flowers,
+        diamonds: gameState.diamonds,
+        tickets: gameState.tickets,
+        bvrCoins: gameState.bvrCoins,
+        bees: Object.fromEntries(gameState.bees),
+        alveoles: Object.fromEntries(gameState.alveoles),
+        invitedFriends: gameState.invitedFriends,
+        claimedMissions: gameState.claimedMissions,
+        referrals: gameState.referrals,
+        totalReferralEarnings: gameState.totalReferralEarnings,
+        hasPendingFunds: gameState.hasPendingFunds,
+        transactions: gameState.transactions,
+        diamondsThisYear: gameState.diamondsThisYear,
+        yearStartDate: gameState.yearStartDate
+      }
+    });
+  } catch (error) {
+    console.error('Upgrade alveole error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error upgrading alveole',
+      error: error.message
+    });
+  }
 });
 
 // @route   POST /api/game/:userId/collect-honey

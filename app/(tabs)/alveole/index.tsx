@@ -153,8 +153,9 @@ export default function AlveoleScreen() {
                       styles.unlockButton,
                       flowers < alveole.cost && styles.unlockButtonDisabled,
                     ]}
-                    onPress={() => {
-                      if (buyAlveole(alveole.level)) {
+                    onPress={async () => {
+                      const success = await buyAlveole(alveole.level);
+                      if (success) {
                         Alert.alert(t.success, t.alveoleUnlocked.replace('{level}', alveole.level.toString()));
                       } else {
                         Alert.alert(t.insufficientFlowers, t.needFlowers.replace('{amount}', formatNumber(alveole.cost)));
