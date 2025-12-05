@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Home, ShoppingBag, Hexagon, ListTodo } from 'lucide-react-native';
 import { View, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import TopBar from '@/components/TopBar';
+import TopBar from '../../components/TopBar';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const isWeb = Platform.OS === 'web';
