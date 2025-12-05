@@ -3,8 +3,8 @@
  * Syncs user ID between authentication and game state
  */
 import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useGame } from '@/contexts/GameContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useGame } from '../contexts/GameContext';
 
 export function AuthGameBridge() {
   const { currentUser, isAuthenticated } = useAuth();

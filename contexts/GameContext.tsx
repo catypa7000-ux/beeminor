@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { gameAPI, transactionsAPI } from '@/lib/api';
+import { gameAPI, transactionsAPI } from '../lib/api';
 
 export type BeeType = {
   id: string;

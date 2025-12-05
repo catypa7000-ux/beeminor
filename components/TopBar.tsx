@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useGame } from '@/contexts/GameContext';
-import { useLanguage, Language } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useGame } from '../contexts/GameContext';
+import { useLanguage, Language } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Menu, X, Crown } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 

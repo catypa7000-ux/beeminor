@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { authAPI } from '@/lib/api';
+import { authAPI } from '../lib/api';
 
 export type User = {
   id: string;
