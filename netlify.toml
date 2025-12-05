@@ -15,10 +15,11 @@
   # Node version
   NODE_VERSION = "20"
   EXPO_NO_TELEMETRY = "1"
+  NODE_ENV = "production"
   
-  # Environment variables (configure in Netlify dashboard)
-  # EXPO_PUBLIC_API_BASE_URL = "https://your-backend-url.com"
-  # NODE_ENV = "production"
+  # Backend API URLs
+  EXPO_PUBLIC_API_BASE_URL = "https://beeminor-main-production.up.railway.app"
+  EXPO_PUBLIC_RORK_API_BASE_URL = "https://beeminor-main-production.up.railway.app"
 
 # Disable auto-publishing - manual deploy only
 [build.processing]

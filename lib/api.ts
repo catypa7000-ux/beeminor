@@ -26,6 +26,7 @@ async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  
   const url = `${API_BASE_URL}${endpoint}`;
   
   const defaultHeaders: HeadersInit = {
