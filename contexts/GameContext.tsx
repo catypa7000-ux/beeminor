@@ -1153,20 +1153,39 @@ export const [GameProvider, useGame] = createContextHook(() => {
   }, []);
 
   const submitWithdrawal = useCallback(async (transaction: Omit<Transaction, 'id' | 'status' | 'createdAt'>) => {
-    // Create withdrawal via backend
+    // Create transaction via backend
     try {
-      // Determine currency and amount based on transaction type
-      const isBVR = transaction.type === 'withdrawal_bvr';
-      const currency = isBVR ? 'BVR' : 'USD';
-      const amount = transaction.amount;
+      let response;
       
-      const response = await transactionsAPI.createWithdrawal({
-        userId: transaction.userId,
-        amount: amount,
-        currency: currency,
-        cryptoAddress: transaction.walletAddress,
-        type: transaction.type
-      });
+      // For deposits, use the simple transaction creation endpoint
+      if (transaction.type === 'deposit_crypto') {
+        response = await transactionsAPI.createTransaction({
+          userId: transaction.userId,
+          type: transaction.type,
+          amount: transaction.amount,
+          currency: transaction.network || 'USD',
+          cryptoAddress: transaction.walletAddress,
+          notes: JSON.stringify({
+            usdAmount: transaction.usdAmount,
+            fees: transaction.fees,
+            receivedAmount: transaction.receivedAmount,
+            flowersAmount: transaction.flowersAmount
+          })
+        });
+      } else {
+        // For withdrawals, use the withdrawal endpoint that deducts resources
+        const isBVR = transaction.type === 'withdrawal_bvr';
+        const currency = isBVR ? 'BVR' : 'USD';
+        const amount = transaction.amount;
+        
+        response = await transactionsAPI.createWithdrawal({
+          userId: transaction.userId,
+          amount: amount,
+          currency: currency,
+          cryptoAddress: transaction.walletAddress,
+          type: transaction.type
+        });
+      }
 
       if (response.success) {
         // Update local state with backend response
@@ -1186,7 +1205,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
         return newTransaction;
       }
     } catch (error) {
-      console.error('Withdrawal submission failed:', error);
+      console.error('Transaction submission failed:', error);
       // Fallback to local-only for backwards compatibility
       const newTransaction: Transaction = {
         ...transaction,
@@ -1293,18 +1312,34 @@ export const [GameProvider, useGame] = createContextHook(() => {
       const response = await transactionsAPI.getPendingTransactions();
       if (response.success) {
         // Map backend transactions to frontend format
-        return response.transactions.map(t => ({
-          id: t.id,
-          userId: t.userId,
-          userEmail: t.userEmail,
-          type: t.type as 'withdrawal_diamond' | 'withdrawal_bvr' | 'deposit_crypto',
-          amount: t.amount,
-          network: t.currency || 'USD',
-          walletAddress: t.cryptoAddress || t.address || '',
-          status: 'pending' as TransactionStatus,
-          createdAt: t.createdAt,
-          usdAmount: t.amount
-        }));
+        return response.transactions.map(t => {
+          let parsedInfo: any = {};
+          
+          // Parse notes if available (for deposit_crypto transactions)
+          if (t.notes) {
+            try {
+              parsedInfo = JSON.parse(t.notes);
+            } catch (e) {
+              console.log('Could not parse transaction notes:', e);
+            }
+          }
+          
+          return {
+            id: t.id,
+            userId: t.userId,
+            userEmail: t.userEmail,
+            type: t.type as 'withdrawal_diamond' | 'withdrawal_bvr' | 'deposit_crypto',
+            amount: t.amount,
+            network: t.currency || 'USD',
+            walletAddress: t.cryptoAddress || t.address || '',
+            status: 'pending' as TransactionStatus,
+            createdAt: t.createdAt,
+            usdAmount: parsedInfo.usdAmount || t.amount,
+            fees: parsedInfo.fees,
+            receivedAmount: parsedInfo.receivedAmount,
+            flowersAmount: parsedInfo.flowersAmount
+          };
+        });
       }
       return [];
     } catch (error) {

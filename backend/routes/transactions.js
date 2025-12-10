@@ -229,18 +229,47 @@ router.put('/:id/status', async (req, res) => {
       console.log('=== DEPOSIT APPROVAL DEBUG ===');
       console.log('Transaction type:', transaction.type);
       console.log('Transaction amount:', transaction.amount);
+      console.log('Transaction notes:', transaction.notes);
       
       const gameState = await GameState.findOne({ userId: transaction.userId });
       if (gameState) {
-        // Calculate flowers to award (1000 flowers per $1 USD, minus $1 fee)
-        const usdAmount = transaction.amount || 0;
-        const netAmount = Math.max(0, usdAmount - 1); // Subtract $1 fee
-        const flowersToAward = Math.floor(netAmount * 1000);
+        let flowersToAward = 0;
+        let ticketsToAward = 0;
+        let usdAmount = transaction.amount || 0;
+        
+        // Try to parse notes for detailed deposit information
+        if (transaction.notes) {
+          try {
+            const depositInfo = JSON.parse(transaction.notes);
+            usdAmount = depositInfo.usdAmount || transaction.amount || 0;
+            
+            // Use pre-calculated flowers amount if available
+            if (depositInfo.flowersAmount) {
+              flowersToAward = depositInfo.flowersAmount;
+            } else {
+              // Fallback calculation: 1000 flowers per $1 USD, minus $1 fee
+              const netAmount = Math.max(0, usdAmount - 1);
+              flowersToAward = Math.floor(netAmount * 1000);
+            }
+            
+            console.log('Parsed deposit info from notes:', depositInfo);
+          } catch (parseError) {
+            console.log('Could not parse notes, using default calculation');
+            // Fallback calculation
+            const netAmount = Math.max(0, usdAmount - 1);
+            flowersToAward = Math.floor(netAmount * 1000);
+          }
+        } else {
+          // No notes, use default calculation
+          const netAmount = Math.max(0, usdAmount - 1);
+          flowersToAward = Math.floor(netAmount * 1000);
+        }
         
         // Calculate tickets (1 ticket per $10 spent)
-        const ticketsToAward = Math.floor(usdAmount / 10);
+        ticketsToAward = Math.floor(usdAmount / 10);
         
         console.log('Before approval - flowers:', gameState.flowers, 'tickets:', gameState.tickets);
+        console.log('USD Amount:', usdAmount);
         console.log('Awarding:', flowersToAward, 'flowers and', ticketsToAward, 'tickets');
         
         // Award flowers and tickets
