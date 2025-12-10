@@ -60,7 +60,7 @@ export default function WalletScreen() {
   const calculateFlowersEarned = (usdValue: number): number => {
     const FEE = 1;
     const netValue = Math.max(0, usdValue - FEE);
-    return Math.floor(netValue * 8000);
+    return Math.floor(netValue * 1000);
   };
 
   const handleExchange = () => {
