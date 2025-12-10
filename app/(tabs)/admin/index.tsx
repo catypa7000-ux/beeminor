@@ -445,15 +445,10 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
     const amount = parseInt(flowersInput);
     if (!isNaN(amount) && amount > 0) {
       try {
-        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiBaseUrl}/api/game/${selectedUserId}/admin/add-resources`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ flowers: amount })
-        });
-        const data = await response.json();
+        const { gameAPI } = await import('../../../lib/api');
+        const response = await gameAPI.addResources(selectedUserId, { flowers: amount });
         
-        if (data.success) {
+        if (response.success) {
           setFlowersInput('');
           if (Platform.OS === 'web') {
             alert(`${amount} fleurs ajoutées à l'utilisateur ${selectedUser?.email}!`);
@@ -481,15 +476,10 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
     const amount = parseInt(removeFlowersInput);
     if (!isNaN(amount) && amount > 0) {
       try {
-        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiBaseUrl}/api/game/${selectedUserId}/admin/add-resources`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ flowers: -amount })
-        });
-        const data = await response.json();
+        const { gameAPI } = await import('../../../lib/api');
+        const response = await gameAPI.addResources(selectedUserId, { flowers: -amount });
         
-        if (data.success) {
+        if (response.success) {
           setRemoveFlowersInput('');
           if (Platform.OS === 'web') {
             alert(`${amount} fleurs retirées à l'utilisateur ${selectedUser?.email}!`);
@@ -517,15 +507,10 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
     const amount = parseInt(ticketsInput);
     if (!isNaN(amount) && amount > 0) {
       try {
-        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiBaseUrl}/api/game/${selectedUserId}/admin/add-resources`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tickets: amount })
-        });
-        const data = await response.json();
+        const { gameAPI } = await import('../../../lib/api');
+        const response = await gameAPI.addResources(selectedUserId, { tickets: amount });
         
-        if (data.success) {
+        if (response.success) {
           setTicketsInput('');
           if (Platform.OS === 'web') {
             alert(`${amount} tickets roulette ajoutés à l'utilisateur ${selectedUser?.email}!`);

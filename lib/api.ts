@@ -443,6 +443,29 @@ export const gameAPI = {
       body: JSON.stringify({ hasPending }),
     });
   },
+
+  addResources: async (userId: string, resources: {
+    flowers?: number;
+    tickets?: number;
+    diamonds?: number;
+    honey?: number;
+    bvrCoins?: number;
+  }) => {
+    return apiRequest<{
+      success: boolean;
+      message: string;
+      gameState: {
+        flowers: number;
+        tickets: number;
+        diamonds: number;
+        honey: number;
+        bvrCoins: number;
+      };
+    }>(`/api/game/${userId}/admin/add-resources`, {
+      method: 'POST',
+      body: JSON.stringify(resources),
+    });
+  },
 };
 
 // Leaderboard API
