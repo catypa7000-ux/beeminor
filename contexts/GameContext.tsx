@@ -133,11 +133,11 @@ export type Transaction = {
 
 export const ALVEOLE_LEVELS: Omit<AlveoleLevel, 'unlocked'>[] = [
   { level: 1, capacity: 1000000, cost: 0 },
-  { level: 2, capacity: 3000000, cost: 200000 },
-  { level: 3, capacity: 6000000, cost: 500000 },
-  { level: 4, capacity: 14000000, cost: 1250000 },
-  { level: 5, capacity: 30000000, cost: 3500000 },
-  { level: 6, capacity: 48000000, cost: 8000000 },
+  { level: 2, capacity: 3000000, cost: 20000 },
+  { level: 3, capacity: 6000000, cost: 50000 },
+  { level: 4, capacity: 14000000, cost: 125000 },
+  { level: 5, capacity: 30000000, cost: 350000 },
+  { level: 6, capacity: 48000000, cost: 800000 },
 ];
 
 type GameState = {
