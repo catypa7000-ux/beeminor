@@ -173,7 +173,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const [yearStartDate, setYearStartDate] = useState<string>(new Date().getFullYear().toString());
   const [allUsersLeaderboard, setAllUsersLeaderboard] = useState<LeaderboardUser[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadUserId();

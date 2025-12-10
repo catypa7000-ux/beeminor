@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame, ALVEOLE_LEVELS } from '../../../contexts/GameContext';
@@ -51,7 +51,7 @@ export default function AlveoleScreen() {
         if (success) {
           window.alert(`${t.sold}\n\n${t.transactionSuccess}`);
         } else {
-          window.alert(`${t.error}\n\n${t.transactionFailed || 'Transaction failed'}`);
+          window.alert(`${t.error}\n\n${t.transactionFailed}`);
         }
       });
     }

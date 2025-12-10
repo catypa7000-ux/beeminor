@@ -1,7 +1,7 @@
 import { BEE_TYPES, useGame } from '../../../contexts/GameContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -23,7 +23,7 @@ export default function ShopScreen() {
     }
   };
 
-  const handleBuyFlowers = (amount: number, price: number) => {
+  const handleBuyFlowers = async (amount: number, price: number) => {
     if (!hasPendingFunds) {
       const confirmed = window.confirm('Vous devez d\'abord envoyer les fonds nécessaires. Voulez-vous accéder à la page Wallet pour envoyer des fonds ?');
       if (confirmed) {
@@ -31,7 +31,7 @@ export default function ShopScreen() {
       }
       return;
     }
-    const success = buyFlowers(amount, price);
+    const success = await buyFlowers(amount, price);
     if (success) {
       console.log(`Purchased ${amount} flowers for ${price}$ and received tickets`);
       window.alert(`Succès: ${amount} fleurs achetées avec succès!`);

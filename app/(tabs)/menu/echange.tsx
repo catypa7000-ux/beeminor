@@ -47,7 +47,7 @@ export default function EchangeScreen() {
       if (confirmed) {
         const result = await exchangeResource('DIAMONDS_TO_FLOWERS', amount);
         if (result.success) {
-          window.alert(`Succès: Vous avez reçu ${result.flowersReceived.toLocaleString()} fleurs!`);
+          window.alert(`Succès: Vous avez reçu ${(result.flowersReceived || 0).toLocaleString()} fleurs!`);
           setExchangeAmount('');
         } else {
           window.alert(`Erreur: ${result.message}`);
@@ -72,7 +72,7 @@ export default function EchangeScreen() {
       if (confirmed) {
         const result = await exchangeResource('BVR_TO_FLOWERS', amount);
         if (result.success) {
-          window.alert(`Succès: Vous avez reçu ${result.flowersReceived.toLocaleString()} fleurs!`);
+          window.alert(`Succès: Vous avez reçu ${(result.flowersReceived || 0).toLocaleString()} fleurs!`);
           setExchangeAmount('');
         } else {
           window.alert(`Erreur: ${result.message}`);

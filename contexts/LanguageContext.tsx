@@ -128,6 +128,7 @@ export type Translations = {
   needMinHoney: string;
   sold: string;
   transactionSuccess: string;
+  transactionFailed: string;
   cryptoWithdrawPage: string;
   ticketsAvailable: string;
   spinning: string;
@@ -213,6 +214,7 @@ export type Translations = {
   passwordResetSuccess: string;
   canNowLogin: string;
   winChances: string;
+  claimFailed: string;
 };
 
 const translations: Record<Language, Translations> = {
@@ -340,6 +342,7 @@ const translations: Record<Language, Translations> = {
     needMinHoney: 'Vous avez besoin d\'au moins 300 miel pour vendre.',
     sold: 'Vendu!',
     transactionSuccess: 'Transaction réussie!',
+    transactionFailed: 'Transaction échouée',
     cryptoWithdrawPage: 'Retrait Crypto',
     ticketsAvailable: 'Tickets disponibles',
     spinning: 'En rotation...',
@@ -425,6 +428,7 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess: 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.',
     canNowLogin: 'Vous pouvez maintenant vous connecter',
     winChances: 'Chances de gagner',
+    claimFailed: 'Échec de la réclamation',
   },
   en: {
     home: 'Home',
@@ -550,6 +554,7 @@ const translations: Record<Language, Translations> = {
     needMinHoney: 'You need at least 300 honey to sell.',
     sold: 'Sold!',
     transactionSuccess: 'Transaction successful!',
+    transactionFailed: 'Transaction failed',
     cryptoWithdrawPage: 'Crypto Withdraw',
     ticketsAvailable: 'Available tickets',
     spinning: 'Spinning...',
@@ -635,6 +640,7 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess: 'Your password has been reset successfully. You can now log in.',
     canNowLogin: 'You can now log in',
     winChances: 'Win Chances',
+    claimFailed: 'Claim failed',
   },
   es: {
     home: 'Inicio',
@@ -760,6 +766,7 @@ const translations: Record<Language, Translations> = {
     needMinHoney: 'Necesitas al menos 300 miel para vender.',
     sold: '¡Vendido!',
     transactionSuccess: '¡Transacción exitosa!',
+    transactionFailed: 'Transacción fallida',
     cryptoWithdrawPage: 'Retiro Cripto',
     ticketsAvailable: 'Tickets disponibles',
     spinning: 'Girando...',
@@ -845,6 +852,7 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess: 'Tu contraseña ha sido restablecida con éxito. Ahora puedes iniciar sesión.',
     canNowLogin: 'Ahora puedes iniciar sesión',
     winChances: 'Probabilidades de ganar',
+    claimFailed: 'Fallo al reclamar',
   },
   de: {
     home: 'Startseite',
@@ -970,6 +978,7 @@ const translations: Record<Language, Translations> = {
     needMinHoney: 'Sie benötigen mindestens 300 Honig zum Verkaufen.',
     sold: 'Verkauft!',
     transactionSuccess: 'Transaktion erfolgreich!',
+    transactionFailed: 'Transaktion fehlgeschlagen',
     cryptoWithdrawPage: 'Krypto-Auszahlung',
     ticketsAvailable: 'Verfügbare Tickets',
     spinning: 'Dreht sich...',
@@ -1055,6 +1064,7 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess: 'Ihr Passwort wurde erfolgreich zurückgesetzt. Sie können sich jetzt anmelden.',
     canNowLogin: 'Sie können sich jetzt anmelden',
     winChances: 'Gewinnchancen',
+    claimFailed: 'Anspruch fehlgeschlagen',
   },
   it: {
     home: 'Home',
@@ -1180,6 +1190,7 @@ const translations: Record<Language, Translations> = {
     needMinHoney: 'Hai bisogno di almeno 300 miele per vendere.',
     sold: 'Venduto!',
     transactionSuccess: 'Transazione riuscita!',
+    transactionFailed: 'Transazione fallita',
     cryptoWithdrawPage: 'Prelievo Crypto',
     ticketsAvailable: 'Ticket disponibili',
     spinning: 'Girando...',
@@ -1265,6 +1276,7 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess: 'La tua password è stata reimpostata con successo. Ora puoi accedere.',
     canNowLogin: 'Ora puoi accedere',
     winChances: 'Probabilità di vincita',
+    claimFailed: 'Richiesta fallita',
   },
   pt: {
     home: 'Início',
@@ -1390,6 +1402,7 @@ const translations: Record<Language, Translations> = {
     needMinHoney: 'Você precisa de pelo menos 300 mel para vender.',
     sold: 'Vendido!',
     transactionSuccess: 'Transação bem-sucedida!',
+    transactionFailed: 'Transação falhou',
     cryptoWithdrawPage: 'Saque Crypto',
     ticketsAvailable: 'Tickets disponíveis',
     spinning: 'Girando...',
@@ -1475,6 +1488,7 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess: 'Sua senha foi redefinida com sucesso. Você pode fazer login agora.',
     canNowLogin: 'Você pode fazer login agora',
     winChances: 'Chances de ganhar',
+    claimFailed: 'Falha ao reivindicar',
   },
   ru: {
     home: 'Главная',
@@ -1600,6 +1614,7 @@ const translations: Record<Language, Translations> = {
     needMinHoney: 'Вам нужно минимум 300 мёда для продажи.',
     sold: 'Продано!',
     transactionSuccess: 'Транзакция успешна!',
+    transactionFailed: 'Транзакция не удалась',
     cryptoWithdrawPage: 'Вывод Крипты',
     ticketsAvailable: 'Доступные тикеты',
     spinning: 'Вращается...',
@@ -1685,6 +1700,7 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess: 'Ваш пароль был успешно сброшен. Теперь вы можете войти.',
     canNowLogin: 'Теперь вы можете войти',
     winChances: 'Шансы на выигрыш',
+    claimFailed: 'Не удалось получить',
   },
   ar: {
     home: 'الرئيسية',
@@ -1810,6 +1826,7 @@ const translations: Record<Language, Translations> = {
     needMinHoney: 'تحتاج إلى ما لا يقل عن 300 عسل للبيع.',
     sold: 'تم البيع!',
     transactionSuccess: 'نجحت العملية!',
+    transactionFailed: 'فشلت العملية',
     cryptoWithdrawPage: 'سحب العملات المشفرة',
     ticketsAvailable: 'التذاكر المتاحة',
     spinning: 'جارٍ الدوران...',
@@ -1895,6 +1912,7 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess: 'تمت إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.',
     canNowLogin: 'يمكنك الآن تسجيل الدخول',
     winChances: 'فرص الفوز',
+    claimFailed: 'فشل الاستحقاق',
   },
   id: {
     home: 'Beranda',
@@ -2020,6 +2038,7 @@ const translations: Record<Language, Translations> = {
     needMinHoney: 'Anda membutuhkan setidaknya 300 madu untuk dijual.',
     sold: 'Terjual!',
     transactionSuccess: 'Transaksi berhasil!',
+    transactionFailed: 'Transaksi gagal',
     cryptoWithdrawPage: 'Tarik Crypto',
     ticketsAvailable: 'Tiket tersedia',
     spinning: 'Berputar...',
@@ -2105,6 +2124,7 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess: 'Kata sandi Anda telah berhasil diatur ulang. Anda sekarang dapat masuk.',
     canNowLogin: 'Anda sekarang dapat masuk',
     winChances: 'Peluang Menang',
+    claimFailed: 'Klaim gagal',
   },
 };
 

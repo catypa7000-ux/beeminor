@@ -1,7 +1,7 @@
 import { useGame } from '../../../contexts/GameContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Share, Clipboard, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, Clipboard, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Users, Gift, Ticket, Copy, DollarSign, TrendingUp, Award } from 'lucide-react-native';
@@ -87,7 +87,7 @@ export default function TachesScreen() {
       }
       window.alert(`${t.rewardClaimed}\n\n${message}`);
     } else {
-      window.alert(`${t.error}\n\n${t.claimFailed || 'Failed to claim mission'}`);
+      window.alert(`${t.error}\n\n${t.claimFailed}`);
     }
   };
 
