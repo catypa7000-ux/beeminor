@@ -74,12 +74,12 @@ export default function ShopScreen() {
 
         <Text style={styles.sectionTitle}>{t.buyFlowers}</Text>
 
-        <TouchableOpacity style={styles.buyFlowersCard} onPress={() => handleBuyFlowers(50000, 6)}>
+        <TouchableOpacity style={styles.buyFlowersCard} onPress={() => handleBuyFlowers(6000, 6)}>
           <View style={styles.buyFlowersContent}>
             <Text style={styles.buyFlowersEmoji}>🌸</Text>
             <View style={styles.buyFlowersInfo}>
               <Text style={styles.buyFlowersTitle}>{t.smallPack}</Text>
-              <Text style={styles.buyFlowersDescription}>50 000 {t.flowers.toLowerCase()}</Text>
+              <Text style={styles.buyFlowersDescription}>6 000 {t.flowers.toLowerCase()}</Text>
             </View>
           </View>
           <View style={styles.buyFlowersPrice}>
@@ -87,12 +87,12 @@ export default function ShopScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.buyFlowersCard} onPress={() => handleBuyFlowers(100000, 10)}>
+        <TouchableOpacity style={styles.buyFlowersCard} onPress={() => handleBuyFlowers(10000, 10)}>
           <View style={styles.buyFlowersContent}>
             <Text style={styles.buyFlowersEmoji}>🌸</Text>
             <View style={styles.buyFlowersInfo}>
               <Text style={styles.buyFlowersTitle}>{t.mediumPack}</Text>
-              <Text style={styles.buyFlowersDescription}>100 000 {t.flowers.toLowerCase()}</Text>
+              <Text style={styles.buyFlowersDescription}>10 000 {t.flowers.toLowerCase()}</Text>
             </View>
           </View>
           <View style={styles.buyFlowersPrice}>
@@ -100,12 +100,12 @@ export default function ShopScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.buyFlowersCard} onPress={() => handleBuyFlowers(500000, 50)}>
+        <TouchableOpacity style={styles.buyFlowersCard} onPress={() => handleBuyFlowers(50000, 50)}>
           <View style={styles.buyFlowersContent}>
             <Text style={styles.buyFlowersEmoji}>🌸</Text>
             <View style={styles.buyFlowersInfo}>
               <Text style={styles.buyFlowersTitle}>{t.largePack}</Text>
-              <Text style={styles.buyFlowersDescription}>500 000 {t.flowers.toLowerCase()}</Text>
+              <Text style={styles.buyFlowersDescription}>50 000 {t.flowers.toLowerCase()}</Text>
             </View>
           </View>
           <View style={styles.buyFlowersPrice}>
@@ -113,12 +113,12 @@ export default function ShopScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.buyFlowersCard} onPress={() => handleBuyFlowers(1000000, 100)}>
+        <TouchableOpacity style={styles.buyFlowersCard} onPress={() => handleBuyFlowers(100000, 100)}>
           <View style={styles.buyFlowersContent}>
             <Text style={styles.buyFlowersEmoji}>🌸</Text>
             <View style={styles.buyFlowersInfo}>
               <Text style={styles.buyFlowersTitle}>{t.giantPack}</Text>
-              <Text style={styles.buyFlowersDescription}>1 000 000 {t.flowers.toLowerCase()}</Text>
+              <Text style={styles.buyFlowersDescription}>100 000 {t.flowers.toLowerCase()}</Text>
             </View>
           </View>
           <View style={styles.buyFlowersPrice}>

@@ -19,7 +19,7 @@ const NETWORKS: NetworkOption[] = [
   { id: 'BNB', name: 'Binance Smart Chain', color: '#F3BA2F', minWithdraw: 20000 },
 ];
 
-const DIAMOND_TO_USD = 1 / 10000;
+const DIAMOND_TO_USD = 0.1 / 1000;
 
 export default function RetraitScreen() {
   const game = useGame();
@@ -308,7 +308,7 @@ export default function RetraitScreen() {
           </View>
           <Text style={styles.inputHint}>
             {withdrawType === 'diamonds' 
-              ? '10000 diamants = 1$ • Min: 20000 diamants (2$)'
+              ? '10000 diamants = 1$ (1000 fleurs) • Min: 20000 diamants (2$)'
               : 'Retrait BVR sur Solana uniquement'}
           </Text>
         </View>

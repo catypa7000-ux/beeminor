@@ -13,7 +13,7 @@ export default function EchangeScreen() {
 
   const calculateReceived = (type: ExchangeType, amount: number): number => {
     if (type === 'DIAMONDS_TO_FLOWERS') {
-      return amount * 1.1;
+      return (amount / 10) * 1.1;
     } else if (type === 'BVR_TO_FLOWERS') {
       return amount / 100;
     }
@@ -126,7 +126,7 @@ export default function EchangeScreen() {
               )}
             </View>
             <Text style={styles.exchangeName}>Diamants vers Fleurs</Text>
-            <Text style={styles.exchangeRate}>1 diamant = 1.1 fleurs (bonus +10%)</Text>
+            <Text style={styles.exchangeRate}>10 diamants = 1.1 fleurs (bonus +10%)</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -205,7 +205,7 @@ export default function EchangeScreen() {
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>ℹ️ Informations</Text>
           <Text style={styles.infoText}>
-            • Diamants → Fleurs: 1 diamant = 1.1 fleurs (bonus +10%){'\n'}
+            • Diamants → Fleurs: 10 diamants = 1.1 fleurs (bonus +10%){'\n'}
             • BVR → Fleurs: 100 BVR = 1 fleur{'\n'}
             • L&apos;échange est instantané{'\n'}
             • Aucuns frais
