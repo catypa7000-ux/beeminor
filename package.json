@@ -11,6 +11,7 @@
     "backend:start": "cd backend && npm start",
     "backend": "npm run backend:dev",
     "backend:install": "cd backend && npm install",
+    "vercel-build": "npm run build:web",
     "lint": "expo lint"
   },
   "dependencies": {
