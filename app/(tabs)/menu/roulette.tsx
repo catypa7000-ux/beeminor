@@ -30,22 +30,22 @@ type Prize = {
 };
 
 const PRIZES: Prize[] = [
-  { id: '1', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, color: '#E6F3FF', weight: 22, rarity: 'common' },
-  { id: '2', label: '1000', type: 'flowers', flowersAmount: 1000, color: '#FFF5E6', weight: 22, rarity: 'common' },
-  { id: '3', label: 'Abeille', type: 'bee', beeType: 'worker', beeCount: 1, color: '#FFD9A0', weight: 15, rarity: 'uncommon' },
-  { id: '4', label: '3000', type: 'flowers', flowersAmount: 3000, color: '#FFEFD5', weight: 15, rarity: 'uncommon' },
-  { id: '5', label: 'Virtual 2', type: 'bee', beeType: 'virtual2', beeCount: 1, color: '#D9ECFF', weight: 15, rarity: 'uncommon' },
-  { id: '6', label: 'Elite', type: 'bee', beeType: 'elite', beeCount: 1, color: '#FFDAB9', weight: 8, rarity: 'rare' },
-  { id: '7', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, color: '#E6F3FF', weight: 22, rarity: 'common' },
-  { id: '8', label: '1000', type: 'flowers', flowersAmount: 1000, color: '#FFF5E6', weight: 22, rarity: 'common' },
-  { id: '9', label: 'Virtual 3', type: 'bee', beeType: 'virtual3', beeCount: 1, color: '#BDDEFF', weight: 10, rarity: 'rare' },
-  { id: '10', label: '5000', type: 'flowers', flowersAmount: 5000, color: '#FFF8DC', weight: 10, rarity: 'rare' },
-  { id: '11', label: 'Abeille', type: 'bee', beeType: 'worker', beeCount: 1, color: '#FFD9A0', weight: 15, rarity: 'uncommon' },
-  { id: '12', label: 'Royal', type: 'bee', beeType: 'royal', beeCount: 1, color: '#FFE4B5', weight: 5, rarity: 'epic' },
-  { id: '13', label: 'Virtual 2', type: 'bee', beeType: 'virtual2', beeCount: 1, color: '#D9ECFF', weight: 15, rarity: 'uncommon' },
-  { id: '14', label: '10000', type: 'flowers', flowersAmount: 10000, color: '#FFEFD5', weight: 3, rarity: 'epic' },
-  { id: '15', label: 'Elite', type: 'bee', beeType: 'elite', beeCount: 1, color: '#FFDAB9', weight: 8, rarity: 'rare' },
-  { id: '16', label: 'Reine', type: 'bee', beeType: 'queen', beeCount: 1, color: '#FFD700', weight: 1, rarity: 'legendary' },
+  { id: '1', label: '100', type: 'flowers', flowersAmount: 100, color: '#FFF5E6', weight: 70, rarity: 'common' },
+  { id: '2', label: '300', type: 'flowers', flowersAmount: 300, color: '#FFEFD5', weight: 30, rarity: 'common' },
+  { id: '3', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, color: '#E6F3FF', weight: 12, rarity: 'uncommon' },
+  { id: '4', label: '500', type: 'flowers', flowersAmount: 500, color: '#FFF8DC', weight: 12, rarity: 'uncommon' },
+  { id: '5', label: 'Virtual 2', type: 'bee', beeType: 'virtual2', beeCount: 1, color: '#D9ECFF', weight: 6, rarity: 'rare' },
+  { id: '6', label: '100', type: 'flowers', flowersAmount: 100, color: '#FFF5E6', weight: 70, rarity: 'common' },
+  { id: '7', label: '1000', type: 'flowers', flowersAmount: 1000, color: '#FFE4B5', weight: 3, rarity: 'epic' },
+  { id: '8', label: '300', type: 'flowers', flowersAmount: 300, color: '#FFEFD5', weight: 30, rarity: 'common' },
+  { id: '9', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, color: '#E6F3FF', weight: 12, rarity: 'uncommon' },
+  { id: '10', label: '500', type: 'flowers', flowersAmount: 500, color: '#FFF8DC', weight: 12, rarity: 'uncommon' },
+  { id: '11', label: 'Virtual 3', type: 'bee', beeType: 'virtual3', beeCount: 1, color: '#BDDEFF', weight: 3, rarity: 'legendary' },
+  { id: '12', label: '100', type: 'flowers', flowersAmount: 100, color: '#FFF5E6', weight: 70, rarity: 'common' },
+  { id: '13', label: 'Virtual 2', type: 'bee', beeType: 'virtual2', beeCount: 1, color: '#D9ECFF', weight: 6, rarity: 'rare' },
+  { id: '14', label: '300', type: 'flowers', flowersAmount: 300, color: '#FFEFD5', weight: 30, rarity: 'common' },
+  { id: '15', label: '500', type: 'flowers', flowersAmount: 500, color: '#FFF8DC', weight: 12, rarity: 'uncommon' },
+  { id: '16', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, color: '#E6F3FF', weight: 12, rarity: 'uncommon' },
 ];
 
 export default function RouletteScreen() {
