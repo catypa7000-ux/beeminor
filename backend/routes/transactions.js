@@ -218,71 +218,122 @@ router.put('/:id/status', async (req, res) => {
       });
     }
 
-    // Track refund details for email notification
-    let refundedAmount = 0;
-    let refundedCurrency = '';
+    // Note: refund tracking could be used for future email notifications
 
     // If deposit is being approved, award flowers and tickets
     if (transaction.type === 'deposit_crypto' && 
         transaction.status === 'pending' && 
         status === 'completed') {
       console.log('=== DEPOSIT APPROVAL DEBUG ===');
+      console.log('Transaction ID:', transaction._id);
       console.log('Transaction type:', transaction.type);
+      console.log('Transaction userId:', transaction.userId);
       console.log('Transaction amount:', transaction.amount);
       console.log('Transaction notes:', transaction.notes);
       
-      const gameState = await GameState.findOne({ userId: transaction.userId });
-      if (gameState) {
-        let flowersToAward = 0;
-        let ticketsToAward = 0;
-        let usdAmount = transaction.amount || 0;
+      let gameState = await GameState.findOne({ userId: transaction.userId });
+      
+      // Create game state if it doesn't exist (e.g., new user depositing before playing)
+      if (!gameState) {
+        console.log('⚠️  GameState not found for userId:', transaction.userId);
+        console.log('✓ Creating new GameState for user...');
         
-        // Try to parse notes for detailed deposit information
-        if (transaction.notes) {
-          try {
-            const depositInfo = JSON.parse(transaction.notes);
-            usdAmount = depositInfo.usdAmount || transaction.amount || 0;
-            
-            // Use pre-calculated flowers amount if available
-            if (depositInfo.flowersAmount) {
-              flowersToAward = depositInfo.flowersAmount;
-            } else {
-              // Fallback calculation: 1000 flowers per $1 USD, minus $1 fee
-              const netAmount = Math.max(0, usdAmount - 1);
-              flowersToAward = Math.floor(netAmount * 1000);
-            }
-            
-            console.log('Parsed deposit info from notes:', depositInfo);
-          } catch (parseError) {
-            console.log('Could not parse notes, using default calculation');
-            // Fallback calculation
+        gameState = new GameState({
+          userId: transaction.userId,
+          honey: 100,
+          flowers: 0,
+          diamonds: 0,
+          tickets: 0,
+          bvrCoins: 0,
+          bees: new Map(),
+          alveoles: new Map([[1, true]]),
+          invitedFriends: 0,
+          claimedMissions: [],
+          referrals: [],
+          totalReferralEarnings: 0,
+          hasPendingFunds: false,
+          transactions: [],
+          diamondsThisYear: 0,
+          yearStartDate: new Date().getFullYear().toString()
+        });
+        
+        try {
+          await gameState.save();
+          console.log('✅ New GameState created successfully!');
+        } catch (createError) {
+          console.error('❌ ERROR creating GameState:', createError);
+          return res.status(500).json({
+            success: false,
+            message: 'Failed to create game state for user',
+            error: createError.message
+          });
+        }
+      }
+      
+      console.log('✓ GameState found for user:', transaction.userId);
+      
+      let flowersToAward = 0;
+      let ticketsToAward = 0;
+      let usdAmount = transaction.amount || 0;
+      
+      // Try to parse notes for detailed deposit information
+      if (transaction.notes) {
+        try {
+          const depositInfo = JSON.parse(transaction.notes);
+          usdAmount = depositInfo.usdAmount || transaction.amount || 0;
+          
+          // Use pre-calculated flowers amount if available
+          if (depositInfo.flowersAmount) {
+            flowersToAward = depositInfo.flowersAmount;
+          } else {
+            // Fallback calculation: 1000 flowers per $1 USD, minus $1 fee
             const netAmount = Math.max(0, usdAmount - 1);
             flowersToAward = Math.floor(netAmount * 1000);
           }
-        } else {
-          // No notes, use default calculation
+          
+          console.log('✓ Parsed deposit info from notes:', depositInfo);
+        } catch (_parseError) {
+          console.log('⚠️  Could not parse notes, using default calculation');
+          // Fallback calculation
           const netAmount = Math.max(0, usdAmount - 1);
           flowersToAward = Math.floor(netAmount * 1000);
         }
-        
-        // Calculate tickets (1 ticket per $10 spent)
-        ticketsToAward = Math.floor(usdAmount / 10);
-        
-        console.log('Before approval - flowers:', gameState.flowers, 'tickets:', gameState.tickets);
-        console.log('USD Amount:', usdAmount);
-        console.log('Awarding:', flowersToAward, 'flowers and', ticketsToAward, 'tickets');
-        
-        // Award flowers and tickets
-        gameState.flowers += flowersToAward;
-        if (ticketsToAward > 0) {
-          gameState.tickets += ticketsToAward;
-        }
-        
-        await gameState.save();
-        console.log('After approval - flowers:', gameState.flowers, 'tickets:', gameState.tickets);
-        console.log('=== DEPOSIT APPROVAL COMPLETE ===');
       } else {
-        console.log('ERROR: GameState not found for deposit approval');
+        console.log('⚠️  No notes found, using default calculation');
+        // No notes, use default calculation
+        const netAmount = Math.max(0, usdAmount - 1);
+        flowersToAward = Math.floor(netAmount * 1000);
+      }
+      
+      // Calculate tickets (1 ticket per $10 spent)
+      ticketsToAward = Math.floor(usdAmount / 10);
+      
+      console.log('📊 Before approval:');
+      console.log('   - Flowers:', gameState.flowers);
+      console.log('   - Tickets:', gameState.tickets);
+      console.log('📊 Processing:');
+      console.log('   - USD Amount:', usdAmount);
+      console.log('   - Flowers to award:', flowersToAward);
+      console.log('   - Tickets to award:', ticketsToAward);
+      
+      // Award flowers and tickets
+      gameState.flowers = (gameState.flowers || 0) + flowersToAward;
+      gameState.tickets = (gameState.tickets || 0) + ticketsToAward;
+      
+      try {
+        await gameState.save();
+        console.log('✅ GameState saved successfully!');
+        console.log('📊 After approval:');
+        console.log('   - Flowers:', gameState.flowers);
+        console.log('   - Tickets:', gameState.tickets);
+        console.log('=== DEPOSIT APPROVAL COMPLETE ===');
+      } catch (saveError) {
+        console.error('❌ ERROR saving GameState:', saveError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to save game state after awarding flowers',
+          error: saveError.message
+        });
       }
     }
 
@@ -302,13 +353,9 @@ router.put('/:id/status', async (req, res) => {
         // Refund based on currency type
         if (transaction.currency === 'BVR') {
           gameState.bvrCoins += transaction.amount;
-          refundedAmount = transaction.amount;
-          refundedCurrency = 'BVR';
           console.log('Refunding BVR:', transaction.amount);
         } else {
           gameState.flowers += transaction.amount;
-          refundedAmount = transaction.amount;
-          refundedCurrency = 'USD';
           console.log('Refunding flowers:', transaction.amount);
         }
         

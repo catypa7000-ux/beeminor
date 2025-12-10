@@ -222,6 +222,8 @@ input: 10 → +10 BVR (= 10 USD)
 - [x] Panel Admin: Attribution de tickets fonctionnelle
 - [x] Système de roulette fonctionnel
 - [x] **Attribution automatique de tickets lors des achats (1 ticket / 10$)**
+- [x] **FIX: Attribution fleurs et tickets lors de l'approbation des dépôts**
+- [x] **FIX: Création automatique du GameState si inexistant lors de l'approbation**
 
 ---
 
@@ -287,6 +289,51 @@ Pour toute question sur les valeurs du système:
 
 ---
 
+---
+
+## 🔧 Corrections Récentes (2025-12-10)
+
+### Problème Résolu: Transactions sans attribution de fleurs/tickets
+
+**Problème:** Les utilisateurs ne recevaient ni fleurs ni tickets lors de l'approbation des transactions par l'admin.
+
+**Causes identifiées:**
+1. Le GameState de l'utilisateur n'existait pas dans la base de données
+2. Aucune vérification n'était faite avant d'essayer d'attribuer les ressources
+3. Erreurs silencieuses lors de la sauvegarde
+
+**Solutions implémentées:**
+
+1. **Création automatique du GameState** (`backend/routes/transactions.js`)
+   - Lors de l'approbation d'un dépôt, si le GameState n'existe pas, il est créé automatiquement
+   - Valeurs par défaut: 100 miel, 0 fleurs, 1 alvéole débloquée
+
+2. **Logs détaillés** pour le debugging
+   - Logs avant/après l'attribution des ressources
+   - Identification claire du userId et des montants
+   - Messages d'erreur explicites avec émojis pour visibilité
+
+3. **Gestion d'erreur robuste**
+   - Retour d'erreur 404 si le GameState ne peut pas être créé
+   - Retour d'erreur 500 si la sauvegarde échoue
+   - Protection contre les valeurs null/undefined
+
+4. **Calcul correct des fleurs et tickets**
+   - Parse des notes JSON pour récupérer les montants précalculés
+   - Fallback sur calcul automatique si notes manquantes
+   - Formule: `fleurs = (usdAmount - 1) * 1000` (après taxe de 1$)
+   - Formule: `tickets = Math.floor(usdAmount / 10)` (1 ticket par 10$)
+
+**Test recommandé:**
+1. Créer un compte utilisateur
+2. Soumettre un dépôt crypto de 10$ via le Wallet
+3. Approuver la transaction dans le panel admin
+4. Vérifier que l'utilisateur reçoit:
+   - 9,000 fleurs (10$ - 1$ taxe = 9$ × 1000)
+   - 1 ticket (10$ / 10)
+
+---
+
 **Dernière mise à jour:** 2025-12-10
-**Version du système:** 1.0
+**Version du système:** 1.1
 **Taux de conversion:** 1 USD = 1000 Fleurs (FIXE)
