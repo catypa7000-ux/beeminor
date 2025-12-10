@@ -39,8 +39,8 @@ export default function AlveoleScreen() {
     }
 
     const diamondsEarned = Math.floor(amount / 100);
-    const flowersEarned = diamondsEarned;
-    const bvrEarned = diamondsEarned * 1;
+    const flowersEarned = Math.floor((amount / 100) * 0.10 * 100) / 100;
+    const bvrEarned = Math.floor((amount / 100) * 0.5 * 100) / 100;
 
     const confirmed = window.confirm(
       `${t.sellHoney} ${formatNumber(amount)} ${t.honey.toLowerCase()} (${percentage * 100}%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n🌸 ${flowersEarned} ${t.flowers.toLowerCase()}\n🐝 ${bvrEarned} BVR\n\nConfirmer?`
