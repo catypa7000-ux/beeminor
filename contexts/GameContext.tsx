@@ -968,6 +968,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     }
 
     // Fallback: local-only update (for offline or unauthenticated users)
+    // 100 miel = 1 diamant + 0.10 fleurs + 0.5 BVR
     const diamondsEarned = Math.floor(amount / 100);
     const flowersEarned = diamondsEarned * 0.10;
     const bvrEarned = diamondsEarned * 0.5;
