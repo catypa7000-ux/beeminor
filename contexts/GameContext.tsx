@@ -257,8 +257,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
         if (state.bees) {
           setBees(state.bees);
         }
-        if (state.virtualBees) {
-          setVirtualBees(state.virtualBees);
+        if ((state as any).virtualBees) {
+          setVirtualBees((state as any).virtualBees);
         }
         if (state.alveoles) {
           setAlveoles(state.alveoles);
@@ -356,8 +356,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
             if (state.bees) {
               setBees(state.bees);
             }
-            if (state.virtualBees) {
-              setVirtualBees(state.virtualBees);
+            if ((state as any).virtualBees) {
+              setVirtualBees((state as any).virtualBees);
             }
             if (state.alveoles) {
               setAlveoles(state.alveoles);
@@ -381,7 +381,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
               tickets: state.tickets ?? 0,
               bvrCoins: state.bvrCoins ?? 0,
               bees: state.bees || { baby: 0, worker: 0, elite: 0, royal: 0, queen: 0 },
-              virtualBees: state.virtualBees || { virtual1: 1, virtual2: 0, virtual3: 0 },
+              virtualBees: (state as any).virtualBees || { virtual1: 1, virtual2: 0, virtual3: 0 },
               alveoles: state.alveoles || { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false },
               invitedFriends: state.invitedFriends ?? 0,
               claimedMissions: state.claimedMissions ?? [],
