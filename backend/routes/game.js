@@ -204,7 +204,7 @@ router.post('/:userId/sell-honey', async (req, res) => {
     }
 
     // Minimum honey requirement
-    const MIN_HONEY = 300;
+    const MIN_HONEY = 100;
     if (amount < MIN_HONEY) {
       return res.status(400).json({
         success: false,
@@ -229,10 +229,10 @@ router.post('/:userId/sell-honey', async (req, res) => {
       });
     }
 
-    // Calculate rewards (300 honey = 1 diamond + 1 flower + 2 BVR)
-    const diamondsEarned = Math.floor(amount / 300);
+    // Calculate rewards (100 honey = 1 diamond + 1 flower + 1 BVR)
+    const diamondsEarned = Math.floor(amount / 100);
     const flowersEarned = diamondsEarned;
-    const bvrEarned = diamondsEarned * 2;
+    const bvrEarned = diamondsEarned;
 
     // Update game state
     gameState.honey -= amount;

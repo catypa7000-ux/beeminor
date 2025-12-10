@@ -882,7 +882,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const sellHoney = useCallback(async (amount: number) => {
     // Optimistic check - validate locally first
     if (honey < amount) return false;
-    if (amount < 300) return false;
+    if (amount < 100) return false;
 
     // If user is authenticated, use backend validation
     if (currentUserId) {
