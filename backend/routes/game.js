@@ -781,35 +781,61 @@ router.post('/:userId/process-referral', async (req, res) => {
       });
     }
 
-    // Check if buyer already has a referral entry (meaning bonus was already given)
+    // Check if buyer already has a referral entry
     const existingReferral = sponsorGameState.referrals.find(
       r => r.email === buyer.email
     );
 
-    if (existingReferral && existingReferral.earnings > 0) {
+    // Check if this is the first purchase (earnings > invitationBonus means already processed first purchase)
+    const invitationBonus = 100;
+    const isFirstPurchase = existingReferral && existingReferral.earnings === invitationBonus;
+
+    if (existingReferral && existingReferral.earnings > invitationBonus) {
+      // First purchase bonus already given, just give 5% ongoing bonus
+      const ongoingBonus = Math.floor(purchaseAmount * 0.05);
+      sponsorGameState.flowers += ongoingBonus;
+      sponsorGameState.totalReferralEarnings += ongoingBonus;
+      existingReferral.earnings += ongoingBonus;
+      sponsorGameState.lastUpdated = new Date();
+      await sponsorGameState.save();
+
       return res.json({
         success: true,
-        message: 'Referral bonus already awarded',
-        bonusAwarded: false
+        message: 'Ongoing referral bonus awarded (5%)',
+        bonusAwarded: true,
+        bonus: {
+          sponsor: sponsor.email,
+          amount: ongoingBonus,
+          type: 'flowers',
+          purchaseType: purchaseType,
+          isFirstPurchase: false
+        },
+        sponsorNewBalance: {
+          flowers: sponsorGameState.flowers,
+          totalReferralEarnings: sponsorGameState.totalReferralEarnings,
+          invitedFriends: sponsorGameState.invitedFriends
+        }
       });
     }
 
-    // Calculate bonus: 10% of purchase amount in flowers
-    const bonusAmount = Math.floor(purchaseAmount * 0.1);
+    // Calculate bonus: 5% of purchase amount + 1000 fleurs for first purchase
+    const affiliationBonus = Math.floor(purchaseAmount * 0.05);
+    const firstPurchaseBonus = isFirstPurchase ? 1000 : 0;
+    const totalBonus = affiliationBonus + firstPurchaseBonus;
 
     // Award bonus to sponsor
-    sponsorGameState.flowers += bonusAmount;
-    sponsorGameState.totalReferralEarnings += bonusAmount;
+    sponsorGameState.flowers += totalBonus;
+    sponsorGameState.totalReferralEarnings += totalBonus;
 
     // Update or create referral entry
     if (existingReferral) {
-      existingReferral.earnings = bonusAmount;
+      existingReferral.earnings += totalBonus;
     } else {
       sponsorGameState.referrals.push({
         email: buyer.email,
         referralCode: buyer.referralCode,
         joinedAt: buyer.createdAt,
-        earnings: bonusAmount
+        earnings: totalBonus
       });
       sponsorGameState.invitedFriends += 1;
     }
@@ -819,13 +845,16 @@ router.post('/:userId/process-referral', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Referral bonus awarded',
+      message: isFirstPurchase ? 'Referral bonus awarded (5% + 1000 first purchase)' : 'Referral bonus awarded (5%)',
       bonusAwarded: true,
       bonus: {
         sponsor: sponsor.email,
-        amount: bonusAmount,
+        amount: totalBonus,
+        affiliationBonus: affiliationBonus,
+        firstPurchaseBonus: firstPurchaseBonus,
         type: 'flowers',
-        purchaseType: purchaseType
+        purchaseType: purchaseType,
+        isFirstPurchase: isFirstPurchase
       },
       sponsorNewBalance: {
         flowers: sponsorGameState.flowers,
@@ -894,14 +923,17 @@ router.post('/:userId/link-referral', async (req, res) => {
       });
     }
 
-    // Add referral entry (without earnings yet)
+    // Add referral entry and award 100 flowers for invitation
+    const invitationBonus = 100;
     sponsorGameState.referrals.push({
       email: user.email,
       referralCode: user.referralCode,
       joinedAt: user.createdAt,
-      earnings: 0
+      earnings: invitationBonus
     });
     sponsorGameState.invitedFriends += 1;
+    sponsorGameState.flowers += invitationBonus;
+    sponsorGameState.totalReferralEarnings += invitationBonus;
     sponsorGameState.lastUpdated = new Date();
     await sponsorGameState.save();
 

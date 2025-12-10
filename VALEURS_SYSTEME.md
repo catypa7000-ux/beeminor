@@ -157,10 +157,26 @@ Les gains sont en **Fleurs** et suivent le taux:
 ## 🎁 Système de Récompenses
 
 ### Parrainage
+
+#### Bonus d'invitation
 ```
-Parrain: +500 Fleurs (= 0.50 USD)
-Filleul: +500 Fleurs (= 0.50 USD)
+Bonus immédiat lors de l'inscription d'un ami: +100 Fleurs (= 0.10 USD)
 ```
+
+#### Bonus d'affiliation (sur achats de l'ami)
+```
+Commission sur achats: 5% du montant dépensé par l'ami
+```
+
+#### Bonus premier achat
+```
+Bonus unique au premier achat de l'ami: +1000 Fleurs (= 1.00 USD)
+```
+
+**Exemple complet:**
+- Ami s'inscrit → +100 fleurs
+- Ami fait un achat de 10,000 fleurs → +500 fleurs (5%) + 1000 fleurs (bonus premier achat) = +1500 fleurs
+- Ami fait un autre achat de 5,000 fleurs → +250 fleurs (5%)
 
 ### Récompenses Journalières
 ```

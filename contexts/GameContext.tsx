@@ -989,8 +989,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
   const inviteFriend = useCallback(() => {
     setInvitedFriends((current) => current + 1);
-    setFlowers((current) => current + 200);
-    setTotalReferralEarnings((current) => current + 200);
+    setFlowers((current) => current + 100);
+    setTotalReferralEarnings((current) => current + 100);
 
     const newReferral: Referral = {
       id: `ref_${Date.now()}`,
@@ -998,7 +998,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       joinDate: new Date().toLocaleDateString('fr-FR'),
       totalDeposits: 0,
       firstDepositBonus: 0,
-      lifetimeEarnings: 200,
+      lifetimeEarnings: 100,
       hasFirstPurchase: false,
     };
     setReferrals((current) => [newReferral, ...current]);
