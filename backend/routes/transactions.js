@@ -222,6 +222,41 @@ router.put('/:id/status', async (req, res) => {
     let refundedAmount = 0;
     let refundedCurrency = '';
 
+    // If deposit is being approved, award flowers and tickets
+    if (transaction.type === 'deposit_crypto' && 
+        transaction.status === 'pending' && 
+        status === 'completed') {
+      console.log('=== DEPOSIT APPROVAL DEBUG ===');
+      console.log('Transaction type:', transaction.type);
+      console.log('Transaction amount:', transaction.amount);
+      
+      const gameState = await GameState.findOne({ userId: transaction.userId });
+      if (gameState) {
+        // Calculate flowers to award (1000 flowers per $1 USD, minus $1 fee)
+        const usdAmount = transaction.amount || 0;
+        const netAmount = Math.max(0, usdAmount - 1); // Subtract $1 fee
+        const flowersToAward = Math.floor(netAmount * 1000);
+        
+        // Calculate tickets (1 ticket per $10 spent)
+        const ticketsToAward = Math.floor(usdAmount / 10);
+        
+        console.log('Before approval - flowers:', gameState.flowers, 'tickets:', gameState.tickets);
+        console.log('Awarding:', flowersToAward, 'flowers and', ticketsToAward, 'tickets');
+        
+        // Award flowers and tickets
+        gameState.flowers += flowersToAward;
+        if (ticketsToAward > 0) {
+          gameState.tickets += ticketsToAward;
+        }
+        
+        await gameState.save();
+        console.log('After approval - flowers:', gameState.flowers, 'tickets:', gameState.tickets);
+        console.log('=== DEPOSIT APPROVAL COMPLETE ===');
+      } else {
+        console.log('ERROR: GameState not found for deposit approval');
+      }
+    }
+
     // If withdrawal is being cancelled/failed, refund the resources
     if ((transaction.type === 'withdrawal' || transaction.type === 'withdrawal_diamond' || transaction.type === 'withdrawal_bvr') && 
         transaction.status === 'pending' && 

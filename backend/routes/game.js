@@ -944,6 +944,7 @@ router.post('/:userId/purchase-flowers', async (req, res) => {
 
     // Award tickets (1 ticket per $10 spent)
     const ticketsEarned = Math.floor(priceUSD / 10);
+    console.log(`💳 Purchase: ${priceUSD} → ${amount} flowers + ${ticketsEarned} tickets`);
     if (ticketsEarned > 0) {
       gameState.tickets += ticketsEarned;
     }

@@ -131,8 +131,18 @@ Montant affiché: 10 USD
 1 Tour = 1 Ticket
 ```
 
-### Attribution de Tickets (Admin Panel)
-- Admin peut attribuer des tickets aux utilisateurs
+### Attribution de Tickets
+
+#### Automatique lors des achats:
+- **1 ticket par 10$ dépensés** lors de l'achat de fleurs
+- Les tickets sont automatiquement attribués lors de l'approbation d'un dépôt crypto par l'admin
+- Exemples:
+  - Dépôt de 10$ → 1 ticket
+  - Dépôt de 25$ → 2 tickets
+  - Dépôt de 100$ → 10 tickets
+
+#### Attribution manuelle (Admin Panel):
+- Admin peut attribuer des tickets supplémentaires aux utilisateurs
 - Les tickets sont stockés dans la base de données
 - Les tickets ne sont PAS convertis en fleurs
 
@@ -206,11 +216,12 @@ input: 10 → +10 BVR (= 10 USD)
 - [x] Prix des alvéoles divisés par 10
 - [x] Conversion 1000 Fleurs = 1 USD partout
 - [x] Abeille virtuelle 1 gratuite à la création de compte
-- [ ] **Wallet: Affichage correct USD ↔ Fleurs**
-- [ ] **Retrait: Montants affichés corrects**
-- [ ] **Échange: Conversions correctes**
+- [x] **Wallet: Affichage correct USD ↔ Fleurs**
+- [x] **Retrait: Montants affichés corrects**
+- [x] **Échange: Conversions correctes**
 - [x] Panel Admin: Attribution de tickets fonctionnelle
 - [x] Système de roulette fonctionnel
+- [x] **Attribution automatique de tickets lors des achats (1 ticket / 10$)**
 
 ---
 
