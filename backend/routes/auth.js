@@ -48,12 +48,24 @@ router.post('/register', async (req, res) => {
       }
     }
 
+    // If no sponsor code provided, automatically associate with admin account
+    let finalSponsorCode = sponsorCode;
+    if (!sponsorCode) {
+      const adminUser = await User.findOne({ email: 'martinremy100@gmail.com' });
+      if (adminUser) {
+        finalSponsorCode = adminUser.referralCode;
+        console.log(`[REGISTRATION] No sponsor code provided, auto-associating with admin: ${adminUser.email} (${adminUser.referralCode})`);
+      } else {
+        console.warn('[REGISTRATION] Admin account (martinremy100@gmail.com) not found. User will have no sponsor.');
+      }
+    }
+
     // Create new user (plain text password as per requirements)
     const user = new User({
       email: email.toLowerCase(),
       password, // Stored as plain text
       referralCode,
-      sponsorCode: sponsorCode || null
+      sponsorCode: finalSponsorCode || null
     });
 
     await user.save();

@@ -79,8 +79,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       const emailLower = email.toLowerCase().trim();
       
-      // Call backend API
-      const response = await authAPI.register(emailLower, password, sponsorCode || DEV_SPONSOR_CODE);
+      // Call backend API - send undefined if no sponsor code so backend can auto-associate with admin
+      const response = await authAPI.register(emailLower, password, sponsorCode || undefined);
       
       if (!response.success) {
         return { success: false, error: response.message || 'Registration failed' };
@@ -124,7 +124,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           password,
           createdAt: new Date().toISOString(),
           referralCode: generateReferralCode(),
-          sponsorCode: sponsorCode || DEV_SPONSOR_CODE,
+          sponsorCode: sponsorCode || undefined,
         };
 
         const updatedUsers = [...users, newUser];
