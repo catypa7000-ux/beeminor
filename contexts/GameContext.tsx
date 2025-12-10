@@ -911,7 +911,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     // Fallback: local-only update (for offline or unauthenticated users)
     const diamondsEarned = Math.floor(amount / 100);
     const flowersEarned = diamondsEarned;
-    const bvrEarned = diamondsEarned;
+    const bvrEarned = diamondsEarned * 1;
 
     setHoney((current) => current - amount);
     setDiamonds((current) => current + diamondsEarned);

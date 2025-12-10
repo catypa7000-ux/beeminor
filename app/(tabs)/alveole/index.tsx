@@ -33,14 +33,14 @@ export default function AlveoleScreen() {
 
   const handleQuickSell = (percentage: number) => {
     const amount = Math.floor(honey * percentage);
-    if (amount < 300) {
-      window.alert(`${t.insufficientHoney}\n\n${t.needMinHoney}`);
+    if (amount < 100) {
+      window.alert(`${t.insufficientHoney}\n\nVous avez besoin d'au moins 100 miel pour vendre.`);
       return;
     }
 
-    const diamondsEarned = Math.floor(amount / 300);
+    const diamondsEarned = Math.floor(amount / 100);
     const flowersEarned = diamondsEarned;
-    const bvrEarned = diamondsEarned * 2;
+    const bvrEarned = diamondsEarned * 1;
 
     const confirmed = window.confirm(
       `${t.sellHoney} ${formatNumber(amount)} ${t.honey.toLowerCase()} (${percentage * 100}%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n🌸 ${flowersEarned} ${t.flowers.toLowerCase()}\n🐝 ${bvrEarned} BVR\n\nConfirmer?`

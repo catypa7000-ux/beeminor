@@ -232,7 +232,7 @@ router.post('/:userId/sell-honey', async (req, res) => {
     // Calculate rewards (100 honey = 1 diamond + 1 flower + 1 BVR)
     const diamondsEarned = Math.floor(amount / 100);
     const flowersEarned = diamondsEarned;
-    const bvrEarned = diamondsEarned;
+    const bvrEarned = diamondsEarned * 1;
 
     // Update game state
     gameState.honey -= amount;

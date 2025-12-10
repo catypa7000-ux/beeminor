@@ -134,8 +134,8 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.sellButton}
               onPress={async () => {
-                if (honey < 300) {
-                  window.alert('Error: You need at least 300 honey to sell!');
+                if (honey < 100) {
+                  window.alert('Error: You need at least 100 honey to sell!');
                   return;
                 }
                 
