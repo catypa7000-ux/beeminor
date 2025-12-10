@@ -1,4 +1,4 @@
-import { useGame, BEE_TYPES } from '../../../contexts/GameContext';
+import { useGame, BEE_TYPES, VIRTUAL_BEE_TYPES } from '../../../contexts/GameContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import React, { useState, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Image, Platform, ScrollView } from 'react-native';
@@ -30,19 +30,19 @@ type Prize = {
 };
 
 const PRIZES: Prize[] = [
-  { id: '1', label: 'Bébé', type: 'bee', beeType: 'baby', beeCount: 1, color: '#FFE5B4', weight: 25, rarity: 'common' },
+  { id: '1', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, color: '#E6F3FF', weight: 22, rarity: 'common' },
   { id: '2', label: '1000', type: 'flowers', flowersAmount: 1000, color: '#FFF5E6', weight: 22, rarity: 'common' },
-  { id: '3', label: 'Abeille', type: 'bee', beeType: 'worker', beeCount: 1, color: '#FFD9A0', weight: 20, rarity: 'uncommon' },
+  { id: '3', label: 'Abeille', type: 'bee', beeType: 'worker', beeCount: 1, color: '#FFD9A0', weight: 15, rarity: 'uncommon' },
   { id: '4', label: '3000', type: 'flowers', flowersAmount: 3000, color: '#FFEFD5', weight: 15, rarity: 'uncommon' },
-  { id: '5', label: 'Bébé', type: 'bee', beeType: 'baby', beeCount: 1, color: '#FFE5B4', weight: 25, rarity: 'common' },
+  { id: '5', label: 'Virtual 2', type: 'bee', beeType: 'virtual2', beeCount: 1, color: '#D9ECFF', weight: 15, rarity: 'uncommon' },
   { id: '6', label: 'Elite', type: 'bee', beeType: 'elite', beeCount: 1, color: '#FFDAB9', weight: 8, rarity: 'rare' },
-  { id: '7', label: 'Abeille', type: 'bee', beeType: 'worker', beeCount: 1, color: '#FFD9A0', weight: 20, rarity: 'uncommon' },
+  { id: '7', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, color: '#E6F3FF', weight: 22, rarity: 'common' },
   { id: '8', label: '1000', type: 'flowers', flowersAmount: 1000, color: '#FFF5E6', weight: 22, rarity: 'common' },
-  { id: '9', label: 'Bébé', type: 'bee', beeType: 'baby', beeCount: 1, color: '#FFE5B4', weight: 25, rarity: 'common' },
+  { id: '9', label: 'Virtual 3', type: 'bee', beeType: 'virtual3', beeCount: 1, color: '#BDDEFF', weight: 10, rarity: 'rare' },
   { id: '10', label: '5000', type: 'flowers', flowersAmount: 5000, color: '#FFF8DC', weight: 10, rarity: 'rare' },
-  { id: '11', label: 'Abeille', type: 'bee', beeType: 'worker', beeCount: 1, color: '#FFD9A0', weight: 20, rarity: 'uncommon' },
+  { id: '11', label: 'Abeille', type: 'bee', beeType: 'worker', beeCount: 1, color: '#FFD9A0', weight: 15, rarity: 'uncommon' },
   { id: '12', label: 'Royal', type: 'bee', beeType: 'royal', beeCount: 1, color: '#FFE4B5', weight: 5, rarity: 'epic' },
-  { id: '13', label: 'Bébé', type: 'bee', beeType: 'baby', beeCount: 1, color: '#FFE5B4', weight: 25, rarity: 'common' },
+  { id: '13', label: 'Virtual 2', type: 'bee', beeType: 'virtual2', beeCount: 1, color: '#D9ECFF', weight: 15, rarity: 'uncommon' },
   { id: '14', label: '10000', type: 'flowers', flowersAmount: 10000, color: '#FFEFD5', weight: 3, rarity: 'epic' },
   { id: '15', label: 'Elite', type: 'bee', beeType: 'elite', beeCount: 1, color: '#FFDAB9', weight: 8, rarity: 'rare' },
   { id: '16', label: 'Reine', type: 'bee', beeType: 'queen', beeCount: 1, color: '#FFD700', weight: 1, rarity: 'legendary' },

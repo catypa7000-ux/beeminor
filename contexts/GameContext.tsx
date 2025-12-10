@@ -60,6 +60,33 @@ export const BEE_TYPES: BeeType[] = [
   },
 ];
 
+export const VIRTUAL_BEE_TYPES: BeeType[] = [
+  {
+    id: 'virtual1',
+    name: 'Virtual Bee 1',
+    nameFr: 'Abeille Virtuelle 1',
+    honeyPerHour: 10,
+    cost: 0,
+    emoji: '🐝',
+  },
+  {
+    id: 'virtual2',
+    name: 'Virtual Bee 2',
+    nameFr: 'Abeille Virtuelle 2',
+    honeyPerHour: 20,
+    cost: 0,
+    emoji: '🐝',
+  },
+  {
+    id: 'virtual3',
+    name: 'Virtual Bee 3',
+    nameFr: 'Abeille Virtuelle 3',
+    honeyPerHour: 30,
+    cost: 0,
+    emoji: '🐝',
+  },
+];
+
 export type AlveoleLevel = {
   level: number;
   capacity: number;
@@ -118,6 +145,7 @@ type GameState = {
   flowers: number;
   diamonds: number;
   bees: Record<string, number>;
+  virtualBees: Record<string, number>;
   tickets: number;
   bvrCoins: number;
   alveoles: Record<number, boolean>;
@@ -158,6 +186,11 @@ export const [GameProvider, useGame] = createContextHook(() => {
     elite: 0,
     royal: 0,
     queen: 0,
+  });
+  const [virtualBees, setVirtualBees] = useState<Record<string, number>>({
+    virtual1: 0,
+    virtual2: 0,
+    virtual3: 0,
   });
   const [virtualBeeStartTime, setVirtualBeeStartTime] = useState<string | null>(null);
   const [alveoles, setAlveoles] = useState<Record<number, boolean>>({
@@ -342,6 +375,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
               tickets: state.tickets ?? 0,
               bvrCoins: state.bvrCoins ?? 0,
               bees: state.bees || { baby: 0, worker: 0, elite: 0, royal: 0, queen: 0 },
+              virtualBees: { virtual1: 1, virtual2: 0, virtual3: 0 },
               alveoles: state.alveoles || { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false },
               invitedFriends: state.invitedFriends ?? 0,
               claimedMissions: state.claimedMissions ?? [],
@@ -401,12 +435,14 @@ export const [GameProvider, useGame] = createContextHook(() => {
           setSponsorCode('DEV_PARENT');
         }
         setBees(state.bees);
+        setVirtualBees(state.virtualBees || { virtual1: 0, virtual2: 0, virtual3: 0 });
         setAlveoles(state.alveoles ?? { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false });
         setVirtualBeeStartTime(state.virtualBeeStartTime || null);
       } else {
-        // First time user - initialize with virtual bee
+        // First time user - initialize with first virtual bee
         const now = new Date().toISOString();
         setVirtualBeeStartTime(now);
+        setVirtualBees({ virtual1: 1, virtual2: 0, virtual3: 0 });
       }
     } catch (error) {
       console.error('Failed to load game state:', error);
@@ -422,19 +458,14 @@ export const [GameProvider, useGame] = createContextHook(() => {
       total += count * beeType.honeyPerHour;
     });
     
-    // Add virtual bee production (10 miel/hour) for first 3 days
-    if (virtualBeeStartTime) {
-      const startTime = new Date(virtualBeeStartTime).getTime();
-      const now = Date.now();
-      const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
-      
-      if (now - startTime < threeDaysInMs) {
-        total += 10; // Virtual bee produces 10 miel/hour
-      }
-    }
+    // Add virtual bees production
+    VIRTUAL_BEE_TYPES.forEach((beeType) => {
+      const count = virtualBees[beeType.id] || 0;
+      total += count * beeType.honeyPerHour;
+    });
     
     return total;
-  }, [bees, virtualBeeStartTime]);
+  }, [bees, virtualBees]);
 
   const syncGameStateToBackend = useCallback(async (userId: string) => {
     if (!userId) return;
@@ -486,6 +517,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     newTickets: number,
     newBvrCoins: number,
     newBees: Record<string, number>,
+    newVirtualBees: Record<string, number>,
     newAlveoles: Record<number, boolean>,
     newInvitedFriends: number,
     newClaimedMissions: number[],
@@ -509,6 +541,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
         tickets: newTickets,
         bvrCoins: newBvrCoins,
         bees: newBees,
+        virtualBees: newVirtualBees,
         alveoles: newAlveoles,
         invitedFriends: newInvitedFriends,
         claimedMissions: newClaimedMissions,
@@ -627,6 +660,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       tickets,
       bvrCoins,
       bees,
+      virtualBees,
       alveoles,
       invitedFriends,
       claimedMissions,
@@ -649,6 +683,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     tickets,
     bvrCoins,
     bees,
+    virtualBees,
     alveoles,
     invitedFriends,
     claimedMissions,
@@ -985,6 +1020,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     setTickets(0);
     setBvrCoins(0);
     setBees({ baby: 0, worker: 0, elite: 0, royal: 0, queen: 0 });
+    setVirtualBees({ virtual1: 1, virtual2: 0, virtual3: 0 });
     setAlveoles({ 1: true, 2: false, 3: false, 4: false, 5: false, 6: false });
     setInvitedFriends(0);
     setClaimedMissions([]);
@@ -1293,6 +1329,13 @@ export const [GameProvider, useGame] = createContextHook(() => {
     }
   }, [currentUserId, syncGameStateFromBackend]);
 
+  const addVirtualBee = useCallback((virtualBeeId: string) => {
+    setVirtualBees((current) => ({
+      ...current,
+      [virtualBeeId]: (current[virtualBeeId] || 0) + 1,
+    }));
+  }, []);
+
   return useMemo(() => ({
     honey,
     flowers,
@@ -1300,6 +1343,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     tickets,
     bvrCoins,
     bees,
+    virtualBees,
     alveoles,
     isLoaded,
     buyBee,
@@ -1344,6 +1388,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     updateLeaderboard,
     setUserId, // Expose setUserId to connect with AuthContext
     refreshGameState, // Manual refresh for cross-device sync
+    addVirtualBee,
   }), [
     honey,
     flowers,
@@ -1351,6 +1396,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     tickets,
     bvrCoins,
     bees,
+    virtualBees,
     alveoles,
     isLoaded,
     buyBee,

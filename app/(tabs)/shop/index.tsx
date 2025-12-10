@@ -1,4 +1,4 @@
-import { BEE_TYPES, useGame } from '../../../contexts/GameContext';
+import { BEE_TYPES, VIRTUAL_BEE_TYPES, useGame } from '../../../contexts/GameContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from 'react-native';
@@ -9,7 +9,7 @@ const isWeb = Platform.OS === 'web';
 const MAX_WEB_WIDTH = 600;
 
 export default function ShopScreen() {
-  const { honey, flowers, diamonds, bees, buyBee, buyFlowers, hasPendingFunds } = useGame();
+  const { honey, flowers, diamonds, bees, virtualBees, buyBee, buyFlowers, hasPendingFunds } = useGame();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -127,6 +127,31 @@ export default function ShopScreen() {
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>{t.bees}</Text>
+
+        {VIRTUAL_BEE_TYPES.map((beeType) => {
+          const owned = virtualBees[beeType.id] || 0;
+
+          return (
+            <View key={beeType.id} style={[styles.beeCard, styles.virtualBeeCard]}>              <View style={styles.beeInfo}>
+                <View style={styles.beeHeader}>
+                  {beeType.imageUrl ? (
+                    <Image source={{ uri: beeType.imageUrl }} style={styles.beeImage} />
+                  ) : (
+                    <Text style={styles.beeEmoji}>{beeType.emoji}</Text>
+                  )}
+                  <View style={styles.beeTitleContainer}>
+                    <Text style={styles.beeName}>{beeType.nameFr}</Text>
+                    <Text style={styles.virtualBeeBadge}>VIRTUELLE</Text>
+                  </View>
+                </View>
+                <Text style={styles.beeOwned}>{t.owned}: {owned}</Text>
+              </View>
+              <View style={styles.nonPurchasableBadge}>
+                <Text style={styles.nonPurchasableText}>Non achetable</Text>
+              </View>
+            </View>
+          );
+        })}
 
         {BEE_TYPES.map((beeType) => {
           const owned = bees[beeType.id] || 0;
@@ -350,5 +375,30 @@ const styles = StyleSheet.create({
   },
   buyButtonEmoji: {
     fontSize: 18,
+  },
+  virtualBeeCard: {
+    backgroundColor: '#E6F3FF',
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+  },
+  virtualBeeBadge: {
+    fontSize: 11,
+    color: '#4A90E2',
+    fontWeight: 'bold' as const,
+    backgroundColor: '#fff',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  nonPurchasableBadge: {
+    backgroundColor: '#666',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  nonPurchasableText: {
+    fontSize: 12,
+    fontWeight: 'bold' as const,
+    color: '#fff',
   },
 });
