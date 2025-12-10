@@ -257,6 +257,9 @@ export const [GameProvider, useGame] = createContextHook(() => {
         if (state.bees) {
           setBees(state.bees);
         }
+        if (state.virtualBees) {
+          setVirtualBees(state.virtualBees);
+        }
         if (state.alveoles) {
           setAlveoles(state.alveoles);
         }
@@ -353,6 +356,9 @@ export const [GameProvider, useGame] = createContextHook(() => {
             if (state.bees) {
               setBees(state.bees);
             }
+            if (state.virtualBees) {
+              setVirtualBees(state.virtualBees);
+            }
             if (state.alveoles) {
               setAlveoles(state.alveoles);
             }
@@ -375,7 +381,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
               tickets: state.tickets ?? 0,
               bvrCoins: state.bvrCoins ?? 0,
               bees: state.bees || { baby: 0, worker: 0, elite: 0, royal: 0, queen: 0 },
-              virtualBees: { virtual1: 1, virtual2: 0, virtual3: 0 },
+              virtualBees: state.virtualBees || { virtual1: 1, virtual2: 0, virtual3: 0 },
               alveoles: state.alveoles || { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false },
               invitedFriends: state.invitedFriends ?? 0,
               claimedMissions: state.claimedMissions ?? [],
@@ -435,15 +441,12 @@ export const [GameProvider, useGame] = createContextHook(() => {
           setSponsorCode('DEV_PARENT');
         }
         setBees(state.bees);
-        setVirtualBees(state.virtualBees || { virtual1: 0, virtual2: 0, virtual3: 0 });
+        setVirtualBees(state.virtualBees || { virtual1: 1, virtual2: 0, virtual3: 0 });
         setAlveoles(state.alveoles ?? { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false });
         setVirtualBeeStartTime(state.virtualBeeStartTime || null);
-      } else {
-        // First time user - initialize with first virtual bee
-        const now = new Date().toISOString();
-        setVirtualBeeStartTime(now);
-        setVirtualBees({ virtual1: 1, virtual2: 0, virtual3: 0 });
       }
+      
+      console.log('🐝 Game state loaded. Virtual bees:', virtualBees);
     } catch (error) {
       console.error('Failed to load game state:', error);
     } finally {

@@ -32,11 +32,20 @@ const gameStateSchema = new mongoose.Schema({
     type: Map,
     of: Number,
     default: {
-      baby: 1,
+      baby: 0,
       worker: 0,
       elite: 0,
       royal: 0,
       queen: 0
+    }
+  },
+  virtualBees: {
+    type: Map,
+    of: Number,
+    default: {
+      virtual1: 1,
+      virtual2: 0,
+      virtual3: 0
     }
   },
   alveoles: {
