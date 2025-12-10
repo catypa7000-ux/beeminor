@@ -133,6 +133,7 @@ type GameState = {
   diamondsThisYear: number;
   yearStartDate: string;
   allUsersLeaderboard: LeaderboardUser[];
+  virtualBeeStartTime?: string | null;
 };
 
 const STORAGE_KEY = 'bee_game_state';
@@ -140,7 +141,7 @@ const USER_ID_KEY = 'current_user_id';
 
 export const [GameProvider, useGame] = createContextHook(() => {
   const [honey, setHoney] = useState<number>(100);
-  const [flowers, setFlowers] = useState<number>(5000);
+  const [flowers, setFlowers] = useState<number>(0);
   const [diamonds, setDiamonds] = useState<number>(0);
   const [tickets, setTickets] = useState<number>(0);
   const [bvrCoins, setBvrCoins] = useState<number>(0);
@@ -152,12 +153,13 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const [sponsorCode, setSponsorCode] = useState<string>('');
   const [isAffiliatedToDev, setIsAffiliatedToDev] = useState<boolean>(false);
   const [bees, setBees] = useState<Record<string, number>>({
-    baby: 1,
+    baby: 0,
     worker: 0,
     elite: 0,
     royal: 0,
     queen: 0,
   });
+  const [virtualBeeStartTime, setVirtualBeeStartTime] = useState<string | null>(null);
   const [alveoles, setAlveoles] = useState<Record<number, boolean>>({
     1: true,
     2: false,
@@ -206,7 +208,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       if (response.success && response.gameState) {
         const state = response.gameState;
         setHoney(state.honey ?? 100);
-        setFlowers(state.flowers ?? 5000);
+        setFlowers(state.flowers ?? 0);
         setDiamonds(state.diamonds ?? 0);
         setTickets(state.tickets ?? 0);
         setBvrCoins(state.bvrCoins ?? 0);
@@ -302,7 +304,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
           if (response.success && response.gameState) {
             const state = response.gameState;
             setHoney(state.honey ?? 100);
-            setFlowers(state.flowers ?? 5000);
+            setFlowers(state.flowers ?? 0);
             setDiamonds(state.diamonds ?? 0);
             setTickets(state.tickets ?? 0);
             setBvrCoins(state.bvrCoins ?? 0);
@@ -335,11 +337,11 @@ export const [GameProvider, useGame] = createContextHook(() => {
             // Save to local storage as backup
             const gameState: GameState = {
               honey: state.honey ?? 100,
-              flowers: state.flowers ?? 5000,
+              flowers: state.flowers ?? 0,
               diamonds: state.diamonds ?? 0,
               tickets: state.tickets ?? 0,
               bvrCoins: state.bvrCoins ?? 0,
-              bees: state.bees || { baby: 1, worker: 0, elite: 0, royal: 0, queen: 0 },
+              bees: state.bees || { baby: 0, worker: 0, elite: 0, royal: 0, queen: 0 },
               alveoles: state.alveoles || { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false },
               invitedFriends: state.invitedFriends ?? 0,
               claimedMissions: state.claimedMissions ?? [],
@@ -353,6 +355,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
               diamondsThisYear: state.diamondsThisYear ?? 0,
               yearStartDate: state.yearStartDate ?? new Date().getFullYear().toString(),
               allUsersLeaderboard: allUsersLeaderboard,
+              virtualBeeStartTime: virtualBeeStartTime,
             };
             await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
             setIsLoaded(true);
@@ -368,7 +371,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       if (stored) {
         const state: GameState = JSON.parse(stored);
         setHoney(state.honey);
-        setFlowers(state.flowers ?? 5000);
+        setFlowers(state.flowers ?? 0);
         setDiamonds(state.diamonds ?? 0);
         setTickets(state.tickets ?? 0);
         setBvrCoins(state.bvrCoins ?? 0);
@@ -399,6 +402,11 @@ export const [GameProvider, useGame] = createContextHook(() => {
         }
         setBees(state.bees);
         setAlveoles(state.alveoles ?? { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false });
+        setVirtualBeeStartTime(state.virtualBeeStartTime || null);
+      } else {
+        // First time user - initialize with virtual bee
+        const now = new Date().toISOString();
+        setVirtualBeeStartTime(now);
       }
     } catch (error) {
       console.error('Failed to load game state:', error);
@@ -413,8 +421,20 @@ export const [GameProvider, useGame] = createContextHook(() => {
       const count = bees[beeType.id] || 0;
       total += count * beeType.honeyPerHour;
     });
+    
+    // Add virtual bee production (10 miel/hour) for first 3 days
+    if (virtualBeeStartTime) {
+      const startTime = new Date(virtualBeeStartTime).getTime();
+      const now = Date.now();
+      const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+      
+      if (now - startTime < threeDaysInMs) {
+        total += 10; // Virtual bee produces 10 miel/hour
+      }
+    }
+    
     return total;
-  }, [bees]);
+  }, [bees, virtualBeeStartTime]);
 
   const syncGameStateToBackend = useCallback(async (userId: string) => {
     if (!userId) return;
@@ -478,7 +498,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
     newTransactions: Transaction[],
     newDiamondsThisYear: number,
     newYearStartDate: string,
-    newAllUsersLeaderboard: LeaderboardUser[]
+    newAllUsersLeaderboard: LeaderboardUser[],
+    newVirtualBeeStartTime: string | null
   ) => {
     try {
       const state: GameState = {
@@ -501,6 +522,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
         diamondsThisYear: newDiamondsThisYear,
         yearStartDate: newYearStartDate,
         allUsersLeaderboard: newAllUsersLeaderboard,
+        virtualBeeStartTime: newVirtualBeeStartTime,
       };
       
       // Save to local storage
@@ -617,7 +639,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
       transactions,
       diamondsThisYear,
       yearStartDate,
-      allUsersLeaderboard
+      allUsersLeaderboard,
+      virtualBeeStartTime
     );
   }, [
     honey,
@@ -639,6 +662,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     diamondsThisYear,
     yearStartDate,
     allUsersLeaderboard,
+    virtualBeeStartTime,
     isLoaded,
     saveGameState,
   ]);
@@ -955,13 +979,13 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
   const resetGameState = useCallback(() => {
     setUserId(null);
-    setHoney(1000);
+    setHoney(100);
     setFlowers(0);
     setDiamonds(0);
     setTickets(0);
     setBvrCoins(0);
-    setBees({});
-    setAlveoles({});
+    setBees({ baby: 0, worker: 0, elite: 0, royal: 0, queen: 0 });
+    setAlveoles({ 1: true, 2: false, 3: false, 4: false, 5: false, 6: false });
     setInvitedFriends(0);
     setClaimedMissions([]);
     setReferralCode('');
@@ -973,6 +997,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     setTransactions([]);
     setDiamondsThisYear(0);
     setAllUsersLeaderboard([]);
+    setVirtualBeeStartTime(new Date().toISOString());
     setIsLoaded(false);
   }, []);
 
