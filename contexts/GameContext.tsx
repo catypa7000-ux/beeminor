@@ -17,44 +17,44 @@ export const BEE_TYPES: BeeType[] = [
   {
     id: 'baby',
     name: 'Baby Bee',
-    nameFr: 'Abeille Bébé',
-    honeyPerHour: 42,
-    cost: 2000,
+    nameFr: 'Abeille 1',
+    honeyPerHour: 416.76,
+    cost: 24990,
     emoji: '🐝',
     imageUrl: 'https://r2-pub.rork.com/generated-images/0cb67fac-9945-4aa0-9293-34090f21d482.png',
   },
   {
     id: 'worker',
     name: 'Worker Bee',
-    nameFr: 'Abeille',
-    honeyPerHour: 220,
-    cost: 10000,
+    nameFr: 'Abeille 2',
+    honeyPerHour: 833.33,
+    cost: 49990,
     emoji: '🐝',
   },
   {
     id: 'elite',
     name: 'Elite Bee',
-    nameFr: 'Abeille Elite',
-    honeyPerHour: 1100,
-    cost: 50000,
+    nameFr: 'Abeille 3',
+    honeyPerHour: 2083.33,
+    cost: 99990,
     emoji: '🐝',
     imageUrl: 'https://r2-pub.rork.com/generated-images/6a4677d5-68c9-4074-8fb8-3dab6a23b35c.png',
   },
   {
     id: 'royal',
     name: 'Royal Bee',
-    nameFr: 'Abeille Royal',
-    honeyPerHour: 6091,
-    cost: 250000,
+    nameFr: 'Abeille 4',
+    honeyPerHour: 4583,
+    cost: 199000,
     emoji: '🐝',
     imageUrl: 'https://r2-pub.rork.com/generated-images/c2298206-dec8-46f2-b8c1-d66d7da3f67c.png',
   },
   {
     id: 'queen',
     name: 'Queen Bee',
-    nameFr: 'Reine Abeille',
-    honeyPerHour: 31979,
-    cost: 1200000,
+    nameFr: 'Abeille 5',
+    honeyPerHour: 8750,
+    cost: 389000,
     emoji: '🐝',
     imageUrl: 'https://r2-pub.rork.com/generated-images/34df0abf-f189-43e9-96b8-5c4551e1c05f.png',
   },
@@ -909,9 +909,9 @@ export const [GameProvider, useGame] = createContextHook(() => {
     }
 
     // Fallback: local-only update (for offline or unauthenticated users)
-    const diamondsEarned = Math.floor(amount / 300);
+    const diamondsEarned = Math.floor(amount / 100);
     const flowersEarned = diamondsEarned;
-    const bvrEarned = diamondsEarned * 2;
+    const bvrEarned = diamondsEarned;
 
     setHoney((current) => current - amount);
     setDiamonds((current) => current + diamondsEarned);
