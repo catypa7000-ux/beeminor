@@ -367,6 +367,7 @@ export default function RetraitScreen() {
             </Text>
           ) : (
             <Text style={styles.infoText}>
+              • 100 BVR jeu = 1 token BVR{'\n'}
               • Les BVR sont retirables uniquement sur Solana{'\n'}
               • Aucun frais de retrait pour les BVR{'\n'}
               • ⚠️ OBLIGATOIRE: Retrait sur non-custodial wallet uniquement (Solflare, Trust, Phantom, Bitget){'\n'}
