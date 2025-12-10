@@ -229,10 +229,10 @@ router.post('/:userId/sell-honey', async (req, res) => {
       });
     }
 
-    // Calculate rewards (100 honey = 1 diamond + 1 flower + 1 BVR)
+    // Calculate rewards (100 honey = 1 diamond + 0.10 flower + 0.5 BVR)
     const diamondsEarned = Math.floor(amount / 100);
-    const flowersEarned = diamondsEarned;
-    const bvrEarned = diamondsEarned * 1;
+    const flowersEarned = diamondsEarned * 0.10;
+    const bvrEarned = diamondsEarned * 0.5;
 
     // Update game state
     gameState.honey -= amount;
