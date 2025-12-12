@@ -14,6 +14,8 @@ const corsOptions = {
     const allowedOrigins = [
       "http://localhost:8081",
       "exp://localhost:8081",
+      "https://www.beeminor.live",
+      "https://beeminor.live",
       process.env.FRONTEND_URL,
       /\.vercel\.app$/,
     ].filter(Boolean);
