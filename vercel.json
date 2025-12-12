@@ -35,6 +35,16 @@
       "dest": "/web-build/index.html"
     }
   ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/backend/server.js"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/web-build/index.html"
+    }
+  ],
   "env": {
     "NODE_ENV": "production"
   }
