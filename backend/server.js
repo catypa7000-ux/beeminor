@@ -11,6 +11,7 @@ const corsOptions = {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
 
+    
     const allowedOrigins = [
       "http://localhost:8081",
       "exp://localhost:8081",
