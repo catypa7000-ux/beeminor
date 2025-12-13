@@ -188,7 +188,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     queen: 0,
   });
   const [virtualBees, setVirtualBees] = useState<Record<string, number>>({
-    virtual1: 0,
+    virtual1: 1,
     virtual2: 0,
     virtual3: 0,
   });
@@ -223,9 +223,50 @@ export const [GameProvider, useGame] = createContextHook(() => {
   };
 
   useEffect(() => {
-    loadUserId();
-    generateReferralCode();
-    initializeMockLeaderboard();
+    const initializeGame = async () => {
+      console.log('🐝 Initializing game...');
+      await loadUserId();
+      
+      // Load game state from local storage first
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          console.log('📦 Loading from local storage...');
+          const state: GameState = JSON.parse(stored);
+          setHoney(state.honey ?? 100);
+          setFlowers(state.flowers ?? 0);
+          setDiamonds(state.diamonds ?? 0);
+          setTickets(state.tickets ?? 0);
+          setBvrCoins(state.bvrCoins ?? 0);
+          setInvitedFriends(state.invitedFriends ?? 0);
+          setClaimedMissions(state.claimedMissions ?? []);
+          setReferralCode(state.referralCode || '');
+          setReferrals(state.referrals ?? []);
+          setTotalReferralEarnings(state.totalReferralEarnings ?? 0);
+          setSponsorCode(state.sponsorCode ?? '');
+          setIsAffiliatedToDev(state.isAffiliatedToDev ?? false);
+          setHasPendingFunds(state.hasPendingFunds ?? false);
+          setTransactions(state.transactions ?? []);
+          setDiamondsThisYear(state.diamondsThisYear ?? 0);
+          setYearStartDate(state.yearStartDate ?? new Date().getFullYear().toString());
+          setAllUsersLeaderboard(state.allUsersLeaderboard ?? []);
+          setBees(state.bees || { baby: 0, worker: 0, elite: 0, royal: 0, queen: 0 });
+          setVirtualBees(state.virtualBees || { virtual1: 1, virtual2: 0, virtual3: 0 });
+          setAlveoles(state.alveoles ?? { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false });
+          setVirtualBeeStartTime(state.virtualBeeStartTime || null);
+        }
+      } catch (error) {
+        console.error('Failed to load from local storage:', error);
+      }
+      
+      generateReferralCode();
+      initializeMockLeaderboard();
+      
+      console.log('✅ Game initialized');
+      setIsLoaded(true);
+    };
+    initializeGame();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const syncGameStateFromBackend = useCallback(async (userId: string) => {
@@ -451,8 +492,13 @@ export const [GameProvider, useGame] = createContextHook(() => {
     }
   }, [currentUserId, referralCode, sponsorCode, isAffiliatedToDev, allUsersLeaderboard, virtualBeeStartTime]);
 
-  // Reload game state when userId changes
+  // Reload game state when userId changes (but not on initial mount)
+  const isInitialMount = useRef(true);
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     if (currentUserId) {
       loadGameState();
     }
