@@ -210,19 +210,6 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    loadUserId();
-    generateReferralCode();
-    initializeMockLeaderboard();
-  }, []);
-
-  // Reload game state when userId changes
-  useEffect(() => {
-    if (currentUserId) {
-      loadGameState();
-    }
-  }, [currentUserId]);
-
   const loadUserId = async () => {
     try {
       // Load user ID from AsyncStorage (set when user logs in)
@@ -234,6 +221,12 @@ export const [GameProvider, useGame] = createContextHook(() => {
       console.error('Failed to load user ID:', error);
     }
   };
+
+  useEffect(() => {
+    loadUserId();
+    generateReferralCode();
+    initializeMockLeaderboard();
+  }, []);
 
   const syncGameStateFromBackend = useCallback(async (userId: string) => {
     try {
@@ -333,7 +326,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     setReferralCode(code);
   };
 
-  const loadGameState = async () => {
+  const loadGameState = useCallback(async () => {
     try {
       // Try loading from backend first if userId exists
       if (currentUserId) {
@@ -450,13 +443,20 @@ export const [GameProvider, useGame] = createContextHook(() => {
         setVirtualBeeStartTime(state.virtualBeeStartTime || null);
       }
       
-      console.log('🐝 Game state loaded. Virtual bees:', virtualBees);
+      console.log('🐝 Game state loaded');
     } catch (error) {
       console.error('Failed to load game state:', error);
     } finally {
       setIsLoaded(true);
     }
-  };
+  }, [currentUserId, referralCode, sponsorCode, isAffiliatedToDev, allUsersLeaderboard, virtualBeeStartTime]);
+
+  // Reload game state when userId changes
+  useEffect(() => {
+    if (currentUserId) {
+      loadGameState();
+    }
+  }, [currentUserId, loadGameState]);
 
   const getTotalProduction = useCallback(() => {
     let total = 0;
@@ -474,48 +474,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     return total;
   }, [bees, virtualBees]);
 
-  const syncGameStateToBackend = useCallback(async (userId: string) => {
-    if (!userId) return;
 
-    try {
-      // Convert game state to backend format
-      const backendState = {
-        honey,
-        flowers,
-        diamonds,
-        tickets,
-        bvrCoins,
-        bees: new Map(Object.entries(bees)),
-        alveoles: new Map(Object.entries(alveoles).map(([k, v]) => [Number(k), v])),
-        invitedFriends,
-        claimedMissions,
-        referrals: referrals.map(r => ({
-          email: r.name || '',
-          referralCode: r.id || '',
-          joinedDate: r.joinDate ? new Date(r.joinDate) : new Date(),
-          earnings: r.lifetimeEarnings || 0
-        })),
-        totalReferralEarnings,
-        hasPendingFunds,
-        transactions: transactions.map(t => ({
-          id: t.id,
-          type: t.type,
-          amount: t.amount,
-          currency: t.network || 'USD',
-          status: t.status === 'approved' ? 'completed' : t.status === 'rejected' ? 'failed' : 'pending',
-          createdAt: new Date(t.createdAt),
-          address: t.walletAddress || null
-        })),
-        diamondsThisYear,
-        yearStartDate
-      };
-
-      await gameAPI.updateGameState(userId, backendState);
-    } catch (error) {
-      console.error('Failed to sync game state to backend:', error);
-      // Continue without throwing - local storage is still saved
-    }
-  }, [honey, flowers, diamonds, tickets, bvrCoins, bees, alveoles, invitedFriends, claimedMissions, referrals, totalReferralEarnings, hasPendingFunds, transactions, diamondsThisYear, yearStartDate]);
 
   const saveGameState = useCallback(async (
     newHoney: number,
@@ -1043,7 +1002,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     setAllUsersLeaderboard([]);
     setVirtualBeeStartTime(new Date().toISOString());
     setIsLoaded(false);
-  }, []);
+  }, [setUserId]);
 
   const exchangeResource = useCallback(async (type: 'DIAMONDS_TO_FLOWERS' | 'BVR_TO_FLOWERS', amount: number) => {
     // Validate amount
@@ -1478,7 +1437,9 @@ export const [GameProvider, useGame] = createContextHook(() => {
     getCurrentUserRank,
     updateLeaderboard,
     setUserId,
-    resetGameState, // Add resetGameState for logout functionality
     refreshGameState,
+    addVirtualBee,
+    exchangeResource,
+    spinRoulette,
   ]);
 });
