@@ -3,6 +3,29 @@ const router = express.Router();
 const GameState = require('../models/GameState');
 const User = require('../models/User');
 
+// Helper function to create a new GameState with proper defaults
+const createDefaultGameState = (userId) => {
+  return new GameState({
+    userId: userId,
+    honey: 100,
+    flowers: 5000,
+    diamonds: 0,
+    tickets: 0,
+    bvrCoins: 0,
+    bees: new Map([['baby', 0], ['worker', 0], ['elite', 0], ['royal', 0], ['queen', 0]]),
+    virtualBees: new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]]),
+    alveoles: new Map([['1', true], ['2', false], ['3', false], ['4', false], ['5', false], ['6', false]]),
+    invitedFriends: 0,
+    claimedMissions: [],
+    referrals: [],
+    totalReferralEarnings: 0,
+    hasPendingFunds: false,
+    transactions: [],
+    diamondsThisYear: 0,
+    yearStartDate: new Date().getFullYear().toString()
+  });
+};
+
 // @route   GET /api/game/:userId
 // @desc    Get game state for user
 // @access  Public (should be protected in production)
@@ -12,10 +35,16 @@ router.get('/:userId', async (req, res) => {
     
     // Create default game state if doesn't exist
     if (!gameState) {
-      gameState = new GameState({
-        userId: req.params.userId
-      });
+      gameState = createDefaultGameState(req.params.userId);
       await gameState.save();
+      console.log(`🐝 Created new game state for user ${req.params.userId} with virtual bee 1`);
+    }
+    
+    // Ensure virtualBees exists (migration for old accounts)
+    if (!gameState.virtualBees || gameState.virtualBees.size === 0) {
+      gameState.virtualBees = new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]]);
+      await gameState.save();
+      console.log(`🔧 Fixed virtualBees for user ${req.params.userId}`);
     }
 
     res.json({
@@ -907,7 +936,8 @@ router.post('/:userId/link-referral', async (req, res) => {
     // Get sponsor's game state
     let sponsorGameState = await GameState.findOne({ userId: sponsor._id });
     if (!sponsorGameState) {
-      sponsorGameState = new GameState({ userId: sponsor._id });
+      sponsorGameState = createDefaultGameState(sponsor._id);
+      await sponsorGameState.save();
     }
 
     // Check if already linked
