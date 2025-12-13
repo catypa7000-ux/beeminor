@@ -259,6 +259,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
         }
         if ((state as any).virtualBees) {
           setVirtualBees((state as any).virtualBees);
+        } else {
+          setVirtualBees({ virtual1: 1, virtual2: 0, virtual3: 0 });
         }
         if (state.alveoles) {
           setAlveoles(state.alveoles);
@@ -358,6 +360,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
             }
             if ((state as any).virtualBees) {
               setVirtualBees((state as any).virtualBees);
+            } else {
+              setVirtualBees({ virtual1: 1, virtual2: 0, virtual3: 0 });
             }
             if (state.alveoles) {
               setAlveoles(state.alveoles);
