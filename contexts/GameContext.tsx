@@ -882,8 +882,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
   }, [currentUserId]);
 
   const getTotalBees = useCallback(() => {
-    return Object.values(bees).reduce((sum, count) => sum + count, 0);
-  }, [bees]);
+    const physicalBees = Object.values(bees).reduce((sum, count) => sum + count, 0);
+    const virtualBeesCount = Object.values(virtualBees).reduce((sum, count) => sum + count, 0);
+    return physicalBees + virtualBeesCount;
+  }, [bees, virtualBees]);
 
   const buyAlveole = useCallback(async (level: number) => {
     const alveoleInfo = ALVEOLE_LEVELS.find((a) => a.level === level);
