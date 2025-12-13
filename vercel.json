@@ -35,12 +35,6 @@
       "dest": "/web-build/index.html"
     }
   ],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
-  ],
   "env": {
     "NODE_ENV": "production"
   }
