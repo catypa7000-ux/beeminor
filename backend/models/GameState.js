@@ -14,7 +14,7 @@ const gameStateSchema = new mongoose.Schema({
   },
   flowers: {
     type: Number,
-    default: 5000
+    default: 100
   },
   diamonds: {
     type: Number,
