@@ -129,29 +129,8 @@ export default function ShopScreen() {
         <Text style={styles.sectionTitle}>{t.bees}</Text>
 
         {VIRTUAL_BEE_TYPES.map((beeType) => {
-          const owned = virtualBees[beeType.id] || 0;
-
-          return (
-            <View key={beeType.id} style={[styles.beeCard, styles.virtualBeeCard]}>              <View style={styles.beeInfo}>
-                <View style={styles.beeHeader}>
-                  {beeType.imageUrl ? (
-                    <Image source={{ uri: beeType.imageUrl }} style={styles.beeImage} />
-                  ) : (
-                    <Text style={styles.beeEmoji}>{beeType.emoji}</Text>
-                  )}
-                  <View style={styles.beeTitleContainer}>
-                    <Text style={styles.beeName}>{beeType.nameFr}</Text>
-                    <Text style={styles.virtualBeeBadge}>VIRTUELLE</Text>
-                  </View>
-                </View>
-                <Text style={styles.beeOwned}>{t.owned}: {owned}</Text>
-              </View>
-              <View style={styles.nonPurchasableBadge}>
-                <Text style={styles.nonPurchasableText}>Non achetable</Text>
-              </View>
-            </View>
-          );
-        })}
+const owned = virtualBees[beeType.id] || 0;
+console.log(`🐝 Virtual Bee ${beeType.id}: ${owned}`);
 
         {BEE_TYPES.map((beeType) => {
           const owned = bees[beeType.id] || 0;
