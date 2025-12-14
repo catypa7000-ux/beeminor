@@ -286,14 +286,17 @@ export default function RouletteScreen() {
         </TouchableOpacity>
 
         {wonPrize && (
-          <View style={styles.prizeCard}>
-            <Text style={styles.prizeTitle}>{t.youWon}</Text>
-            <Text style={styles.prizeLabel}>{wonPrize.label}</Text>
-            {wonPrize.type === 'flowers' && (
-              <Text style={styles.prizeDetail}>+{wonPrize.flowersAmount} {t.flowers.toLowerCase()}</Text>
-            )}
-          </View>
-        )}
+<View style={styles.prizeCard}>
+  <Text style={styles.prizeTitle}>{t.youWon}</Text>
+  <Text style={styles.prizeLabel}>{wonPrize.label}</Text>
+  {wonPrize.type === 'flowers' && (
+    <Text style={styles.prizeDetail}>+{wonPrize.flowersAmount} {t.flowers.toLowerCase()}</Text>
+  )}
+  {wonPrize.type === 'bee' && wonPrize.beeType && (
+    <Text style={styles.prizeDetail}>+1 {VIRTUAL_BEE_TYPES.find(b => b.id === wonPrize.beeType)?.nameFr || 'Abeille'}</Text>
+  )}
+</View>
+)}
 
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>{t.howToGetTickets}</Text>
