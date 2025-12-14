@@ -8,7 +8,7 @@ const createDefaultGameState = (userId) => {
   return new GameState({
     userId: userId,
     honey: 100,
-    flowers: 5000,
+    flowers: 100,
     diamonds: 0,
     tickets: 0,
     bvrCoins: 0,
