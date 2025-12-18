@@ -1,7 +1,7 @@
-import createContextHook from '@nkzw/create-context-hook';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { authAPI } from '../lib/api';
+import createContextHook from "@nkzw/create-context-hook";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { authAPI } from "../lib/api";
 
 export type User = {
   id: string;
@@ -24,13 +24,15 @@ type AuthState = {
   passwordResetRequests?: PasswordResetRequest[];
 };
 
-const STORAGE_KEY = 'auth_state';
-const DEV_SPONSOR_CODE = 'DEV_PARENT';
+const STORAGE_KEY = "auth_state";
+const DEV_SPONSOR_CODE = "DEV_PARENT";
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [passwordResetRequests, setPasswordResetRequests] = useState<PasswordResetRequest[]>([]);
+  const [passwordResetRequests, setPasswordResetRequests] = useState<
+    PasswordResetRequest[]
+  >([]);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
@@ -38,8 +40,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   const generateReferralCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
     for (let i = 0; i < 8; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -56,139 +58,185 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         setPasswordResetRequests(state.passwordResetRequests || []);
       }
     } catch (error) {
-      console.error('Failed to load auth state:', error);
+      console.error("Failed to load auth state:", error);
     } finally {
       setIsLoaded(true);
     }
   };
 
-  const saveAuthState = useCallback(async (user: User | null, allUsers: User[], resetRequests: PasswordResetRequest[]) => {
-    try {
-      const state: AuthState = {
-        currentUser: user,
-        users: allUsers,
-        passwordResetRequests: resetRequests,
-      };
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (error) {
-      console.error('Failed to save auth state:', error);
-    }
-  }, []);
-
-  const register = useCallback(async (email: string, password: string, sponsorCode?: string) => {
-    try {
-      const emailLower = email.toLowerCase().trim();
-      
-      // Call backend API - send undefined if no sponsor code so backend can auto-associate with admin
-      const response = await authAPI.register(emailLower, password, sponsorCode || undefined);
-      
-      if (!response.success) {
-        return { success: false, error: response.message || 'Registration failed' };
+  const saveAuthState = useCallback(
+    async (
+      user: User | null,
+      allUsers: User[],
+      resetRequests: PasswordResetRequest[]
+    ) => {
+      try {
+        const state: AuthState = {
+          currentUser: user,
+          users: allUsers,
+          passwordResetRequests: resetRequests,
+        };
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (error) {
+        console.error("Failed to save auth state:", error);
       }
+    },
+    []
+  );
 
-      // Transform backend user to frontend User type
-      const newUser: User = {
-        id: response.user.id,
-        email: response.user.email,
-        password, // Keep password for local storage (will be removed later)
-        createdAt: response.user.createdAt,
-        referralCode: response.user.referralCode,
-        sponsorCode: response.user.sponsorCode || DEV_SPONSOR_CODE,
-      };
-
-      // Update state
-      setCurrentUser(newUser);
-      // Keep users array for compatibility (can be removed later)
-      const updatedUsers = [...users.filter(u => u.email !== emailLower), newUser];
-      setUsers(updatedUsers);
-      await saveAuthState(newUser, updatedUsers, passwordResetRequests);
-
-      return { success: true, user: newUser };
-    } catch (error: any) {
-      console.error('Register error:', error);
-      const errorMessage = error.message || 'Registration failed. Please try again.';
-      
-      // Fallback to local storage if backend is unavailable
-      if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('Failed to fetch')) {
-        console.warn('Backend unavailable, using local storage fallback');
-        
+  const register = useCallback(
+    async (email: string, password: string, sponsorCode?: string) => {
+      try {
         const emailLower = email.toLowerCase().trim();
-        const existingUser = users.find((u) => u.email.toLowerCase() === emailLower);
-        if (existingUser) {
-          return { success: false, error: 'Email already registered' };
+
+        // Call backend API - send undefined if no sponsor code so backend can auto-associate with admin
+        const response = await authAPI.register(
+          emailLower,
+          password,
+          sponsorCode || undefined
+        );
+
+        if (!response.success) {
+          return {
+            success: false,
+            error: response.message || "Registration failed",
+          };
         }
 
+        // Transform backend user to frontend User type
         const newUser: User = {
-          id: `user_${Date.now()}`,
-          email: emailLower,
-          password,
-          createdAt: new Date().toISOString(),
-          referralCode: generateReferralCode(),
-          sponsorCode: sponsorCode || undefined,
+          id: response.user.id,
+          email: response.user.email,
+          password, // Keep password for local storage (will be removed later)
+          createdAt: response.user.createdAt,
+          referralCode: response.user.referralCode,
+          sponsorCode: response.user.sponsorCode || DEV_SPONSOR_CODE,
         };
 
-        const updatedUsers = [...users, newUser];
-        setUsers(updatedUsers);
+        // Update state
         setCurrentUser(newUser);
+        // Keep users array for compatibility (can be removed later)
+        const updatedUsers = [
+          ...users.filter((u) => u.email !== emailLower),
+          newUser,
+        ];
+        setUsers(updatedUsers);
         await saveAuthState(newUser, updatedUsers, passwordResetRequests);
 
         return { success: true, user: newUser };
-      }
-      
-      return { success: false, error: errorMessage };
-    }
-  }, [users, passwordResetRequests, saveAuthState]);
+      } catch (error: any) {
+        console.error("Register error:", error);
+        const errorMessage =
+          error.message || "Registration failed. Please try again.";
 
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      const emailLower = email.toLowerCase().trim();
-      
-      // Call backend API
-      const response = await authAPI.login(emailLower, password);
-      
-      if (!response.success) {
-        return { success: false, error: response.message || 'Invalid email or password' };
-      }
+        // Fallback to local storage if backend is unavailable
+        if (
+          errorMessage.includes("fetch") ||
+          errorMessage.includes("network") ||
+          errorMessage.includes("Failed to fetch")
+        ) {
+          console.warn("Backend unavailable, using local storage fallback");
 
-      // Transform backend user to frontend User type
-      const user: User = {
-        id: response.user.id,
-        email: response.user.email,
-        password, // Keep password for local storage (will be removed later)
-        createdAt: response.user.createdAt,
-        referralCode: response.user.referralCode,
-        sponsorCode: response.user.sponsorCode,
-      };
+          const emailLower = email.toLowerCase().trim();
+          const existingUser = users.find(
+            (u) => u.email.toLowerCase() === emailLower
+          );
+          if (existingUser) {
+            return { success: false, error: "Email already registered" };
+          }
 
-      // Update state
-      setCurrentUser(user);
-      // Keep users array for compatibility
-      const updatedUsers = [...users.filter(u => u.email !== emailLower), user];
-      setUsers(updatedUsers);
-      await saveAuthState(user, updatedUsers, passwordResetRequests);
+          const newUser: User = {
+            id: `user_${Date.now()}`,
+            email: emailLower,
+            password,
+            createdAt: new Date().toISOString(),
+            referralCode: generateReferralCode(),
+            sponsorCode: sponsorCode || undefined,
+          };
 
-      return { success: true, user };
-    } catch (error: any) {
-      console.error('Login error:', error);
-      const errorMessage = error.message || 'Login failed. Please try again.';
-      
-      // Fallback to local storage if backend is unavailable
-      if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('Failed to fetch')) {
-        console.warn('Backend unavailable, using local storage fallback');
-        
-        const emailLower = email.toLowerCase().trim();
-        const user = users.find((u) => u.email.toLowerCase() === emailLower && u.password === password);
-        
-        if (user) {
-          setCurrentUser(user);
-          await saveAuthState(user, users, passwordResetRequests);
-          return { success: true, user };
+          const updatedUsers = [...users, newUser];
+          setUsers(updatedUsers);
+          setCurrentUser(newUser);
+          await saveAuthState(newUser, updatedUsers, passwordResetRequests);
+
+          return { success: true, user: newUser };
         }
+
+        return { success: false, error: errorMessage };
       }
-      
-      return { success: false, error: errorMessage || 'Invalid email or password' };
-    }
-  }, [users, passwordResetRequests, saveAuthState]);
+    },
+    [users, passwordResetRequests, saveAuthState]
+  );
+
+  const login = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const emailLower = email.toLowerCase().trim();
+
+        // Call backend API
+        const response = await authAPI.login(emailLower, password);
+
+        if (!response.success) {
+          return {
+            success: false,
+            error: response.message || "Invalid email or password",
+          };
+        }
+
+        // Transform backend user to frontend User type
+        const user: User = {
+          id: response.user.id,
+          email: response.user.email,
+          password, // Keep password for local storage (will be removed later)
+          createdAt: response.user.createdAt,
+          referralCode: response.user.referralCode,
+          sponsorCode: response.user.sponsorCode,
+        };
+
+        // Update state
+        setCurrentUser(user);
+        // Keep users array for compatibility
+        const updatedUsers = [
+          ...users.filter((u) => u.email !== emailLower),
+          user,
+        ];
+        setUsers(updatedUsers);
+        await saveAuthState(user, updatedUsers, passwordResetRequests);
+
+        return { success: true, user };
+      } catch (error: any) {
+        console.error("Login error:", error);
+        const errorMessage = error.message || "Login failed. Please try again.";
+
+        // Fallback to local storage if backend is unavailable
+        if (
+          errorMessage.includes("fetch") ||
+          errorMessage.includes("network") ||
+          errorMessage.includes("Failed to fetch")
+        ) {
+          console.warn("Backend unavailable, using local storage fallback");
+
+          const emailLower = email.toLowerCase().trim();
+          const user = users.find(
+            (u) =>
+              u.email.toLowerCase() === emailLower && u.password === password
+          );
+
+          if (user) {
+            setCurrentUser(user);
+            await saveAuthState(user, users, passwordResetRequests);
+            return { success: true, user };
+          }
+        }
+
+        return {
+          success: false,
+          error: errorMessage || "Invalid email or password",
+        };
+      }
+    },
+    [users, passwordResetRequests, saveAuthState]
+  );
 
   const logout = useCallback(async () => {
     setCurrentUser(null);
@@ -199,72 +247,82 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
-  const requestPasswordReset = useCallback(async (email: string) => {
-    const emailLower = email.toLowerCase().trim();
-    const user = users.find((u) => u.email.toLowerCase() === emailLower);
-    
-    if (!user) {
-      return { success: false, error: 'Aucun compte trouvé avec cet email' };
-    }
+  const requestPasswordReset = useCallback(
+    async (email: string) => {
+      const emailLower = email.toLowerCase().trim();
+      const user = users.find((u) => u.email.toLowerCase() === emailLower);
 
-    const resetCode = generateResetCode();
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 1);
+      if (!user) {
+        return { success: false, error: "Aucun compte trouvé avec cet email" };
+      }
 
-    const newRequest: PasswordResetRequest = {
-      email: emailLower,
-      code: resetCode,
-      expiresAt: expiresAt.toISOString(),
-    };
+      const resetCode = generateResetCode();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 1);
 
-    const updatedRequests = passwordResetRequests.filter(
-      (r) => r.email !== emailLower
-    );
-    updatedRequests.push(newRequest);
-    setPasswordResetRequests(updatedRequests);
-    await saveAuthState(currentUser, users, updatedRequests);
+      const newRequest: PasswordResetRequest = {
+        email: emailLower,
+        code: resetCode,
+        expiresAt: expiresAt.toISOString(),
+      };
 
-    console.log(`\n[RESET PASSWORD] Email would be sent to: ${email}`);
-    console.log(`[RESET PASSWORD] Reset code: ${resetCode}`);
-    console.log(`[RESET PASSWORD] Expires at: ${expiresAt.toLocaleString()}\n`);
+      const updatedRequests = passwordResetRequests.filter(
+        (r) => r.email !== emailLower
+      );
+      updatedRequests.push(newRequest);
+      setPasswordResetRequests(updatedRequests);
+      await saveAuthState(currentUser, users, updatedRequests);
 
-    return { success: true, code: resetCode };
-  }, [users, passwordResetRequests, currentUser, saveAuthState]);
+      return { success: true, code: resetCode };
+    },
+    [users, passwordResetRequests, currentUser, saveAuthState]
+  );
 
-  const resetPassword = useCallback(async (email: string, code: string, newPassword: string) => {
-    const emailLower = email.toLowerCase().trim();
-    const request = passwordResetRequests.find(
-      (r) => r.email === emailLower && r.code === code
-    );
+  const resetPassword = useCallback(
+    async (email: string, code: string, newPassword: string) => {
+      const emailLower = email.toLowerCase().trim();
+      const request = passwordResetRequests.find(
+        (r) => r.email === emailLower && r.code === code
+      );
 
-    if (!request) {
-      return { success: false, error: 'Code de réinitialisation invalide' };
-    }
+      if (!request) {
+        return { success: false, error: "Code de réinitialisation invalide" };
+      }
 
-    const now = new Date();
-    const expiresAt = new Date(request.expiresAt);
-    if (now > expiresAt) {
-      return { success: false, error: 'Le code de réinitialisation a expiré' };
-    }
+      const now = new Date();
+      const expiresAt = new Date(request.expiresAt);
+      if (now > expiresAt) {
+        return {
+          success: false,
+          error: "Le code de réinitialisation a expiré",
+        };
+      }
 
-    const userIndex = users.findIndex((u) => u.email.toLowerCase() === emailLower);
-    if (userIndex === -1) {
-      return { success: false, error: 'Utilisateur non trouvé' };
-    }
+      const userIndex = users.findIndex(
+        (u) => u.email.toLowerCase() === emailLower
+      );
+      if (userIndex === -1) {
+        return { success: false, error: "Utilisateur non trouvé" };
+      }
 
-    const updatedUsers = [...users];
-    updatedUsers[userIndex] = { ...updatedUsers[userIndex], password: newPassword };
-    setUsers(updatedUsers);
+      const updatedUsers = [...users];
+      updatedUsers[userIndex] = {
+        ...updatedUsers[userIndex],
+        password: newPassword,
+      };
+      setUsers(updatedUsers);
 
-    const updatedRequests = passwordResetRequests.filter(
-      (r) => r.email !== emailLower
-    );
-    setPasswordResetRequests(updatedRequests);
+      const updatedRequests = passwordResetRequests.filter(
+        (r) => r.email !== emailLower
+      );
+      setPasswordResetRequests(updatedRequests);
 
-    await saveAuthState(currentUser, updatedUsers, updatedRequests);
+      await saveAuthState(currentUser, updatedUsers, updatedRequests);
 
-    return { success: true };
-  }, [users, passwordResetRequests, currentUser, saveAuthState]);
+      return { success: true };
+    },
+    [users, passwordResetRequests, currentUser, saveAuthState]
+  );
 
   useEffect(() => {
     if (isLoaded) {
@@ -272,15 +330,27 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   }, [currentUser, users, passwordResetRequests, isLoaded, saveAuthState]);
 
-  return useMemo(() => ({
-    currentUser,
-    users,
-    isLoaded,
-    register,
-    login,
-    logout,
-    requestPasswordReset,
-    resetPassword,
-    isAuthenticated: currentUser !== null,
-  }), [currentUser, users, isLoaded, register, login, logout, requestPasswordReset, resetPassword]);
+  return useMemo(
+    () => ({
+      currentUser,
+      users,
+      isLoaded,
+      register,
+      login,
+      logout,
+      requestPasswordReset,
+      resetPassword,
+      isAuthenticated: currentUser !== null,
+    }),
+    [
+      currentUser,
+      users,
+      isLoaded,
+      register,
+      login,
+      logout,
+      requestPasswordReset,
+      resetPassword,
+    ]
+  );
 });
