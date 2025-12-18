@@ -1,4 +1,5 @@
 import { useGame } from "../../../contexts/GameContext";
+import { useLanguage } from "../../../contexts/LanguageContext";
 import React, { useState } from "react";
 import {
   View,
@@ -14,6 +15,7 @@ type ExchangeType = "DIAMONDS_TO_FLOWERS" | "BVR_TO_FLOWERS";
 
 export default function EchangeScreen() {
   const { diamonds, bvrCoins, flowers, exchangeResource } = useGame();
+  const { t } = useLanguage();
   const [selectedExchange, setSelectedExchange] = useState<ExchangeType | null>(
     null
   );
@@ -156,8 +158,8 @@ export default function EchangeScreen() {
                 </View>
               )}
             </View>
-            <Text style={styles.exchangeName}>Diamants vers Fleurs</Text>
-            <Text style={styles.exchangeRate}>100 diamants = 0.01 fleurs</Text>
+            <Text style={styles.exchangeName}>{t.diamondsToFlowers}</Text>
+            <Text style={styles.exchangeRate}>{t.diamondExchangeRate}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -233,11 +235,12 @@ export default function EchangeScreen() {
         )}
 
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>ℹ️ Informations</Text>
+          <Text style={styles.infoTitle}>ℹ️ {t.importantInfo}</Text>
           <Text style={styles.infoText}>
-            • Diamants → Fleurs: 100 diamants = 0.01 fleurs{"\n"}• BVR → Fleurs:
-            100 BVR = 1 fleur{"\n"}• L&apos;échange est instantané{"\n"}• Aucuns
-            frais
+            • {t.diamondsToFlowers}: {t.diamondExchangeRate}
+            {"\n"}• {t.bvrToFlowers}: 100 BVR = 1 {t.flowers}
+            {"\n"}• {t.instant}
+            {"\n"}• {t.noFees}
           </Text>
         </View>
 

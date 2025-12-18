@@ -138,6 +138,7 @@ export type Translations = {
   sold: string;
   transactionSuccess: string;
   transactionFailed: string;
+  diamondExchangeRate: string;
   cryptoWithdrawPage: string;
   ticketsAvailable: string;
   spinning: string;
@@ -354,6 +355,7 @@ const translations: Record<Language, Translations> = {
     sold: "Vendu!",
     transactionSuccess: "Transaction réussie!",
     transactionFailed: "Transaction échouée",
+    diamondExchangeRate: "100 diamants = 0.01 fleurs",
     cryptoWithdrawPage: "Retrait Crypto",
     ticketsAvailable: "Tickets disponibles",
     spinning: "En rotation...",
@@ -574,6 +576,7 @@ const translations: Record<Language, Translations> = {
     sold: "Sold!",
     transactionSuccess: "Transaction successful!",
     transactionFailed: "Transaction failed",
+    diamondExchangeRate: "100 diamonds = 0.01 flowers",
     cryptoWithdrawPage: "Crypto Withdraw",
     ticketsAvailable: "Available tickets",
     spinning: "Spinning...",
@@ -790,6 +793,7 @@ const translations: Record<Language, Translations> = {
     sold: "¡Vendido!",
     transactionSuccess: "¡Transacción exitosa!",
     transactionFailed: "Transacción fallida",
+    diamondExchangeRate: "100 diamantes = 0.01 flores",
     cryptoWithdrawPage: "Retiro Cripto",
     ticketsAvailable: "Tickets disponibles",
     spinning: "Girando...",
@@ -1008,6 +1012,7 @@ const translations: Record<Language, Translations> = {
     sold: "Verkauft!",
     transactionSuccess: "Transaktion erfolgreich!",
     transactionFailed: "Transaktion fehlgeschlagen",
+    diamondExchangeRate: "100 Diamanten = 0.01 Blumen",
     cryptoWithdrawPage: "Krypto-Auszahlung",
     ticketsAvailable: "Verfügbare Tickets",
     spinning: "Dreht sich...",
@@ -1226,6 +1231,7 @@ const translations: Record<Language, Translations> = {
     sold: "Venduto!",
     transactionSuccess: "Transazione riuscita!",
     transactionFailed: "Transazione fallita",
+    diamondExchangeRate: "100 diamanti = 0.01 fiori",
     cryptoWithdrawPage: "Prelievo Crypto",
     ticketsAvailable: "Ticket disponibili",
     spinning: "Girando...",
@@ -1443,6 +1449,7 @@ const translations: Record<Language, Translations> = {
     sold: "Vendido!",
     transactionSuccess: "Transação bem-sucedida!",
     transactionFailed: "Transação falhou",
+    diamondExchangeRate: "100 diamantes = 0.01 flores",
     cryptoWithdrawPage: "Saque Crypto",
     ticketsAvailable: "Tickets disponíveis",
     spinning: "Girando...",
@@ -1659,6 +1666,7 @@ const translations: Record<Language, Translations> = {
     sold: "Продано!",
     transactionSuccess: "Транзакция успешна!",
     transactionFailed: "Транзакция не удалась",
+    diamondExchangeRate: "100 алмазов = 0.01 цветов",
     cryptoWithdrawPage: "Вывод Крипты",
     ticketsAvailable: "Доступные тикеты",
     spinning: "Вращается...",
@@ -1875,6 +1883,7 @@ const translations: Record<Language, Translations> = {
     sold: "تم البيع!",
     transactionSuccess: "نجحت العملية!",
     transactionFailed: "فشلت العملية",
+    diamondExchangeRate: "100 ماس = 0.01 زهور",
     cryptoWithdrawPage: "سحب العملات المشفرة",
     ticketsAvailable: "التذاكر المتاحة",
     spinning: "جارٍ الدوران...",
@@ -2091,6 +2100,7 @@ const translations: Record<Language, Translations> = {
     sold: "Terjual!",
     transactionSuccess: "Transaksi berhasil!",
     transactionFailed: "Transaksi gagal",
+    diamondExchangeRate: "100 berlian = 0.01 bunga",
     cryptoWithdrawPage: "Tarik Crypto",
     ticketsAvailable: "Tiket tersedia",
     spinning: "Berputar...",
