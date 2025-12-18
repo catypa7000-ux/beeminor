@@ -1,7 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const GameState = require('../models/GameState');
-const User = require('../models/User');
+const GameState = require("../models/GameState");
+const User = require("../models/User");
 
 // Helper function to create a new GameState with proper defaults
 const createDefaultGameState = (userId) => {
@@ -12,9 +12,26 @@ const createDefaultGameState = (userId) => {
     diamonds: 0,
     tickets: 0,
     bvrCoins: 0,
-    bees: new Map([['baby', 0], ['worker', 0], ['elite', 0], ['royal', 0], ['queen', 0]]),
-    virtualBees: new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]]),
-    alveoles: new Map([['1', true], ['2', false], ['3', false], ['4', false], ['5', false], ['6', false]]),
+    bees: new Map([
+      ["baby", 0],
+      ["worker", 0],
+      ["elite", 0],
+      ["royal", 0],
+      ["queen", 0],
+    ]),
+    virtualBees: new Map([
+      ["virtual1", 1],
+      ["virtual2", 0],
+      ["virtual3", 0],
+    ]),
+    alveoles: new Map([
+      ["1", true],
+      ["2", false],
+      ["3", false],
+      ["4", false],
+      ["5", false],
+      ["6", false],
+    ]),
     invitedFriends: 0,
     claimedMissions: [],
     referrals: [],
@@ -22,27 +39,33 @@ const createDefaultGameState = (userId) => {
     hasPendingFunds: false,
     transactions: [],
     diamondsThisYear: 0,
-    yearStartDate: new Date().getFullYear().toString()
+    yearStartDate: new Date().getFullYear().toString(),
   });
 };
 
 // @route   GET /api/game/:userId
 // @desc    Get game state for user
 // @access  Public (should be protected in production)
-router.get('/:userId', async (req, res) => {
+router.get("/:userId", async (req, res) => {
   try {
     let gameState = await GameState.findOne({ userId: req.params.userId });
-    
+
     // Create default game state if doesn't exist
     if (!gameState) {
       gameState = createDefaultGameState(req.params.userId);
       await gameState.save();
-      console.log(`🐝 Created new game state for user ${req.params.userId} with virtual bee 1`);
+      console.log(
+        `🐝 Created new game state for user ${req.params.userId} with virtual bee 1`
+      );
     }
-    
+
     // Ensure virtualBees exists (migration for old accounts)
     if (!gameState.virtualBees || gameState.virtualBees.size === 0) {
-      gameState.virtualBees = new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]]);
+      gameState.virtualBees = new Map([
+        ["virtual1", 1],
+        ["virtual2", 0],
+        ["virtual3", 0],
+      ]);
       await gameState.save();
       console.log(`🔧 Fixed virtualBees for user ${req.params.userId}`);
     }
@@ -66,15 +89,15 @@ router.get('/:userId', async (req, res) => {
         hasPendingFunds: gameState.hasPendingFunds,
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
-        yearStartDate: gameState.yearStartDate
-      }
+        yearStartDate: gameState.yearStartDate,
+      },
     });
   } catch (error) {
-    console.error('Get game state error:', error);
+    console.error("Get game state error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching game state',
-      error: error.message
+      message: "Error fetching game state",
+      error: error.message,
     });
   }
 });
@@ -82,22 +105,22 @@ router.get('/:userId', async (req, res) => {
 // @route   PUT /api/game/:userId
 // @desc    Update game state
 // @access  Public (should be protected in production)
-router.put('/:userId', async (req, res) => {
+router.put("/:userId", async (req, res) => {
   try {
     const updates = req.body;
-    
+
     const gameState = await GameState.findOneAndUpdate(
       { userId: req.params.userId },
-      { 
+      {
         ...updates,
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
       },
       { new: true, upsert: true }
     );
 
     res.json({
       success: true,
-      message: 'Game state updated successfully',
+      message: "Game state updated successfully",
       gameState: {
         userId: gameState.userId.toString(),
         honey: gameState.honey,
@@ -106,7 +129,14 @@ router.put('/:userId', async (req, res) => {
         tickets: gameState.tickets,
         bvrCoins: gameState.bvrCoins,
         bees: Object.fromEntries(gameState.bees),
-        virtualBees: Object.fromEntries(gameState.virtualBees || new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]])),
+        virtualBees: Object.fromEntries(
+          gameState.virtualBees ||
+            new Map([
+              ["virtual1", 1],
+              ["virtual2", 0],
+              ["virtual3", 0],
+            ])
+        ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
         claimedMissions: gameState.claimedMissions,
@@ -115,15 +145,15 @@ router.put('/:userId', async (req, res) => {
         hasPendingFunds: gameState.hasPendingFunds,
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
-        yearStartDate: gameState.yearStartDate
-      }
+        yearStartDate: gameState.yearStartDate,
+      },
     });
   } catch (error) {
-    console.error('Update game state error:', error);
+    console.error("Update game state error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error updating game state',
-      error: error.message
+      message: "Error updating game state",
+      error: error.message,
     });
   }
 });
@@ -131,7 +161,7 @@ router.put('/:userId', async (req, res) => {
 // @route   POST /api/game/:userId/buy-bee
 // @desc    Buy a bee with flowers
 // @access  Public
-router.post('/:userId/buy-bee', async (req, res) => {
+router.post("/:userId/buy-bee", async (req, res) => {
   try {
     const { beeTypeId } = req.body;
 
@@ -139,7 +169,7 @@ router.post('/:userId/buy-bee', async (req, res) => {
     if (!beeTypeId) {
       return res.status(400).json({
         success: false,
-        message: 'Bee type ID is required'
+        message: "Bee type ID is required",
       });
     }
 
@@ -149,14 +179,14 @@ router.post('/:userId/buy-bee', async (req, res) => {
       worker: 10000,
       elite: 50000,
       royal: 250000,
-      queen: 1200000
+      queen: 1200000,
     };
 
     // Validate bee type
     if (!BEE_COSTS[beeTypeId]) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid bee type'
+        message: "Invalid bee type",
       });
     }
 
@@ -167,7 +197,7 @@ router.post('/:userId/buy-bee', async (req, res) => {
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -175,7 +205,7 @@ router.post('/:userId/buy-bee', async (req, res) => {
     if (gameState.flowers < cost) {
       return res.status(400).json({
         success: false,
-        message: `Not enough flowers. Need ${cost}, have ${gameState.flowers}`
+        message: `Not enough flowers. Need ${cost}, have ${gameState.flowers}`,
       });
     }
 
@@ -198,7 +228,14 @@ router.post('/:userId/buy-bee', async (req, res) => {
         tickets: gameState.tickets,
         bvrCoins: gameState.bvrCoins,
         bees: Object.fromEntries(gameState.bees),
-        virtualBees: Object.fromEntries(gameState.virtualBees || new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]])),
+        virtualBees: Object.fromEntries(
+          gameState.virtualBees ||
+            new Map([
+              ["virtual1", 1],
+              ["virtual2", 0],
+              ["virtual3", 0],
+            ])
+        ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
         claimedMissions: gameState.claimedMissions,
@@ -207,15 +244,15 @@ router.post('/:userId/buy-bee', async (req, res) => {
         hasPendingFunds: gameState.hasPendingFunds,
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
-        yearStartDate: gameState.yearStartDate
-      }
+        yearStartDate: gameState.yearStartDate,
+      },
     });
   } catch (error) {
-    console.error('Buy bee error:', error);
+    console.error("Buy bee error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error purchasing bee',
-      error: error.message
+      message: "Error purchasing bee",
+      error: error.message,
     });
   }
 });
@@ -223,7 +260,7 @@ router.post('/:userId/buy-bee', async (req, res) => {
 // @route   POST /api/game/:userId/sell-honey
 // @desc    Sell honey for diamonds, flowers, and BVR coins
 // @access  Public
-router.post('/:userId/sell-honey', async (req, res) => {
+router.post("/:userId/sell-honey", async (req, res) => {
   try {
     const { amount } = req.body;
 
@@ -231,7 +268,7 @@ router.post('/:userId/sell-honey', async (req, res) => {
     if (!amount || amount <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Amount must be greater than 0'
+        message: "Amount must be greater than 0",
       });
     }
 
@@ -240,7 +277,7 @@ router.post('/:userId/sell-honey', async (req, res) => {
     if (amount < MIN_HONEY) {
       return res.status(400).json({
         success: false,
-        message: `Minimum ${MIN_HONEY} honey required to sell`
+        message: `Minimum ${MIN_HONEY} honey required to sell`,
       });
     }
 
@@ -249,7 +286,7 @@ router.post('/:userId/sell-honey', async (req, res) => {
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -257,13 +294,13 @@ router.post('/:userId/sell-honey', async (req, res) => {
     if (gameState.honey < amount) {
       return res.status(400).json({
         success: false,
-        message: `Not enough honey. Have ${gameState.honey}, trying to sell ${amount}`
+        message: `Not enough honey. Have ${gameState.honey}, trying to sell ${amount}`,
       });
     }
 
     // Calculate rewards (100 honey = 1 diamond + 0.10 flower + 0.5 BVR)
     const diamondsEarned = Math.floor(amount / 100);
-    const flowersEarned = diamondsEarned * 0.10;
+    const flowersEarned = diamondsEarned * 0.1;
     const bvrEarned = diamondsEarned * 0.5;
 
     // Update game state
@@ -282,7 +319,7 @@ router.post('/:userId/sell-honey', async (req, res) => {
       rewards: {
         diamonds: diamondsEarned,
         flowers: flowersEarned,
-        bvr: bvrEarned
+        bvr: bvrEarned,
       },
       gameState: {
         userId: gameState.userId.toString(),
@@ -292,7 +329,14 @@ router.post('/:userId/sell-honey', async (req, res) => {
         tickets: gameState.tickets,
         bvrCoins: gameState.bvrCoins,
         bees: Object.fromEntries(gameState.bees),
-        virtualBees: Object.fromEntries(gameState.virtualBees || new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]])),
+        virtualBees: Object.fromEntries(
+          gameState.virtualBees ||
+            new Map([
+              ["virtual1", 1],
+              ["virtual2", 0],
+              ["virtual3", 0],
+            ])
+        ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
         claimedMissions: gameState.claimedMissions,
@@ -301,15 +345,15 @@ router.post('/:userId/sell-honey', async (req, res) => {
         hasPendingFunds: gameState.hasPendingFunds,
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
-        yearStartDate: gameState.yearStartDate
-      }
+        yearStartDate: gameState.yearStartDate,
+      },
     });
   } catch (error) {
-    console.error('Sell honey error:', error);
+    console.error("Sell honey error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error selling honey',
-      error: error.message
+      message: "Error selling honey",
+      error: error.message,
     });
   }
 });
@@ -317,7 +361,7 @@ router.post('/:userId/sell-honey', async (req, res) => {
 // @route   POST /api/game/:userId/upgrade-alveole
 // @desc    Upgrade/unlock alveole with flowers
 // @access  Public
-router.post('/:userId/upgrade-alveole', async (req, res) => {
+router.post("/:userId/upgrade-alveole", async (req, res) => {
   try {
     const { level } = req.body;
 
@@ -325,7 +369,7 @@ router.post('/:userId/upgrade-alveole', async (req, res) => {
     if (!level || level < 1 || level > 6) {
       return res.status(400).json({
         success: false,
-        message: 'Level must be between 1 and 6'
+        message: "Level must be between 1 and 6",
       });
     }
 
@@ -336,14 +380,14 @@ router.post('/:userId/upgrade-alveole', async (req, res) => {
       { level: 3, capacity: 6000000, cost: 500000 },
       { level: 4, capacity: 14000000, cost: 1250000 },
       { level: 5, capacity: 30000000, cost: 3500000 },
-      { level: 6, capacity: 48000000, cost: 8000000 }
+      { level: 6, capacity: 48000000, cost: 8000000 },
     ];
 
-    const alveoleInfo = ALVEOLE_LEVELS.find(a => a.level === level);
+    const alveoleInfo = ALVEOLE_LEVELS.find((a) => a.level === level);
     if (!alveoleInfo) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid alveole level'
+        message: "Invalid alveole level",
       });
     }
 
@@ -352,7 +396,7 @@ router.post('/:userId/upgrade-alveole', async (req, res) => {
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -360,7 +404,7 @@ router.post('/:userId/upgrade-alveole', async (req, res) => {
     if (gameState.alveoles.get(level.toString())) {
       return res.status(400).json({
         success: false,
-        message: `Alveole level ${level} is already unlocked`
+        message: `Alveole level ${level} is already unlocked`,
       });
     }
 
@@ -368,7 +412,7 @@ router.post('/:userId/upgrade-alveole', async (req, res) => {
     if (gameState.flowers < alveoleInfo.cost) {
       return res.status(400).json({
         success: false,
-        message: `Not enough flowers. Need ${alveoleInfo.cost}, have ${gameState.flowers}`
+        message: `Not enough flowers. Need ${alveoleInfo.cost}, have ${gameState.flowers}`,
       });
     }
 
@@ -385,7 +429,7 @@ router.post('/:userId/upgrade-alveole', async (req, res) => {
       alveole: {
         level: level,
         capacity: alveoleInfo.capacity,
-        cost: alveoleInfo.cost
+        cost: alveoleInfo.cost,
       },
       gameState: {
         userId: gameState.userId.toString(),
@@ -395,7 +439,14 @@ router.post('/:userId/upgrade-alveole', async (req, res) => {
         tickets: gameState.tickets,
         bvrCoins: gameState.bvrCoins,
         bees: Object.fromEntries(gameState.bees),
-        virtualBees: Object.fromEntries(gameState.virtualBees || new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]])),
+        virtualBees: Object.fromEntries(
+          gameState.virtualBees ||
+            new Map([
+              ["virtual1", 1],
+              ["virtual2", 0],
+              ["virtual3", 0],
+            ])
+        ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
         claimedMissions: gameState.claimedMissions,
@@ -404,15 +455,15 @@ router.post('/:userId/upgrade-alveole', async (req, res) => {
         hasPendingFunds: gameState.hasPendingFunds,
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
-        yearStartDate: gameState.yearStartDate
-      }
+        yearStartDate: gameState.yearStartDate,
+      },
     });
   } catch (error) {
-    console.error('Upgrade alveole error:', error);
+    console.error("Upgrade alveole error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error upgrading alveole',
-      error: error.message
+      message: "Error upgrading alveole",
+      error: error.message,
     });
   }
 });
@@ -420,14 +471,14 @@ router.post('/:userId/upgrade-alveole', async (req, res) => {
 // @route   POST /api/game/:userId/spin-roulette
 // @desc    Spin roulette with server-side randomization
 // @access  Public
-router.post('/:userId/spin-roulette', async (req, res) => {
+router.post("/:userId/spin-roulette", async (req, res) => {
   try {
     // Get current game state
     let gameState = await GameState.findOne({ userId: req.params.userId });
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -435,28 +486,146 @@ router.post('/:userId/spin-roulette', async (req, res) => {
     if (gameState.tickets <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'No tickets available'
+        message: "No tickets available",
       });
     }
 
     // Prize configuration (server-side - prevents client manipulation)
     const PRIZES = [
-      { id: '1', label: '100', type: 'flowers', flowersAmount: 100, weight: 70, rarity: 'common' },
-      { id: '2', label: '300', type: 'flowers', flowersAmount: 300, weight: 30, rarity: 'common' },
-      { id: '3', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, weight: 12, rarity: 'uncommon' },
-      { id: '4', label: '500', type: 'flowers', flowersAmount: 500, weight: 12, rarity: 'uncommon' },
-      { id: '5', label: 'Virtual 2', type: 'bee', beeType: 'virtual2', beeCount: 1, weight: 6, rarity: 'rare' },
-      { id: '6', label: '100', type: 'flowers', flowersAmount: 100, weight: 70, rarity: 'common' },
-      { id: '7', label: '1000', type: 'flowers', flowersAmount: 1000, weight: 3, rarity: 'epic' },
-      { id: '8', label: '300', type: 'flowers', flowersAmount: 300, weight: 30, rarity: 'common' },
-      { id: '9', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, weight: 12, rarity: 'uncommon' },
-      { id: '10', label: '500', type: 'flowers', flowersAmount: 500, weight: 12, rarity: 'uncommon' },
-      { id: '11', label: 'Virtual 3', type: 'bee', beeType: 'virtual3', beeCount: 1, weight: 3, rarity: 'legendary' },
-      { id: '12', label: '100', type: 'flowers', flowersAmount: 100, weight: 70, rarity: 'common' },
-      { id: '13', label: 'Virtual 2', type: 'bee', beeType: 'virtual2', beeCount: 1, weight: 6, rarity: 'rare' },
-      { id: '14', label: '300', type: 'flowers', flowersAmount: 300, weight: 30, rarity: 'common' },
-      { id: '15', label: '500', type: 'flowers', flowersAmount: 500, weight: 12, rarity: 'uncommon' },
-      { id: '16', label: 'Virtual 1', type: 'bee', beeType: 'virtual1', beeCount: 1, weight: 12, rarity: 'uncommon' }
+      {
+        id: "1",
+        label: "100",
+        type: "flowers",
+        flowersAmount: 100,
+        weight: 70,
+        rarity: "common",
+      },
+      {
+        id: "2",
+        label: "300",
+        type: "flowers",
+        flowersAmount: 300,
+        weight: 30,
+        rarity: "common",
+      },
+      {
+        id: "3",
+        label: "Virtual 1",
+        type: "bee",
+        beeType: "virtual1",
+        beeCount: 1,
+        weight: 12,
+        rarity: "uncommon",
+      },
+      {
+        id: "4",
+        label: "500",
+        type: "flowers",
+        flowersAmount: 500,
+        weight: 12,
+        rarity: "uncommon",
+      },
+      {
+        id: "5",
+        label: "Virtual 2",
+        type: "bee",
+        beeType: "virtual2",
+        beeCount: 1,
+        weight: 6,
+        rarity: "rare",
+      },
+      {
+        id: "6",
+        label: "100",
+        type: "flowers",
+        flowersAmount: 100,
+        weight: 70,
+        rarity: "common",
+      },
+      {
+        id: "7",
+        label: "1000",
+        type: "flowers",
+        flowersAmount: 1000,
+        weight: 3,
+        rarity: "epic",
+      },
+      {
+        id: "8",
+        label: "300",
+        type: "flowers",
+        flowersAmount: 300,
+        weight: 30,
+        rarity: "common",
+      },
+      {
+        id: "9",
+        label: "Virtual 1",
+        type: "bee",
+        beeType: "virtual1",
+        beeCount: 1,
+        weight: 12,
+        rarity: "uncommon",
+      },
+      {
+        id: "10",
+        label: "500",
+        type: "flowers",
+        flowersAmount: 500,
+        weight: 12,
+        rarity: "uncommon",
+      },
+      {
+        id: "11",
+        label: "Virtual 3",
+        type: "bee",
+        beeType: "virtual3",
+        beeCount: 1,
+        weight: 3,
+        rarity: "legendary",
+      },
+      {
+        id: "12",
+        label: "100",
+        type: "flowers",
+        flowersAmount: 100,
+        weight: 70,
+        rarity: "common",
+      },
+      {
+        id: "13",
+        label: "Virtual 2",
+        type: "bee",
+        beeType: "virtual2",
+        beeCount: 1,
+        weight: 6,
+        rarity: "rare",
+      },
+      {
+        id: "14",
+        label: "300",
+        type: "flowers",
+        flowersAmount: 300,
+        weight: 30,
+        rarity: "common",
+      },
+      {
+        id: "15",
+        label: "500",
+        type: "flowers",
+        flowersAmount: 500,
+        weight: 12,
+        rarity: "uncommon",
+      },
+      {
+        id: "16",
+        label: "Virtual 1",
+        type: "bee",
+        beeType: "virtual1",
+        beeCount: 1,
+        weight: 12,
+        rarity: "uncommon",
+      },
     ];
 
     // Server-side weighted random selection
@@ -478,10 +647,24 @@ router.post('/:userId/spin-roulette', async (req, res) => {
     gameState.tickets -= 1;
 
     // Award prize
-    if (prize.type === 'bee' && prize.beeType && prize.beeCount) {
-      const currentBeeCount = gameState.bees.get(prize.beeType) || 0;
-      gameState.bees.set(prize.beeType, currentBeeCount + prize.beeCount);
-    } else if (prize.type === 'flowers' && prize.flowersAmount) {
+    if (prize.type === "bee" && prize.beeType && prize.beeCount) {
+      if (prize.beeType.startsWith("virtual")) {
+        // Initialize virtualBees map if it doesn't exist (though it should from defaults)
+        if (!gameState.virtualBees) {
+          gameState.virtualBees = new Map([
+            ["virtual1", 0],
+            ["virtual2", 0],
+            ["virtual3", 0],
+          ]);
+        }
+
+        const currentCount = gameState.virtualBees.get(prize.beeType) || 0;
+        gameState.virtualBees.set(prize.beeType, currentCount + prize.beeCount);
+      } else {
+        const currentBeeCount = gameState.bees.get(prize.beeType) || 0;
+        gameState.bees.set(prize.beeType, currentBeeCount + prize.beeCount);
+      }
+    } else if (prize.type === "flowers" && prize.flowersAmount) {
       gameState.flowers += prize.flowersAmount;
     }
 
@@ -490,7 +673,7 @@ router.post('/:userId/spin-roulette', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Roulette spin successful',
+      message: "Roulette spin successful",
       prize: {
         index: prizeIndex,
         id: prize.id,
@@ -499,7 +682,7 @@ router.post('/:userId/spin-roulette', async (req, res) => {
         beeType: prize.beeType,
         beeCount: prize.beeCount,
         flowersAmount: prize.flowersAmount,
-        rarity: prize.rarity
+        rarity: prize.rarity,
       },
       gameState: {
         userId: gameState.userId.toString(),
@@ -509,7 +692,14 @@ router.post('/:userId/spin-roulette', async (req, res) => {
         tickets: gameState.tickets,
         bvrCoins: gameState.bvrCoins,
         bees: Object.fromEntries(gameState.bees),
-        virtualBees: Object.fromEntries(gameState.virtualBees || new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]])),
+        virtualBees: Object.fromEntries(
+          gameState.virtualBees ||
+            new Map([
+              ["virtual1", 1],
+              ["virtual2", 0],
+              ["virtual3", 0],
+            ])
+        ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
         claimedMissions: gameState.claimedMissions,
@@ -518,15 +708,15 @@ router.post('/:userId/spin-roulette', async (req, res) => {
         hasPendingFunds: gameState.hasPendingFunds,
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
-        yearStartDate: gameState.yearStartDate
-      }
+        yearStartDate: gameState.yearStartDate,
+      },
     });
   } catch (error) {
-    console.error('Spin roulette error:', error);
+    console.error("Spin roulette error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error spinning roulette',
-      error: error.message
+      message: "Error spinning roulette",
+      error: error.message,
     });
   }
 });
@@ -534,7 +724,7 @@ router.post('/:userId/spin-roulette', async (req, res) => {
 // @route   POST /api/game/:userId/claim-mission
 // @desc    Claim mission rewards with validation
 // @access  Public
-router.post('/:userId/claim-mission', async (req, res) => {
+router.post("/:userId/claim-mission", async (req, res) => {
   try {
     const { missionId } = req.body;
 
@@ -542,7 +732,7 @@ router.post('/:userId/claim-mission', async (req, res) => {
     if (!missionId) {
       return res.status(400).json({
         success: false,
-        message: 'Mission ID is required'
+        message: "Mission ID is required",
       });
     }
 
@@ -554,14 +744,14 @@ router.post('/:userId/claim-mission', async (req, res) => {
       { id: 4, friendsRequired: 50, flowersReward: 12000, ticketsReward: 1 },
       { id: 5, friendsRequired: 100, flowersReward: 30000, ticketsReward: 2 },
       { id: 6, friendsRequired: 300, flowersReward: 70000, ticketsReward: 3 },
-      { id: 7, friendsRequired: 500, flowersReward: 160000, ticketsReward: 5 }
+      { id: 7, friendsRequired: 500, flowersReward: 160000, ticketsReward: 5 },
     ];
 
-    const mission = MISSIONS.find(m => m.id === missionId);
+    const mission = MISSIONS.find((m) => m.id === missionId);
     if (!mission) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid mission ID'
+        message: "Invalid mission ID",
       });
     }
 
@@ -570,7 +760,7 @@ router.post('/:userId/claim-mission', async (req, res) => {
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -578,7 +768,7 @@ router.post('/:userId/claim-mission', async (req, res) => {
     if (gameState.claimedMissions.includes(missionId)) {
       return res.status(400).json({
         success: false,
-        message: 'Mission already claimed'
+        message: "Mission already claimed",
       });
     }
 
@@ -586,7 +776,7 @@ router.post('/:userId/claim-mission', async (req, res) => {
     if (gameState.invitedFriends < mission.friendsRequired) {
       return res.status(400).json({
         success: false,
-        message: `Not enough invited friends. Need ${mission.friendsRequired}, have ${gameState.invitedFriends}`
+        message: `Not enough invited friends. Need ${mission.friendsRequired}, have ${gameState.invitedFriends}`,
       });
     }
 
@@ -600,11 +790,11 @@ router.post('/:userId/claim-mission', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Mission claimed successfully',
+      message: "Mission claimed successfully",
       mission: {
         id: mission.id,
         flowersReward: mission.flowersReward,
-        ticketsReward: mission.ticketsReward
+        ticketsReward: mission.ticketsReward,
       },
       gameState: {
         userId: gameState.userId.toString(),
@@ -614,7 +804,14 @@ router.post('/:userId/claim-mission', async (req, res) => {
         tickets: gameState.tickets,
         bvrCoins: gameState.bvrCoins,
         bees: Object.fromEntries(gameState.bees),
-        virtualBees: Object.fromEntries(gameState.virtualBees || new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]])),
+        virtualBees: Object.fromEntries(
+          gameState.virtualBees ||
+            new Map([
+              ["virtual1", 1],
+              ["virtual2", 0],
+              ["virtual3", 0],
+            ])
+        ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
         claimedMissions: gameState.claimedMissions,
@@ -623,15 +820,15 @@ router.post('/:userId/claim-mission', async (req, res) => {
         hasPendingFunds: gameState.hasPendingFunds,
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
-        yearStartDate: gameState.yearStartDate
-      }
+        yearStartDate: gameState.yearStartDate,
+      },
     });
   } catch (error) {
-    console.error('Claim mission error:', error);
+    console.error("Claim mission error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error claiming mission',
-      error: error.message
+      message: "Error claiming mission",
+      error: error.message,
     });
   }
 });
@@ -639,15 +836,15 @@ router.post('/:userId/claim-mission', async (req, res) => {
 // @route   POST /api/game/:userId/recreate-gamestate
 // @desc    Delete and recreate game state with correct schema (for development only)
 // @access  Public (should be removed in production)
-router.post('/:userId/recreate-gamestate', async (req, res) => {
+router.post("/:userId/recreate-gamestate", async (req, res) => {
   try {
     // Get current game state values to preserve them
     const oldGameState = await GameState.findOne({ userId: req.params.userId });
-    
+
     if (!oldGameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -666,7 +863,7 @@ router.post('/:userId/recreate-gamestate', async (req, res) => {
       totalReferralEarnings: oldGameState.totalReferralEarnings,
       hasPendingFunds: oldGameState.hasPendingFunds,
       diamondsThisYear: oldGameState.diamondsThisYear,
-      yearStartDate: oldGameState.yearStartDate
+      yearStartDate: oldGameState.yearStartDate,
     };
 
     // Delete the old document
@@ -676,29 +873,29 @@ router.post('/:userId/recreate-gamestate', async (req, res) => {
     const newGameState = new GameState({
       userId: req.params.userId,
       ...savedData,
-      transactions: [] // This will now be an array
+      transactions: [], // This will now be an array
     });
 
     await newGameState.save();
 
     res.json({
       success: true,
-      message: 'Game state recreated successfully with correct schema',
+      message: "Game state recreated successfully with correct schema",
       gameState: {
         userId: newGameState.userId.toString(),
         honey: newGameState.honey,
         flowers: newGameState.flowers,
         diamonds: newGameState.diamonds,
         tickets: newGameState.tickets,
-        transactions: newGameState.transactions
-      }
+        transactions: newGameState.transactions,
+      },
     });
   } catch (error) {
-    console.error('Recreate game state error:', error);
+    console.error("Recreate game state error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error recreating game state',
-      error: error.message
+      message: "Error recreating game state",
+      error: error.message,
     });
   }
 });
@@ -706,16 +903,17 @@ router.post('/:userId/recreate-gamestate', async (req, res) => {
 // @route   POST /api/game/:userId/add-test-resources
 // @desc    Add testing resources (for development only)
 // @access  Public (should be removed in production)
-router.post('/:userId/add-test-resources', async (req, res) => {
+router.post("/:userId/add-test-resources", async (req, res) => {
   try {
-    const { honey, flowers, tickets, diamonds, bvrCoins, invitedFriends } = req.body;
+    const { honey, flowers, tickets, diamonds, bvrCoins, invitedFriends } =
+      req.body;
 
     // Get current game state
     let gameState = await GameState.findOne({ userId: req.params.userId });
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -725,14 +923,15 @@ router.post('/:userId/add-test-resources', async (req, res) => {
     if (tickets) gameState.tickets += tickets;
     if (diamonds) gameState.diamonds += diamonds;
     if (bvrCoins) gameState.bvrCoins += bvrCoins;
-    if (typeof invitedFriends === 'number') gameState.invitedFriends = invitedFriends;
-    
+    if (typeof invitedFriends === "number")
+      gameState.invitedFriends = invitedFriends;
+
     gameState.lastUpdated = new Date();
     await gameState.save();
 
     res.json({
       success: true,
-      message: 'Test resources added successfully',
+      message: "Test resources added successfully",
       added: { honey, flowers, tickets, diamonds, bvrCoins },
       gameState: {
         userId: gameState.userId.toString(),
@@ -742,7 +941,14 @@ router.post('/:userId/add-test-resources', async (req, res) => {
         tickets: gameState.tickets,
         bvrCoins: gameState.bvrCoins,
         bees: Object.fromEntries(gameState.bees),
-        virtualBees: Object.fromEntries(gameState.virtualBees || new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]])),
+        virtualBees: Object.fromEntries(
+          gameState.virtualBees ||
+            new Map([
+              ["virtual1", 1],
+              ["virtual2", 0],
+              ["virtual3", 0],
+            ])
+        ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
         claimedMissions: gameState.claimedMissions,
@@ -751,15 +957,15 @@ router.post('/:userId/add-test-resources', async (req, res) => {
         hasPendingFunds: gameState.hasPendingFunds,
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
-        yearStartDate: gameState.yearStartDate
-      }
+        yearStartDate: gameState.yearStartDate,
+      },
     });
   } catch (error) {
-    console.error('Add test resources error:', error);
+    console.error("Add test resources error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error adding test resources',
-      error: error.message
+      message: "Error adding test resources",
+      error: error.message,
     });
   }
 });
@@ -767,7 +973,7 @@ router.post('/:userId/add-test-resources', async (req, res) => {
 // @route   POST /api/game/:userId/process-referral
 // @desc    Process referral bonus when a user makes their first purchase
 // @access  Public (should be protected in production)
-router.post('/:userId/process-referral', async (req, res) => {
+router.post("/:userId/process-referral", async (req, res) => {
   try {
     const { purchaseAmount, purchaseType } = req.body; // flowers spent
 
@@ -776,7 +982,7 @@ router.post('/:userId/process-referral', async (req, res) => {
     if (!buyer) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
@@ -784,8 +990,8 @@ router.post('/:userId/process-referral', async (req, res) => {
     if (!buyer.sponsorCode) {
       return res.json({
         success: true,
-        message: 'No sponsor to reward',
-        bonusAwarded: false
+        message: "No sponsor to reward",
+        bonusAwarded: false,
       });
     }
 
@@ -794,30 +1000,31 @@ router.post('/:userId/process-referral', async (req, res) => {
     if (!sponsor) {
       return res.json({
         success: true,
-        message: 'Sponsor not found',
-        bonusAwarded: false
+        message: "Sponsor not found",
+        bonusAwarded: false,
       });
     }
 
     // Check if this is the buyer's first purchase (check if they already have a referral entry)
     const sponsorGameState = await GameState.findOne({ userId: sponsor._id });
     const buyerGameState = await GameState.findOne({ userId: buyer._id });
-    
+
     if (!sponsorGameState || !buyerGameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
     // Check if buyer already has a referral entry
     const existingReferral = sponsorGameState.referrals.find(
-      r => r.email === buyer.email
+      (r) => r.email === buyer.email
     );
 
     // Check if this is the first purchase (earnings > invitationBonus means already processed first purchase)
     const invitationBonus = 100;
-    const isFirstPurchase = existingReferral && existingReferral.earnings === invitationBonus;
+    const isFirstPurchase =
+      existingReferral && existingReferral.earnings === invitationBonus;
 
     if (existingReferral && existingReferral.earnings > invitationBonus) {
       // First purchase bonus already given, just give 5% ongoing bonus
@@ -830,20 +1037,20 @@ router.post('/:userId/process-referral', async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'Ongoing referral bonus awarded (5%)',
+        message: "Ongoing referral bonus awarded (5%)",
         bonusAwarded: true,
         bonus: {
           sponsor: sponsor.email,
           amount: ongoingBonus,
-          type: 'flowers',
+          type: "flowers",
           purchaseType: purchaseType,
-          isFirstPurchase: false
+          isFirstPurchase: false,
         },
         sponsorNewBalance: {
           flowers: sponsorGameState.flowers,
           totalReferralEarnings: sponsorGameState.totalReferralEarnings,
-          invitedFriends: sponsorGameState.invitedFriends
-        }
+          invitedFriends: sponsorGameState.invitedFriends,
+        },
       });
     }
 
@@ -864,7 +1071,7 @@ router.post('/:userId/process-referral', async (req, res) => {
         email: buyer.email,
         referralCode: buyer.referralCode,
         joinedAt: buyer.createdAt,
-        earnings: totalBonus
+        earnings: totalBonus,
       });
       sponsorGameState.invitedFriends += 1;
     }
@@ -874,29 +1081,31 @@ router.post('/:userId/process-referral', async (req, res) => {
 
     res.json({
       success: true,
-      message: isFirstPurchase ? 'Referral bonus awarded (5% + 1000 first purchase)' : 'Referral bonus awarded (5%)',
+      message: isFirstPurchase
+        ? "Referral bonus awarded (5% + 1000 first purchase)"
+        : "Referral bonus awarded (5%)",
       bonusAwarded: true,
       bonus: {
         sponsor: sponsor.email,
         amount: totalBonus,
         affiliationBonus: affiliationBonus,
         firstPurchaseBonus: firstPurchaseBonus,
-        type: 'flowers',
+        type: "flowers",
         purchaseType: purchaseType,
-        isFirstPurchase: isFirstPurchase
+        isFirstPurchase: isFirstPurchase,
       },
       sponsorNewBalance: {
         flowers: sponsorGameState.flowers,
         totalReferralEarnings: sponsorGameState.totalReferralEarnings,
-        invitedFriends: sponsorGameState.invitedFriends
-      }
+        invitedFriends: sponsorGameState.invitedFriends,
+      },
     });
   } catch (error) {
-    console.error('Process referral error:', error);
+    console.error("Process referral error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error processing referral',
-      error: error.message
+      message: "Error processing referral",
+      error: error.message,
     });
   }
 });
@@ -904,14 +1113,14 @@ router.post('/:userId/process-referral', async (req, res) => {
 // @route   POST /api/game/:userId/link-referral
 // @desc    Link a user to their sponsor and increment invitedFriends
 // @access  Public (should be protected in production)
-router.post('/:userId/link-referral', async (req, res) => {
+router.post("/:userId/link-referral", async (req, res) => {
   try {
     // Get the user
     const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
@@ -919,8 +1128,8 @@ router.post('/:userId/link-referral', async (req, res) => {
     if (!user.sponsorCode) {
       return res.json({
         success: true,
-        message: 'No sponsor code found',
-        linked: false
+        message: "No sponsor code found",
+        linked: false,
       });
     }
 
@@ -929,7 +1138,7 @@ router.post('/:userId/link-referral', async (req, res) => {
     if (!sponsor) {
       return res.status(404).json({
         success: false,
-        message: 'Sponsor not found'
+        message: "Sponsor not found",
       });
     }
 
@@ -942,14 +1151,14 @@ router.post('/:userId/link-referral', async (req, res) => {
 
     // Check if already linked
     const alreadyLinked = sponsorGameState.referrals.some(
-      r => r.email === user.email
+      (r) => r.email === user.email
     );
 
     if (alreadyLinked) {
       return res.json({
         success: true,
-        message: 'Referral already linked',
-        linked: false
+        message: "Referral already linked",
+        linked: false,
       });
     }
 
@@ -959,7 +1168,7 @@ router.post('/:userId/link-referral', async (req, res) => {
       email: user.email,
       referralCode: user.referralCode,
       joinedAt: user.createdAt,
-      earnings: invitationBonus
+      earnings: invitationBonus,
     });
     sponsorGameState.invitedFriends += 1;
     sponsorGameState.flowers += invitationBonus;
@@ -969,19 +1178,19 @@ router.post('/:userId/link-referral', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Referral linked successfully',
+      message: "Referral linked successfully",
       linked: true,
       sponsor: {
         email: sponsor.email,
-        invitedFriends: sponsorGameState.invitedFriends
-      }
+        invitedFriends: sponsorGameState.invitedFriends,
+      },
     });
   } catch (error) {
-    console.error('Link referral error:', error);
+    console.error("Link referral error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error linking referral',
-      error: error.message
+      message: "Error linking referral",
+      error: error.message,
     });
   }
 });
@@ -989,14 +1198,14 @@ router.post('/:userId/link-referral', async (req, res) => {
 // @route   POST /api/game/:userId/purchase-flowers
 // @desc    Purchase flowers with USD (creates pending transaction, awards flowers and tickets)
 // @access  Public (should be protected in production)
-router.post('/:userId/purchase-flowers', async (req, res) => {
+router.post("/:userId/purchase-flowers", async (req, res) => {
   try {
     const { amount, priceUSD, paymentMethod, transactionId } = req.body;
 
     if (!amount || !priceUSD) {
       return res.status(400).json({
         success: false,
-        message: 'Amount and price are required'
+        message: "Amount and price are required",
       });
     }
 
@@ -1005,7 +1214,7 @@ router.post('/:userId/purchase-flowers', async (req, res) => {
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -1014,7 +1223,9 @@ router.post('/:userId/purchase-flowers', async (req, res) => {
 
     // Award tickets (1 ticket per $10 spent)
     const ticketsEarned = Math.floor(priceUSD / 10);
-    console.log(`💳 Purchase: ${priceUSD} → ${amount} flowers + ${ticketsEarned} tickets`);
+    console.log(
+      `💳 Purchase: ${priceUSD} → ${amount} flowers + ${ticketsEarned} tickets`
+    );
     if (ticketsEarned > 0) {
       gameState.tickets += ticketsEarned;
     }
@@ -1025,25 +1236,25 @@ router.post('/:userId/purchase-flowers', async (req, res) => {
     await gameState.save();
 
     // Create transaction record in separate Transaction model (proper architecture)
-    const Transaction = require('../models/Transaction');
+    const Transaction = require("../models/Transaction");
     const transaction = new Transaction({
       userId: req.params.userId,
-      type: 'flower_purchase',
+      type: "flower_purchase",
       amount: priceUSD,
-      currency: 'USD',
-      status: 'completed',
-      address: paymentMethod || '',
-      notes: `Purchased ${amount} flowers, earned ${ticketsEarned} tickets`
+      currency: "USD",
+      status: "completed",
+      address: paymentMethod || "",
+      notes: `Purchased ${amount} flowers, earned ${ticketsEarned} tickets`,
     });
     await transaction.save();
 
     res.json({
       success: true,
-      message: 'Flowers purchased successfully',
+      message: "Flowers purchased successfully",
       purchase: {
         flowers: amount,
         price: priceUSD,
-        ticketsEarned: ticketsEarned
+        ticketsEarned: ticketsEarned,
       },
       gameState: {
         userId: gameState.userId.toString(),
@@ -1053,7 +1264,14 @@ router.post('/:userId/purchase-flowers', async (req, res) => {
         tickets: gameState.tickets,
         bvrCoins: gameState.bvrCoins,
         bees: Object.fromEntries(gameState.bees),
-        virtualBees: Object.fromEntries(gameState.virtualBees || new Map([['virtual1', 1], ['virtual2', 0], ['virtual3', 0]])),
+        virtualBees: Object.fromEntries(
+          gameState.virtualBees ||
+            new Map([
+              ["virtual1", 1],
+              ["virtual2", 0],
+              ["virtual3", 0],
+            ])
+        ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
         claimedMissions: gameState.claimedMissions,
@@ -1062,15 +1280,15 @@ router.post('/:userId/purchase-flowers', async (req, res) => {
         hasPendingFunds: gameState.hasPendingFunds,
         transactions: [], // Transactions stored in separate Transaction model
         diamondsThisYear: gameState.diamondsThisYear,
-        yearStartDate: gameState.yearStartDate
-      }
+        yearStartDate: gameState.yearStartDate,
+      },
     });
   } catch (error) {
-    console.error('Purchase flowers error:', error);
+    console.error("Purchase flowers error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error purchasing flowers',
-      error: error.message
+      message: "Error purchasing flowers",
+      error: error.message,
     });
   }
 });
@@ -1078,21 +1296,21 @@ router.post('/:userId/purchase-flowers', async (req, res) => {
 // @route   POST /api/game/:userId/exchange
 // @desc    Exchange diamonds or BVR for flowers
 // @access  Public (should be protected in production)
-router.post('/:userId/exchange', async (req, res) => {
+router.post("/:userId/exchange", async (req, res) => {
   try {
     const { type, amount } = req.body;
 
     if (!type || !amount) {
       return res.status(400).json({
         success: false,
-        message: 'Type and amount are required'
+        message: "Type and amount are required",
       });
     }
 
     if (amount <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Amount must be positive'
+        message: "Amount must be positive",
       });
     }
 
@@ -1100,43 +1318,43 @@ router.post('/:userId/exchange', async (req, res) => {
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
     let flowersReceived = 0;
-    let exchangedResource = '';
+    let exchangedResource = "";
 
-    if (type === 'DIAMONDS_TO_FLOWERS') {
+    if (type === "DIAMONDS_TO_FLOWERS") {
       if (gameState.diamonds < amount) {
         return res.status(400).json({
           success: false,
-          message: 'Insufficient diamonds',
+          message: "Insufficient diamonds",
           current: gameState.diamonds,
-          required: amount
+          required: amount,
         });
       }
 
-      // 10% bonus: 1 diamond = 1.1 flowers
-      flowersReceived = amount * 1.1;
+      // Updated rate: 100 diamonds = 0.01 flowers (0.0001 flowers per diamond)
+      flowersReceived = amount * 0.0001;
       gameState.diamonds -= amount;
       gameState.flowers += flowersReceived;
       exchangedResource = `${amount} diamonds`;
-    } else if (type === 'BVR_TO_FLOWERS') {
+    } else if (type === "BVR_TO_FLOWERS") {
       if (gameState.bvrCoins < amount) {
         return res.status(400).json({
           success: false,
-          message: 'Insufficient BVR',
+          message: "Insufficient BVR",
           current: gameState.bvrCoins,
-          required: amount
+          required: amount,
         });
       }
 
       if (amount < 100) {
         return res.status(400).json({
           success: false,
-          message: 'Minimum 100 BVR required',
-          current: amount
+          message: "Minimum 100 BVR required",
+          current: amount,
         });
       }
 
@@ -1148,22 +1366,22 @@ router.post('/:userId/exchange', async (req, res) => {
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Invalid exchange type'
+        message: "Invalid exchange type",
       });
     }
 
     gameState.lastUpdated = new Date();
     await gameState.save();
 
-    console.log('✅ Exchange completed:', {
+    console.log("✅ Exchange completed:", {
       type,
       amount,
       flowersReceived,
       newBalances: {
         diamonds: gameState.diamonds,
         bvrCoins: gameState.bvrCoins,
-        flowers: gameState.flowers
-      }
+        flowers: gameState.flowers,
+      },
     });
 
     res.json({
@@ -1173,15 +1391,15 @@ router.post('/:userId/exchange', async (req, res) => {
       newBalances: {
         diamonds: gameState.diamonds,
         bvrCoins: gameState.bvrCoins,
-        flowers: gameState.flowers
-      }
+        flowers: gameState.flowers,
+      },
     });
   } catch (error) {
-    console.error('Exchange error:', error);
+    console.error("Exchange error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error processing exchange',
-      error: error.message
+      message: "Error processing exchange",
+      error: error.message,
     });
   }
 });
@@ -1189,7 +1407,7 @@ router.post('/:userId/exchange', async (req, res) => {
 // @route   POST /api/game/:userId/set-pending-funds
 // @desc    Mark that user has sent payment and funds are pending verification
 // @access  Public (should be protected in production)
-router.post('/:userId/set-pending-funds', async (req, res) => {
+router.post("/:userId/set-pending-funds", async (req, res) => {
   try {
     const { hasPending } = req.body;
 
@@ -1198,7 +1416,7 @@ router.post('/:userId/set-pending-funds', async (req, res) => {
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -1208,15 +1426,15 @@ router.post('/:userId/set-pending-funds', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Pending funds status updated',
-      hasPendingFunds: gameState.hasPendingFunds
+      message: "Pending funds status updated",
+      hasPendingFunds: gameState.hasPendingFunds,
     });
   } catch (error) {
-    console.error('Set pending funds error:', error);
+    console.error("Set pending funds error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error updating pending funds status',
-      error: error.message
+      message: "Error updating pending funds status",
+      error: error.message,
     });
   }
 });
@@ -1224,7 +1442,7 @@ router.post('/:userId/set-pending-funds', async (req, res) => {
 // @route   POST /api/game/:userId/admin/add-resources
 // @desc    Admin: Add resources to user
 // @access  Admin only (should be protected in production)
-router.post('/:userId/admin/add-resources', async (req, res) => {
+router.post("/:userId/admin/add-resources", async (req, res) => {
   try {
     const { userId } = req.params;
     const { flowers, tickets, diamonds, honey, bvrCoins } = req.body;
@@ -1233,7 +1451,7 @@ router.post('/:userId/admin/add-resources', async (req, res) => {
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -1248,21 +1466,21 @@ router.post('/:userId/admin/add-resources', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Resources added successfully',
+      message: "Resources added successfully",
       gameState: {
         flowers: gameState.flowers,
         tickets: gameState.tickets,
         diamonds: gameState.diamonds,
         honey: gameState.honey,
-        bvrCoins: gameState.bvrCoins
-      }
+        bvrCoins: gameState.bvrCoins,
+      },
     });
   } catch (error) {
-    console.error('Admin add resources error:', error);
+    console.error("Admin add resources error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error adding resources',
-      error: error.message
+      message: "Error adding resources",
+      error: error.message,
     });
   }
 });
@@ -1270,7 +1488,7 @@ router.post('/:userId/admin/add-resources', async (req, res) => {
 // @route   POST /api/game/:userId/admin/set-invited-friends
 // @desc    Admin: Set invited friends count
 // @access  Admin only (should be protected in production)
-router.post('/:userId/admin/set-invited-friends', async (req, res) => {
+router.post("/:userId/admin/set-invited-friends", async (req, res) => {
   try {
     const { userId } = req.params;
     const { count } = req.body;
@@ -1278,7 +1496,7 @@ router.post('/:userId/admin/set-invited-friends', async (req, res) => {
     if (count === undefined || count < 0) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid count'
+        message: "Invalid count",
       });
     }
 
@@ -1286,7 +1504,7 @@ router.post('/:userId/admin/set-invited-friends', async (req, res) => {
     if (!gameState) {
       return res.status(404).json({
         success: false,
-        message: 'Game state not found'
+        message: "Game state not found",
       });
     }
 
@@ -1295,18 +1513,17 @@ router.post('/:userId/admin/set-invited-friends', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Invited friends count updated',
-      invitedFriends: gameState.invitedFriends
+      message: "Invited friends count updated",
+      invitedFriends: gameState.invitedFriends,
     });
   } catch (error) {
-    console.error('Admin set invited friends error:', error);
+    console.error("Admin set invited friends error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error setting invited friends',
-      error: error.message
+      message: "Error setting invited friends",
+      error: error.message,
     });
   }
 });
 
 module.exports = router;
-
