@@ -181,10 +181,54 @@ export default function ShopScreen() {
 
         <Text style={styles.sectionTitle}>{t.bees}</Text>
 
-        {/* {VIRTUAL_BEE_TYPES.map((beeType) => {
+        {VIRTUAL_BEE_TYPES.map((beeType) => {
           const owned = virtualBees[beeType.id] || 0;
-          console.log(`🐝 Virtual Bee ${beeType.id}: ${owned}`);
-        })} */}
+
+          return (
+            <View
+              key={beeType.id}
+              style={[styles.beeCard, styles.virtualBeeCard]}
+            >
+              <View style={styles.beeInfo}>
+                <View style={styles.beeHeader}>
+                  <Text style={styles.beeEmoji}>{beeType.emoji}</Text>
+                  <View style={styles.beeTitleContainer}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <Text style={styles.beeName}>{beeType.nameFr}</Text>
+                      <View style={styles.virtualBeeBadge}>
+                        <Text
+                          style={{
+                            color: "#4A90E2",
+                            fontSize: 10,
+                            fontWeight: "bold",
+                          }}
+                        >
+                          VIRTUELLE
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.beeProduction}>
+                      +{beeType.honeyPerHour} miel/h
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.beeOwned}>
+                  {t.owned}: {owned}
+                </Text>
+              </View>
+
+              <View style={styles.nonPurchasableBadge}>
+                <Text style={styles.nonPurchasableText}>Roulette</Text>
+              </View>
+            </View>
+          );
+        })}
 
         {BEE_TYPES.map((beeType) => {
           const owned = bees[beeType.id] || 0;
