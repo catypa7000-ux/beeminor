@@ -175,11 +175,11 @@ router.post("/:userId/buy-bee", async (req, res) => {
 
     // Bee types with costs
     const BEE_COSTS = {
-      baby: 2000,
-      worker: 10000,
-      elite: 50000,
-      royal: 250000,
-      queen: 1200000,
+      baby: 24990,
+      worker: 49990,
+      elite: 99990,
+      royal: 199000,
+      queen: 389000,
     };
 
     // Validate bee type
