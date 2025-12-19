@@ -694,7 +694,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
             } catch (error) {
               console.error("Failed to sync game state to backend:", error);
             }
-          }, 2000); // 2 second debounce
+          }, 500); // 500ms debounce
         }
       } catch (error) {
         console.error("Failed to save game state:", error);
