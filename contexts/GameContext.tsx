@@ -220,6 +220,18 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const generateReferralCode = useCallback(() => {
+    setReferralCode((current) => {
+      if (current) return current;
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let code = "";
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    });
+  }, []);
+
   const loadUserId = async () => {
     try {
       // Load user ID from AsyncStorage (set when user logs in)
@@ -284,7 +296,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
         console.error("Failed to load from local storage:", error);
       }
 
-      generateReferralCode();
+      // generateReferralCode(); // Removed: don't generate randomly on init, wait for backend
       initializeMockLeaderboard();
 
       console.log("✅ Game initialized");
@@ -293,6 +305,12 @@ export const [GameProvider, useGame] = createContextHook(() => {
     initializeGame();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (isLoaded && !referralCode) {
+      generateReferralCode();
+    }
+  }, [isLoaded, referralCode, generateReferralCode]);
 
   const syncGameStateFromBackend = useCallback(async (userId: string) => {
     try {
@@ -325,6 +343,14 @@ export const [GameProvider, useGame] = createContextHook(() => {
         }
         if (state.alveoles) {
           setAlveoles(state.alveoles);
+        }
+
+        // Update referral info from backend
+        if ((state as any).referralCode) {
+          setReferralCode((state as any).referralCode);
+        }
+        if ((state as any).sponsorCode) {
+          setSponsorCode((state as any).sponsorCode);
         }
       }
     } catch (error) {
@@ -389,15 +415,6 @@ export const [GameProvider, useGame] = createContextHook(() => {
     });
   };
 
-  const generateReferralCode = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
-    for (let i = 0; i < 8; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setReferralCode(code);
-  };
-
   const loadGameState = useCallback(async () => {
     try {
       // Try loading from backend first if userId exists
@@ -432,6 +449,14 @@ export const [GameProvider, useGame] = createContextHook(() => {
             }
             if (state.alveoles) {
               setAlveoles(state.alveoles);
+            }
+
+            // Important: Set referral code from backend
+            if ((state as any).referralCode) {
+              setReferralCode((state as any).referralCode);
+            }
+            if ((state as any).sponsorCode) {
+              setSponsorCode((state as any).sponsorCode);
             }
 
             // Link referral on first login (if user has sponsor and not yet linked)
