@@ -62,7 +62,8 @@ export default function TachesScreen() {
   // Get the app URL from environment or use default
   const getInviteLink = () => {
     // In production, this should be your deployed frontend URL
-    const appUrl = process.env.EXPO_PUBLIC_APP_URL || "https://beegame.app";
+    const appUrl =
+      process.env.EXPO_PUBLIC_APP_URL || "https://www.beeminor.live";
     return `${appUrl}/invite/${referralCode}`;
   };
 
