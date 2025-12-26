@@ -324,7 +324,20 @@ export const [GameProvider, useGame] = createContextHook(() => {
         setBvrCoins(state.bvrCoins ?? 0);
         setInvitedFriends(state.invitedFriends ?? 0);
         setClaimedMissions(state.claimedMissions ?? []);
-        setReferrals(state.referrals ?? []);
+
+        // Map backend referrals to frontend Referral type
+        const mappedReferrals = (state.referrals ?? []).map((r: any) => ({
+          id: r.referralCode || r.id || "",
+          name: r.email || r.name || "Inconnu",
+          joinDate: r.joinedAt
+            ? new Date(r.joinedAt).toLocaleDateString("fr-FR")
+            : r.joinDate || "",
+          totalDeposits: r.totalDeposits || 0,
+          firstDepositBonus: r.firstDepositBonus || 0,
+          lifetimeEarnings: r.earnings || r.lifetimeEarnings || 0,
+          hasFirstPurchase: r.hasFirstPurchase || r.earnings > 100 || false,
+        }));
+        setReferrals(mappedReferrals);
         setTotalReferralEarnings(state.totalReferralEarnings ?? 0);
         setHasPendingFunds(state.hasPendingFunds ?? false);
         setTransactions(state.transactions ?? []);
@@ -430,7 +443,20 @@ export const [GameProvider, useGame] = createContextHook(() => {
             setBvrCoins(state.bvrCoins ?? 0);
             setInvitedFriends(state.invitedFriends ?? 0);
             setClaimedMissions(state.claimedMissions ?? []);
-            setReferrals(state.referrals ?? []);
+
+            // Map backend referrals to frontend Referral type
+            const mappedReferrals = (state.referrals ?? []).map((r: any) => ({
+              id: r.referralCode || r.id || "",
+              name: r.email || r.name || "Inconnu",
+              joinDate: r.joinedAt
+                ? new Date(r.joinedAt).toLocaleDateString("fr-FR")
+                : r.joinDate || "",
+              totalDeposits: r.totalDeposits || 0,
+              firstDepositBonus: r.firstDepositBonus || 0,
+              lifetimeEarnings: r.earnings || r.lifetimeEarnings || 0,
+              hasFirstPurchase: r.hasFirstPurchase || r.earnings > 100 || false,
+            }));
+            setReferrals(mappedReferrals);
             setTotalReferralEarnings(state.totalReferralEarnings ?? 0);
             setHasPendingFunds(state.hasPendingFunds ?? false);
             setTransactions(state.transactions ?? []);
@@ -452,20 +478,56 @@ export const [GameProvider, useGame] = createContextHook(() => {
             }
 
             // Important: Set referral code from backend
-            if ((state as any).referralCode) {
-              setReferralCode((state as any).referralCode);
+            const backendReferralCode = (state as any).referralCode;
+            const backendSponsorCode = (state as any).sponsorCode;
+
+            if (backendReferralCode) {
+              setReferralCode(backendReferralCode);
             }
-            if ((state as any).sponsorCode) {
-              setSponsorCode((state as any).sponsorCode);
+            if (backendSponsorCode) {
+              setSponsorCode(backendSponsorCode);
             }
 
             // Link referral on first login (if user has sponsor and not yet linked)
-            if (sponsorCode && state.referrals.length === 0) {
+            // We call it if has sponsor, backend handles deduplication
+            if (backendSponsorCode) {
               try {
-                await gameAPI.linkReferral(currentUserId);
+                const linkRes = await gameAPI.linkReferral(currentUserId);
+                if (linkRes.success && linkRes.linked) {
+                  console.log(
+                    "🔗 Referral linked successfully to sponsor:",
+                    backendSponsorCode
+                  );
+                  // Re-fetch game state to get updated referrals/flowers
+                  const updatedResponse = await gameAPI.getGameState(
+                    currentUserId
+                  );
+                  if (updatedResponse.success && updatedResponse.gameState) {
+                    const updatedState = updatedResponse.gameState;
+                    const newMappedReferrals = (
+                      updatedState.referrals || []
+                    ).map((r: any) => ({
+                      id: r.referralCode || r.id || "",
+                      name: r.email || r.name || "Inconnu",
+                      joinDate: r.joinedAt
+                        ? new Date(r.joinedAt).toLocaleDateString("fr-FR")
+                        : r.joinDate || "",
+                      totalDeposits: r.totalDeposits || 0,
+                      firstDepositBonus: r.firstDepositBonus || 0,
+                      lifetimeEarnings: r.earnings || r.lifetimeEarnings || 0,
+                      hasFirstPurchase:
+                        r.hasFirstPurchase || r.earnings > 100 || false,
+                    }));
+                    setReferrals(newMappedReferrals);
+                    setInvitedFriends(updatedState.invitedFriends || 0);
+                    setFlowers(updatedState.flowers || 0);
+                    setTotalReferralEarnings(
+                      updatedState.totalReferralEarnings || 0
+                    );
+                  }
+                }
               } catch (linkError) {
                 console.log("Referral link note:", linkError);
-                // Non-blocking
               }
             }
 

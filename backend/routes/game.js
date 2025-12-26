@@ -73,6 +73,49 @@ router.get("/:userId", async (req, res) => {
       console.log(`🔧 Fixed virtualBees for user ${req.params.userId}`);
     }
 
+    // REPAIR & SYNC MECHANISM: Ensure references from User model are reflected in GameState
+    if (user && user.referralCode) {
+      const actualReferrals = await User.find({
+        sponsorCode: user.referralCode,
+      }).select("email referralCode createdAt");
+
+      let changed = false;
+
+      // Check for each actual referral if it's already in our game state list
+      for (const actual of actualReferrals) {
+        const alreadyInList = gameState.referrals.find(
+          (r) => r.email === actual.email
+        );
+
+        if (!alreadyInList) {
+          console.log(
+            `[SYNC] Discovering missing referral: ${actual.email} for user ${user.email}`
+          );
+          const invitationBonus = 100;
+          gameState.referrals.push({
+            email: actual.email,
+            referralCode: actual.referralCode,
+            joinedAt: actual.createdAt,
+            earnings: invitationBonus,
+          });
+          changed = true;
+        }
+      }
+
+      // Sync the count if it's different
+      if (gameState.invitedFriends !== actualReferrals.length) {
+        console.log(
+          `[SYNC] Updating invitedFriends count: ${gameState.invitedFriends} -> ${actualReferrals.length}`
+        );
+        gameState.invitedFriends = actualReferrals.length;
+        changed = true;
+      }
+
+      if (changed) {
+        await gameState.save();
+      }
+    }
+
     res.json({
       success: true,
       gameState: {
@@ -113,7 +156,13 @@ router.get("/:userId", async (req, res) => {
 // @access  Public (should be protected in production)
 router.put("/:userId", async (req, res) => {
   try {
-    const updates = req.body;
+    const updates = { ...req.body };
+
+    // Prevent overwriting server-managed referral data from frontend
+    delete updates.referrals;
+    delete updates.invitedFriends;
+    delete updates.totalReferralEarnings;
+    delete updates.userId; // Safety
 
     const gameState = await GameState.findOneAndUpdate(
       { userId: req.params.userId },

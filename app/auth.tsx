@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,33 +9,47 @@ import {
   Platform,
   ScrollView,
   Alert,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../contexts/AuthContext';
-import { useLanguage } from '../contexts/LanguageContext';
-import { router } from 'expo-router';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { router, useLocalSearchParams } from "expo-router";
 
-const isWeb = Platform.OS === 'web';
+const isWeb = Platform.OS === "web";
 const MAX_WEB_WIDTH = 500;
 
-type ScreenMode = 'login' | 'register' | 'forgot' | 'reset';
+type ScreenMode = "login" | "register" | "forgot" | "reset";
 
 export default function AuthScreen() {
   const { register, login, requestPasswordReset, resetPassword } = useAuth();
   const { t, currentLanguage, changeLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
-  const [mode, setMode] = useState<ScreenMode>('login');
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [sponsorCode, setSponsorCode] = useState<string>('');
-  const [resetCode, setResetCode] = useState<string>('');
-  const [newPassword, setNewPassword] = useState<string>('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState<string>('');
+  const params = useLocalSearchParams();
+
+  const [mode, setMode] = useState<ScreenMode>(
+    params.mode === "register" || params.sponsor ? "register" : "login"
+  );
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [sponsorCode, setSponsorCode] = useState<string>(
+    (params.sponsor as string) || ""
+  );
+  const [resetCode, setResetCode] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+
+  // Update sponsor code if it changes in params
+  React.useEffect(() => {
+    if (params.sponsor) {
+      setSponsorCode(params.sponsor as string);
+      setMode("register");
+    }
+  }, [params.sponsor]);
   const handleSubmit = async () => {
-    if (mode === 'forgot') {
+    if (mode === "forgot") {
       if (!email.trim()) {
         Alert.alert(t.error, t.enterEmail);
         return;
@@ -50,8 +64,8 @@ export default function AuthScreen() {
             `${t.resetCodeSentTo} ${email}. ${t.checkLogsForCode} ${result.code}`,
             [
               {
-                text: 'OK',
-                onPress: () => setMode('reset'),
+                text: "OK",
+                onPress: () => setMode("reset"),
               },
             ]
           );
@@ -60,15 +74,20 @@ export default function AuthScreen() {
         }
       } catch (error) {
         Alert.alert(t.error, t.error);
-        console.error('Password reset request error:', error);
+        console.error("Password reset request error:", error);
       } finally {
         setLoading(false);
       }
       return;
     }
 
-    if (mode === 'reset') {
-      if (!email.trim() || !resetCode.trim() || !newPassword.trim() || !confirmNewPassword.trim()) {
+    if (mode === "reset") {
+      if (
+        !email.trim() ||
+        !resetCode.trim() ||
+        !newPassword.trim() ||
+        !confirmNewPassword.trim()
+      ) {
         Alert.alert(t.error, t.fillAllFields);
         return;
       }
@@ -87,28 +106,24 @@ export default function AuthScreen() {
       try {
         const result = await resetPassword(email, resetCode, newPassword);
         if (result.success) {
-          Alert.alert(
-            t.success,
-            t.passwordResetSuccess,
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  setMode('login');
-                  setResetCode('');
-                  setNewPassword('');
-                  setConfirmNewPassword('');
-                  setPassword('');
-                },
+          Alert.alert(t.success, t.passwordResetSuccess, [
+            {
+              text: "OK",
+              onPress: () => {
+                setMode("login");
+                setResetCode("");
+                setNewPassword("");
+                setConfirmNewPassword("");
+                setPassword("");
               },
-            ]
-          );
+            },
+          ]);
         } else {
           Alert.alert(t.error, result.error || t.error);
         }
       } catch (error) {
         Alert.alert(t.error, t.error);
-        console.error('Password reset error:', error);
+        console.error("Password reset error:", error);
       } finally {
         setLoading(false);
       }
@@ -120,7 +135,7 @@ export default function AuthScreen() {
       return;
     }
 
-    if (mode === 'register') {
+    if (mode === "register") {
       if (password !== confirmPassword) {
         Alert.alert(t.error, t.passwordsDontMatch);
         return;
@@ -135,24 +150,28 @@ export default function AuthScreen() {
     setLoading(true);
 
     try {
-      if (mode === 'register') {
-        const result = await register(email, password, sponsorCode || undefined);
+      if (mode === "register") {
+        const result = await register(
+          email,
+          password,
+          sponsorCode || undefined
+        );
         if (result.success) {
-          router.replace('/(tabs)/(home)');
+          router.replace("/(tabs)/(home)");
         } else {
           Alert.alert(t.error, result.error || t.error);
         }
       } else {
         const result = await login(email, password);
         if (result.success) {
-          router.replace('/(tabs)/(home)');
+          router.replace("/(tabs)/(home)");
         } else {
           Alert.alert(t.error, result.error || t.error);
         }
       }
     } catch (error) {
       Alert.alert(t.error, t.error);
-      console.error('Auth error:', error);
+      console.error("Auth error:", error);
     } finally {
       setLoading(false);
     }
@@ -160,25 +179,25 @@ export default function AuthScreen() {
 
   const switchMode = (newMode: ScreenMode) => {
     setMode(newMode);
-    if (newMode !== 'reset') {
-      setResetCode('');
-      setNewPassword('');
-      setConfirmNewPassword('');
+    if (newMode !== "reset") {
+      setResetCode("");
+      setNewPassword("");
+      setConfirmNewPassword("");
     }
-    if (newMode === 'login' || newMode === 'register') {
-      setPassword('');
-      setConfirmPassword('');
-      setSponsorCode('');
+    if (newMode === "login" || newMode === "register") {
+      setPassword("");
+      setConfirmPassword("");
+      setSponsorCode("");
     }
   };
 
   const getTitle = () => {
     switch (mode) {
-      case 'register':
+      case "register":
         return t.createAccount;
-      case 'forgot':
+      case "forgot":
         return t.forgotPassword;
-      case 'reset':
+      case "reset":
         return t.resetPasswordTitle;
       default:
         return t.login;
@@ -188,11 +207,11 @@ export default function AuthScreen() {
   const getButtonText = () => {
     if (loading) return t.loading;
     switch (mode) {
-      case 'register':
+      case "register":
         return t.register;
-      case 'forgot':
+      case "forgot":
         return t.sendCode;
-      case 'reset':
+      case "reset":
         return t.resetButton;
       default:
         return t.loginButton;
@@ -200,35 +219,41 @@ export default function AuthScreen() {
   };
 
   const languages = [
-    { lang: 'fr' as const, flag: '🇫🇷' },
-    { lang: 'en' as const, flag: '🇬🇧' },
-    { lang: 'es' as const, flag: '🇪🇸' },
-    { lang: 'de' as const, flag: '🇩🇪' },
-    { lang: 'it' as const, flag: '🇮🇹' },
-    { lang: 'pt' as const, flag: '🇵🇹' },
-    { lang: 'ru' as const, flag: '🇷🇺' },
-    { lang: 'ar' as const, flag: '🇸🇦' },
-    { lang: 'id' as const, flag: '🇮🇩' },
+    { lang: "fr" as const, flag: "🇫🇷" },
+    { lang: "en" as const, flag: "🇬🇧" },
+    { lang: "es" as const, flag: "🇪🇸" },
+    { lang: "de" as const, flag: "🇩🇪" },
+    { lang: "it" as const, flag: "🇮🇹" },
+    { lang: "pt" as const, flag: "🇵🇹" },
+    { lang: "ru" as const, flag: "🇷🇺" },
+    { lang: "ar" as const, flag: "🇸🇦" },
+    { lang: "id" as const, flag: "🇮🇩" },
   ];
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
       <LinearGradient
-        colors={['#FFD700', '#FFA500', '#FF8C00']}
+        colors={["#FFD700", "#FFA500", "#FF8C00"]}
         style={styles.gradient}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: isWeb ? 40 : insets.top + 20, paddingBottom: isWeb ? 40 : insets.bottom + 20, maxWidth: isWeb ? MAX_WEB_WIDTH : undefined, width: '100%', alignSelf: 'center' },
+            {
+              paddingTop: isWeb ? 40 : insets.top + 20,
+              paddingBottom: isWeb ? 40 : insets.bottom + 20,
+              maxWidth: isWeb ? MAX_WEB_WIDTH : undefined,
+              width: "100%",
+              alignSelf: "center",
+            },
           ]}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.languageSelector}>
-            <ScrollView 
+            <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.languageScrollContent}
@@ -257,7 +282,9 @@ export default function AuthScreen() {
             </View>
 
             <View style={styles.form}>
-              {(mode === 'login' || mode === 'register' || mode === 'forgot') && (
+              {(mode === "login" ||
+                mode === "register" ||
+                mode === "forgot") && (
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>{t.email}</Text>
                   <TextInput
@@ -273,7 +300,7 @@ export default function AuthScreen() {
                 </View>
               )}
 
-              {(mode === 'login' || mode === 'register') && (
+              {(mode === "login" || mode === "register") && (
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>{t.password}</Text>
                   <TextInput
@@ -289,7 +316,7 @@ export default function AuthScreen() {
                 </View>
               )}
 
-              {mode === 'register' && (
+              {mode === "register" && (
                 <>
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>{t.confirmPassword}</Text>
@@ -320,7 +347,7 @@ export default function AuthScreen() {
                 </>
               )}
 
-              {mode === 'reset' && (
+              {mode === "reset" && (
                 <>
                   <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>{t.email}</Text>
@@ -365,7 +392,9 @@ export default function AuthScreen() {
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>{t.confirmNewPassword}</Text>
+                    <Text style={styles.inputLabel}>
+                      {t.confirmNewPassword}
+                    </Text>
                     <TextInput
                       style={styles.input}
                       placeholder={t.confirmYourNewPassword}
@@ -380,7 +409,7 @@ export default function AuthScreen() {
                 </>
               )}
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.button, loading && styles.buttonDisabled]}
                 onPress={handleSubmit}
                 disabled={loading}
@@ -388,32 +417,38 @@ export default function AuthScreen() {
                 <Text style={styles.buttonText}>{getButtonText()}</Text>
               </TouchableOpacity>
 
-              {mode === 'login' && (
-                <TouchableOpacity 
+              {mode === "login" && (
+                <TouchableOpacity
                   style={styles.forgotButton}
-                  onPress={() => switchMode('forgot')}
+                  onPress={() => switchMode("forgot")}
                   disabled={loading}
                 >
-                  <Text style={styles.forgotButtonText}>{t.forgotPassword}</Text>
-                </TouchableOpacity>
-              )}
-
-              {(mode === 'login' || mode === 'register') && (
-                <TouchableOpacity 
-                  style={styles.switchButton}
-                  onPress={() => switchMode(mode === 'login' ? 'register' : 'login')}
-                  disabled={loading}
-                >
-                  <Text style={styles.switchButtonText}>
-                    {mode === 'register' ? t.alreadyHaveAccount : t.dontHaveAccount}
+                  <Text style={styles.forgotButtonText}>
+                    {t.forgotPassword}
                   </Text>
                 </TouchableOpacity>
               )}
 
-              {(mode === 'forgot' || mode === 'reset') && (
-                <TouchableOpacity 
+              {(mode === "login" || mode === "register") && (
+                <TouchableOpacity
                   style={styles.switchButton}
-                  onPress={() => switchMode('login')}
+                  onPress={() =>
+                    switchMode(mode === "login" ? "register" : "login")
+                  }
+                  disabled={loading}
+                >
+                  <Text style={styles.switchButtonText}>
+                    {mode === "register"
+                      ? t.alreadyHaveAccount
+                      : t.dontHaveAccount}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {(mode === "forgot" || mode === "reset") && (
+                <TouchableOpacity
+                  style={styles.switchButton}
+                  onPress={() => switchMode("login")}
                   disabled={loading}
                 >
                   <Text style={styles.switchButtonText}>{t.backToLogin}</Text>
@@ -436,15 +471,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: isWeb ? 24 : 20,
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 40,
   },
   logo: {
@@ -453,53 +488,53 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontWeight: 'bold' as const,
-    color: '#FFF',
+    fontWeight: "bold" as const,
+    color: "#FFF",
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
   },
   subtitle: {
     fontSize: 20,
-    color: '#FFF',
-    fontWeight: '600' as const,
+    color: "#FFF",
+    fontWeight: "600" as const,
   },
   form: {
-    width: '100%',
+    width: "100%",
   },
   inputContainer: {
     marginBottom: 20,
   },
   inputLabel: {
     fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#FFF',
+    fontWeight: "600" as const,
+    color: "#FFF",
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   input: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#333',
-    shadowColor: '#000',
+    color: "#333",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    outlineStyle: 'none' as any,
+    outlineStyle: "none" as any,
   },
   button: {
-    backgroundColor: '#8B4513',
+    backgroundColor: "#8B4513",
     borderRadius: 12,
     padding: 18,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -510,62 +545,62 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 18,
-    fontWeight: 'bold' as const,
-    color: '#FFF',
+    fontWeight: "bold" as const,
+    color: "#FFF",
   },
   switchButton: {
     marginTop: 20,
     padding: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   switchButtonText: {
     fontSize: 14,
-    color: '#FFF',
-    fontWeight: '600' as const,
-    textDecorationLine: 'underline',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    color: "#FFF",
+    fontWeight: "600" as const,
+    textDecorationLine: "underline",
+    textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   forgotButton: {
     marginTop: 12,
     padding: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   forgotButtonText: {
     fontSize: 14,
-    color: '#FFF',
-    fontWeight: '600' as const,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    color: "#FFF",
+    fontWeight: "600" as const,
+    textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   languageSelector: {
     marginBottom: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   languageScrollContent: {
     paddingHorizontal: 20,
     gap: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   languageFlagButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 2,
   },
   languageFlagButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
     borderWidth: 2,
-    borderColor: '#FFF',
+    borderColor: "#FFF",
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 3,
@@ -575,12 +610,12 @@ const styles = StyleSheet.create({
   },
   slogan: {
     fontSize: 16,
-    color: '#FFF',
-    fontWeight: '500' as const,
+    color: "#FFF",
+    fontWeight: "500" as const,
     marginBottom: 12,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textAlign: "center",
+    fontStyle: "italic",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
