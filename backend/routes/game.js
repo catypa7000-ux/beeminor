@@ -81,8 +81,24 @@ router.get("/:userId", async (req, res) => {
 
       let changed = false;
 
+      // Filter out corrupted referrals (missing email or code)
+      const validReferrals = gameState.referrals.filter(
+        (r) => r.email && r.referralCode
+      );
+      if (validReferrals.length !== gameState.referrals.length) {
+        console.log(
+          `[SYNC] Removed ${
+            gameState.referrals.length - validReferrals.length
+          } corrupted referrals for user ${user.email}`
+        );
+        gameState.referrals = validReferrals;
+        changed = true;
+      }
+
       // Check for each actual referral if it's already in our game state list
       for (const actual of actualReferrals) {
+        if (!actual.email || !actual.referralCode) continue;
+
         const alreadyInList = gameState.referrals.find(
           (r) => r.email === actual.email
         );
@@ -112,6 +128,11 @@ router.get("/:userId", async (req, res) => {
       }
 
       if (changed) {
+        // Recalculate total referral earnings based on valid referrals
+        gameState.totalReferralEarnings = gameState.referrals.reduce(
+          (sum, r) => sum + (r.earnings || 0),
+          0
+        );
         await gameState.save();
       }
     }
@@ -1129,13 +1150,16 @@ router.post("/:userId/process-referral", async (req, res) => {
     if (existingReferral) {
       existingReferral.earnings += totalBonus;
     } else {
-      sponsorGameState.referrals.push({
-        email: buyer.email,
-        referralCode: buyer.referralCode,
-        joinedAt: buyer.createdAt,
-        earnings: totalBonus,
-      });
-      sponsorGameState.invitedFriends += 1;
+      // Safety check: Ensure we have valid data before pushing
+      if (buyer.email && buyer.referralCode) {
+        sponsorGameState.referrals.push({
+          email: buyer.email,
+          referralCode: buyer.referralCode,
+          joinedAt: buyer.createdAt,
+          earnings: totalBonus,
+        });
+        sponsorGameState.invitedFriends += 1;
+      }
     }
 
     sponsorGameState.lastUpdated = new Date();
@@ -1226,15 +1250,19 @@ router.post("/:userId/link-referral", async (req, res) => {
 
     // Add referral entry and award 100 flowers for invitation
     const invitationBonus = 100;
-    sponsorGameState.referrals.push({
-      email: user.email,
-      referralCode: user.referralCode,
-      joinedAt: user.createdAt,
-      earnings: invitationBonus,
-    });
-    sponsorGameState.invitedFriends += 1;
-    sponsorGameState.flowers += invitationBonus;
-    sponsorGameState.totalReferralEarnings += invitationBonus;
+
+    // Safety check: Ensure we have valid data before pushing
+    if (user.email && user.referralCode) {
+      sponsorGameState.referrals.push({
+        email: user.email,
+        referralCode: user.referralCode,
+        joinedAt: user.createdAt,
+        earnings: invitationBonus,
+      });
+      sponsorGameState.invitedFriends += 1;
+      sponsorGameState.flowers += invitationBonus;
+      sponsorGameState.totalReferralEarnings += invitationBonus;
+    }
     sponsorGameState.lastUpdated = new Date();
     await sponsorGameState.save();
 
