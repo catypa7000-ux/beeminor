@@ -738,7 +738,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
             clearTimeout(saveTimeoutRef.current);
           }
 
-          // Debounce backend sync (save after 2 seconds of no changes)
+          // Debounce backend sync (save after 3 seconds of no changes)
           saveTimeoutRef.current = setTimeout(async () => {
             try {
               const backendState = {
@@ -781,7 +781,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
             } catch (error) {
               console.error("Failed to sync game state to backend:", error);
             }
-          }, 500); // 500ms debounce
+          }, 3000); // 3s debounce to reduce concurrent requests
         }
       } catch (error) {
         console.error("Failed to save game state:", error);
@@ -830,6 +830,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
   useEffect(() => {
     if (!isLoaded) return;
+    // We don't include 'honey' in dependencies because it updates every second.
+    // Honey is still saved when other things change, or periodically.
     saveGameState(
       honey,
       flowers,
@@ -854,7 +856,6 @@ export const [GameProvider, useGame] = createContextHook(() => {
       virtualBeeStartTime
     );
   }, [
-    honey,
     flowers,
     diamonds,
     tickets,
@@ -876,6 +877,64 @@ export const [GameProvider, useGame] = createContextHook(() => {
     allUsersLeaderboard,
     virtualBeeStartTime,
     isLoaded,
+    saveGameState,
+  ]);
+
+  // Periodic save for honey production (every 60 seconds)
+  useEffect(() => {
+    if (!isLoaded || !currentUserId) return;
+
+    const interval = setInterval(() => {
+      saveGameState(
+        honey,
+        flowers,
+        diamonds,
+        tickets,
+        bvrCoins,
+        bees,
+        virtualBees,
+        alveoles,
+        invitedFriends,
+        claimedMissions,
+        referralCode,
+        referrals,
+        totalReferralEarnings,
+        sponsorCode,
+        isAffiliatedToDev,
+        hasPendingFunds,
+        transactions,
+        diamondsThisYear,
+        yearStartDate,
+        allUsersLeaderboard,
+        virtualBeeStartTime
+      );
+    }, 60000); // Save every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [
+    isLoaded,
+    currentUserId,
+    honey,
+    flowers,
+    diamonds,
+    tickets,
+    bvrCoins,
+    bees,
+    virtualBees,
+    alveoles,
+    invitedFriends,
+    claimedMissions,
+    referralCode,
+    referrals,
+    totalReferralEarnings,
+    sponsorCode,
+    isAffiliatedToDev,
+    hasPendingFunds,
+    transactions,
+    diamondsThisYear,
+    yearStartDate,
+    allUsersLeaderboard,
+    virtualBeeStartTime,
     saveGameState,
   ]);
 
