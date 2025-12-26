@@ -49,6 +49,9 @@ const createDefaultGameState = (userId) => {
 router.get("/:userId", async (req, res) => {
   try {
     let gameState = await GameState.findOne({ userId: req.params.userId });
+    const user = await User.findById(req.params.userId).select(
+      "referralCode sponsorCode email"
+    );
 
     // Create default game state if doesn't exist
     if (!gameState) {
@@ -90,6 +93,9 @@ router.get("/:userId", async (req, res) => {
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
         yearStartDate: gameState.yearStartDate,
+        referralCode: user ? user.referralCode : null,
+        sponsorCode: user ? user.sponsorCode : null,
+        email: user ? user.email : null,
       },
     });
   } catch (error) {
@@ -116,6 +122,10 @@ router.put("/:userId", async (req, res) => {
         lastUpdated: new Date(),
       },
       { new: true, upsert: true }
+    );
+
+    const user = await User.findById(req.params.userId).select(
+      "referralCode sponsorCode email"
     );
 
     res.json({
@@ -146,6 +156,9 @@ router.put("/:userId", async (req, res) => {
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
         yearStartDate: gameState.yearStartDate,
+        referralCode: user ? user.referralCode : null,
+        sponsorCode: user ? user.sponsorCode : null,
+        email: user ? user.email : null,
       },
     });
   } catch (error) {
