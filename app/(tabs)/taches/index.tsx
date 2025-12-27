@@ -373,7 +373,7 @@ export default function TachesScreen() {
                         </View>
                       )}
                     </View>
-                    <View style={styles.referralStats}>
+                    {/* <View style={styles.referralStats}>
                       <View style={styles.referralStat}>
                         <Text style={styles.referralStatLabel}>
                           {t.totalDeposits}
@@ -398,7 +398,7 @@ export default function TachesScreen() {
                           {referral.lifetimeEarnings} {t.flowers.toLowerCase()}
                         </Text>
                       </View>
-                    </View>
+                    </View> */}
                   </View>
                 ))
               )}
