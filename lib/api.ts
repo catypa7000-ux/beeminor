@@ -14,9 +14,7 @@ const getBaseUrl = () => {
     return "http://localhost:3001";
   }
 
-  throw new Error(
-    "No base url found, please set EXPO_PUBLIC_API_BASE_URL"
-  );
+  throw new Error("No base url found, please set EXPO_PUBLIC_API_BASE_URL");
 };
 
 const API_BASE_URL = getBaseUrl();
@@ -26,11 +24,10 @@ async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const defaultHeaders: HeadersInit = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   const config: RequestInit = {
@@ -43,12 +40,12 @@ async function apiRequest<T>(
 
   try {
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({
         message: `HTTP error! status: ${response.status}`,
       }));
-      throw new Error(errorData.message || 'Request failed');
+      throw new Error(errorData.message || "Request failed");
     }
 
     const data = await response.json();
@@ -72,8 +69,8 @@ export const authAPI = {
         sponsorCode?: string;
         createdAt: string;
       };
-    }>('/api/auth/register', {
-      method: 'POST',
+    }>("/api/auth/register", {
+      method: "POST",
       body: JSON.stringify({ email, password, sponsorCode }),
     });
   },
@@ -90,8 +87,8 @@ export const authAPI = {
         createdAt: string;
         lastLogin?: string;
       };
-    }>('/api/auth/login', {
-      method: 'POST',
+    }>("/api/auth/login", {
+      method: "POST",
       body: JSON.stringify({ email, password }),
     });
   },
@@ -130,7 +127,10 @@ export const usersAPI = {
     }>(`/api/users/referral/${code}`);
   },
 
-  updateUser: async (userId: string, updates: { email?: string; sponsorCode?: string }) => {
+  updateUser: async (
+    userId: string,
+    updates: { email?: string; sponsorCode?: string }
+  ) => {
     return apiRequest<{
       success: boolean;
       message: string;
@@ -141,7 +141,7 @@ export const usersAPI = {
         sponsorCode?: string;
       };
     }>(`/api/users/${userId}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(updates),
     });
   },
@@ -160,6 +160,7 @@ export const gameAPI = {
         tickets: number;
         bvrCoins: number;
         bees: Record<string, number>;
+        virtualBees?: Record<string, number>;
         alveoles: Record<number, boolean>;
         invitedFriends: number;
         claimedMissions: number[];
@@ -169,6 +170,7 @@ export const gameAPI = {
         transactions: any[];
         diamondsThisYear: number;
         yearStartDate: string;
+        lastUpdated?: string;
       };
     }>(`/api/game/${userId}`);
   },
@@ -179,7 +181,7 @@ export const gameAPI = {
       message: string;
       gameState: any;
     }>(`/api/game/${userId}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(updates),
     });
   },
@@ -196,6 +198,7 @@ export const gameAPI = {
         tickets: number;
         bvrCoins: number;
         bees: Record<string, number>;
+        virtualBees?: Record<string, number>;
         alveoles: Record<number, boolean>;
         invitedFriends: number;
         claimedMissions: number[];
@@ -207,7 +210,7 @@ export const gameAPI = {
         yearStartDate: string;
       };
     }>(`/api/game/${userId}/buy-bee`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ beeTypeId }),
     });
   },
@@ -229,6 +232,7 @@ export const gameAPI = {
         tickets: number;
         bvrCoins: number;
         bees: Record<string, number>;
+        virtualBees?: Record<string, number>;
         alveoles: Record<number, boolean>;
         invitedFriends: number;
         claimedMissions: number[];
@@ -240,7 +244,7 @@ export const gameAPI = {
         yearStartDate: string;
       };
     }>(`/api/game/${userId}/sell-honey`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ amount }),
     });
   },
@@ -262,6 +266,7 @@ export const gameAPI = {
         tickets: number;
         bvrCoins: number;
         bees: Record<string, number>;
+        virtualBees?: Record<string, number>;
         alveoles: Record<number, boolean>;
         invitedFriends: number;
         claimedMissions: number[];
@@ -273,7 +278,7 @@ export const gameAPI = {
         yearStartDate: string;
       };
     }>(`/api/game/${userId}/upgrade-alveole`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ level }),
     });
   },
@@ -286,7 +291,7 @@ export const gameAPI = {
         index: number;
         id: string;
         label: string;
-        type: 'bee' | 'flowers';
+        type: "bee" | "flowers";
         beeType?: string;
         beeCount?: number;
         flowersAmount?: number;
@@ -300,6 +305,7 @@ export const gameAPI = {
         tickets: number;
         bvrCoins: number;
         bees: Record<string, number>;
+        virtualBees?: Record<string, number>;
         alveoles: Record<number, boolean>;
         invitedFriends: number;
         claimedMissions: number[];
@@ -311,7 +317,7 @@ export const gameAPI = {
         yearStartDate: string;
       };
     }>(`/api/game/${userId}/spin-roulette`, {
-      method: 'POST',
+      method: "POST",
     });
   },
 
@@ -332,6 +338,7 @@ export const gameAPI = {
         tickets: number;
         bvrCoins: number;
         bees: Record<string, number>;
+        virtualBees?: Record<string, number>;
         alveoles: Record<number, boolean>;
         invitedFriends: number;
         claimedMissions: number[];
@@ -343,12 +350,16 @@ export const gameAPI = {
         yearStartDate: string;
       };
     }>(`/api/game/${userId}/claim-mission`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ missionId }),
     });
   },
 
-  exchangeResource: async (userId: string, type: 'DIAMONDS_TO_FLOWERS' | 'BVR_TO_FLOWERS', amount: number) => {
+  exchangeResource: async (
+    userId: string,
+    type: "DIAMONDS_TO_FLOWERS" | "BVR_TO_FLOWERS",
+    amount: number
+  ) => {
     return apiRequest<{
       success: boolean;
       message: string;
@@ -359,12 +370,16 @@ export const gameAPI = {
         flowers: number;
       };
     }>(`/api/game/${userId}/exchange`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ type, amount }),
     });
   },
 
-  processReferral: async (userId: string, purchaseAmount: number, purchaseType: string) => {
+  processReferral: async (
+    userId: string,
+    purchaseAmount: number,
+    purchaseType: string
+  ) => {
     return apiRequest<{
       success: boolean;
       message: string;
@@ -381,7 +396,7 @@ export const gameAPI = {
         invitedFriends: number;
       };
     }>(`/api/game/${userId}/process-referral`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ purchaseAmount, purchaseType }),
     });
   },
@@ -396,11 +411,17 @@ export const gameAPI = {
         invitedFriends: number;
       };
     }>(`/api/game/${userId}/link-referral`, {
-      method: 'POST',
+      method: "POST",
     });
   },
 
-  purchaseFlowers: async (userId: string, amount: number, priceUSD: number, paymentMethod?: string, transactionId?: string) => {
+  purchaseFlowers: async (
+    userId: string,
+    amount: number,
+    priceUSD: number,
+    paymentMethod?: string,
+    transactionId?: string
+  ) => {
     return apiRequest<{
       success: boolean;
       message: string;
@@ -417,6 +438,7 @@ export const gameAPI = {
         tickets: number;
         bvrCoins: number;
         bees: Record<string, number>;
+        virtualBees?: Record<string, number>;
         alveoles: Record<number, boolean>;
         invitedFriends: number;
         claimedMissions: number[];
@@ -428,7 +450,7 @@ export const gameAPI = {
         yearStartDate: string;
       };
     }>(`/api/game/${userId}/purchase-flowers`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ amount, priceUSD, paymentMethod, transactionId }),
     });
   },
@@ -439,18 +461,21 @@ export const gameAPI = {
       message: string;
       hasPendingFunds: boolean;
     }>(`/api/game/${userId}/set-pending-funds`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ hasPending }),
     });
   },
 
-  addResources: async (userId: string, resources: {
-    flowers?: number;
-    tickets?: number;
-    diamonds?: number;
-    honey?: number;
-    bvrCoins?: number;
-  }) => {
+  addResources: async (
+    userId: string,
+    resources: {
+      flowers?: number;
+      tickets?: number;
+      diamonds?: number;
+      honey?: number;
+      bvrCoins?: number;
+    }
+  ) => {
     return apiRequest<{
       success: boolean;
       message: string;
@@ -462,7 +487,7 @@ export const gameAPI = {
         bvrCoins: number;
       };
     }>(`/api/game/${userId}/admin/add-resources`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(resources),
     });
   },
@@ -538,7 +563,7 @@ export const leaderboardAPI = {
         totalReferrals: number;
         totalReferralEarnings: number;
       };
-    }>('/api/leaderboard/stats');
+    }>("/api/leaderboard/stats");
   },
 };
 
@@ -574,8 +599,8 @@ export const transactionsAPI = {
       success: boolean;
       message: string;
       transaction: any;
-    }>('/api/transactions', {
-      method: 'POST',
+    }>("/api/transactions", {
+      method: "POST",
       body: JSON.stringify(transaction),
     });
   },
@@ -593,8 +618,8 @@ export const transactionsAPI = {
       message: string;
       transaction: any;
       remainingFlowers: number;
-    }>('/api/transactions/withdraw', {
-      method: 'POST',
+    }>("/api/transactions/withdraw", {
+      method: "POST",
       body: JSON.stringify(withdrawal),
     });
   },
@@ -609,7 +634,7 @@ export const transactionsAPI = {
       message: string;
       transaction: any;
     }>(`/api/transactions/${transactionId}/status`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify({ status, adminNotes }),
     });
   },
@@ -629,7 +654,7 @@ export const transactionsAPI = {
         notes?: string;
         createdAt: string;
       }>;
-    }>('/api/transactions/pending/all');
+    }>("/api/transactions/pending/all");
   },
 };
 
@@ -656,8 +681,8 @@ export const referralsAPI = {
         email: string;
         referralCode: string;
       } | null;
-    }>('/api/referrals/check', {
-      method: 'POST',
+    }>("/api/referrals/check", {
+      method: "POST",
       body: JSON.stringify({ referralCode: code }),
     });
   },
@@ -672,4 +697,3 @@ export default {
   transactions: transactionsAPI,
   referrals: referralsAPI,
 };
-

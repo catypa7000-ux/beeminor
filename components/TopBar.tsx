@@ -29,14 +29,21 @@ export default function TopBar() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + "M";
+  const formatNumber = (num: any) => {
+    // Safety check: ensure we have a valid number
+    const val = typeof num === "number" ? num : Number(num);
+
+    if (isNaN(val) || val === null || val === undefined) {
+      return "0";
     }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(0) + "K";
+
+    if (val >= 1000000) {
+      return (val / 1000000).toFixed(1) + "M";
     }
-    return num.toFixed(0);
+    if (val >= 1000) {
+      return (val / 1000).toFixed(0) + "K";
+    }
+    return val.toFixed(2);
   };
 
   const languages: { code: Language; flag: string; name: string }[] = [
