@@ -166,6 +166,7 @@ type GameState = {
   yearStartDate: string;
   allUsersLeaderboard: LeaderboardUser[];
   virtualBeeStartTime?: string | null;
+  lastUpdated?: string | null;
 };
 
 const STORAGE_KEY = "bee_game_state";
@@ -218,7 +219,14 @@ export const [GameProvider, useGame] = createContextHook(() => {
     LeaderboardUser[]
   >([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const honeyRef = useRef<number>(honey);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep honeyRef in sync
+  useEffect(() => {
+    honeyRef.current = honey;
+  }, [honey]);
 
   const generateReferralCode = useCallback(() => {
     setReferralCode((current) => {
@@ -232,24 +240,26 @@ export const [GameProvider, useGame] = createContextHook(() => {
     });
   }, []);
 
-  const loadUserId = async () => {
+  const loadUserId = async (): Promise<string | null> => {
     try {
       // Load user ID from AsyncStorage (set when user logs in)
       const userId = await AsyncStorage.getItem(USER_ID_KEY);
       if (userId) {
         setCurrentUserId(userId);
+        return userId;
       }
     } catch (error) {
       console.error("Failed to load user ID:", error);
     }
+    return null;
   };
 
   useEffect(() => {
     const initializeGame = async () => {
       console.log("🐝 Initializing game...");
-      await loadUserId();
+      const userId = await loadUserId();
 
-      // Load game state from local storage first
+      // Load game state from local storage first as a fast path
       try {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -296,9 +306,18 @@ export const [GameProvider, useGame] = createContextHook(() => {
         console.error("Failed to load from local storage:", error);
       }
 
-      // generateReferralCode(); // Removed: don't generate randomly on init, wait for backend
-      initializeMockLeaderboard();
+      // If we have a user, SYNC FROM BACKEND before setting isLoaded=true
+      // This prevents the "default 100 honey" from being saved back to backend
+      if (userId) {
+        console.log("📡 Initial sync with backend...");
+        try {
+          await syncGameStateFromBackend(userId);
+        } catch (err) {
+          console.error("Initial sync failed:", err);
+        }
+      }
 
+      initializeMockLeaderboard();
       console.log("✅ Game initialized");
       setIsLoaded(true);
     };
@@ -317,7 +336,6 @@ export const [GameProvider, useGame] = createContextHook(() => {
       const response = await gameAPI.getGameState(userId);
       if (response.success && response.gameState) {
         const state = response.gameState;
-        setHoney(state.honey ?? 100);
         setFlowers(state.flowers ?? 0);
         setDiamonds(state.diamonds ?? 0);
         setTickets(state.tickets ?? 0);
@@ -358,13 +376,44 @@ export const [GameProvider, useGame] = createContextHook(() => {
           setAlveoles(state.alveoles);
         }
 
-        // Update referral info from backend
         if ((state as any).referralCode) {
           setReferralCode((state as any).referralCode);
         }
         if ((state as any).sponsorCode) {
           setSponsorCode((state as any).sponsorCode);
         }
+
+        // Offline production: If backend has a lastUpdated, calculate catch-up honey
+        // But only if it's more than what's currently in front (Math.max)
+        let backendHoney = state.honey ?? 100;
+        if ((state as any).lastUpdated) {
+          const lastUpdateDate = new Date((state as any).lastUpdated);
+          const now = new Date();
+          const secondsPassed = Math.floor(
+            (now.getTime() - lastUpdateDate.getTime()) / 1000
+          );
+
+          if (secondsPassed > 0) {
+            // Use current local production rate
+            const productionRate = getTotalProduction();
+            const offlineHoney = (productionRate / 3600) * secondsPassed;
+            backendHoney += offlineHoney;
+            console.log(
+              `🕒 Offline production (sync): +${offlineHoney.toFixed(
+                2
+              )} honey over ${secondsPassed}s`
+            );
+          }
+          setLastUpdated((state as any).lastUpdated);
+        }
+
+        // Avoid downgrading honey if local state is ahead (unless it's a huge jump or buy)
+        setHoney((prevLocal) => {
+          // If we just loaded and it's default 100, backend always wins
+          if (prevLocal === 100) return backendHoney;
+          // Otherwise, don't jump back to a stale value
+          return Math.max(prevLocal, backendHoney);
+        });
       }
     } catch (error) {
       console.error("Failed to sync game state from backend:", error);
@@ -436,7 +485,6 @@ export const [GameProvider, useGame] = createContextHook(() => {
           const response = await gameAPI.getGameState(currentUserId);
           if (response.success && response.gameState) {
             const state = response.gameState;
-            setHoney(state.honey ?? 100);
             setFlowers(state.flowers ?? 0);
             setDiamonds(state.diamonds ?? 0);
             setTickets(state.tickets ?? 0);
@@ -468,14 +516,61 @@ export const [GameProvider, useGame] = createContextHook(() => {
             if (state.bees) {
               setBees(state.bees);
             }
+            const currentBees = state.bees || {
+              baby: 0,
+              worker: 0,
+              elite: 0,
+              royal: 0,
+              queen: 0,
+            };
+
             if ((state as any).virtualBees) {
               setVirtualBees((state as any).virtualBees);
             } else {
               setVirtualBees({ virtual1: 1, virtual2: 0, virtual3: 0 });
             }
+            const currentVirtualBees = (state as any).virtualBees || {
+              virtual1: 1,
+              virtual2: 0,
+              virtual3: 0,
+            };
+
             if (state.alveoles) {
               setAlveoles(state.alveoles);
             }
+
+            // Calculate offline production
+            let backendTotalHoney = state.honey ?? 100;
+            if ((state as any).lastUpdated) {
+              const lastUpdatedTime = new Date(
+                (state as any).lastUpdated
+              ).getTime();
+              const now = new Date().getTime();
+              const secondsPassed = Math.floor((now - lastUpdatedTime) / 1000);
+
+              if (secondsPassed > 0) {
+                // Calculate production rate from bees in the state
+                let offlineProduction = 0;
+                BEE_TYPES.forEach((beeType) => {
+                  const count = currentBees[beeType.id] || 0;
+                  offlineProduction += count * beeType.honeyPerHour;
+                });
+                VIRTUAL_BEE_TYPES.forEach((beeType) => {
+                  const count = currentVirtualBees[beeType.id] || 0;
+                  offlineProduction += count * beeType.honeyPerHour;
+                });
+
+                const earned = (offlineProduction / 3600) * secondsPassed;
+                backendTotalHoney += earned;
+                console.log(
+                  `🕒 Offline production (load): +${earned.toFixed(
+                    2
+                  )} honey over ${secondsPassed}s`
+                );
+              }
+              setLastUpdated((state as any).lastUpdated);
+            }
+            setHoney(backendTotalHoney);
 
             // Important: Set referral code from backend
             const backendReferralCode = (state as any).referralCode;
@@ -589,7 +684,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const state: GameState = JSON.parse(stored);
-        setHoney(state.honey);
+        setHoney(state.honey ?? 100);
         setFlowers(state.flowers ?? 0);
         setDiamonds(state.diamonds ?? 0);
         setTickets(state.tickets ?? 0);
@@ -701,7 +796,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
       newDiamondsThisYear: number,
       newYearStartDate: string,
       newAllUsersLeaderboard: LeaderboardUser[],
-      newVirtualBeeStartTime: string | null
+      newVirtualBeeStartTime: string | null,
+      forceSync: boolean = false
     ) => {
       try {
         const state: GameState = {
@@ -733,13 +829,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
         // Sync to backend if user is authenticated (debounced)
         if (currentUserId) {
-          // Clear existing timeout
-          if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-          }
-
-          // Debounce backend sync (save after 3 seconds of no changes)
-          saveTimeoutRef.current = setTimeout(async () => {
+          const syncAction = async () => {
             try {
               const backendState = {
                 honey: newHoney,
@@ -781,7 +871,24 @@ export const [GameProvider, useGame] = createContextHook(() => {
             } catch (error) {
               console.error("Failed to sync game state to backend:", error);
             }
-          }, 3000); // 3s debounce to reduce concurrent requests
+          };
+
+          if (forceSync) {
+            // If forced, clear any pending debounce and sync immediately
+            if (saveTimeoutRef.current) {
+              clearTimeout(saveTimeoutRef.current);
+              saveTimeoutRef.current = null;
+            }
+            syncAction();
+          } else {
+            // Clear existing timeout and restart debounce
+            if (saveTimeoutRef.current) {
+              clearTimeout(saveTimeoutRef.current);
+            }
+
+            // Debounce backend sync (save after 3 seconds of no changes)
+            saveTimeoutRef.current = setTimeout(syncAction, 3000);
+          }
         }
       } catch (error) {
         console.error("Failed to save game state:", error);
@@ -821,6 +928,16 @@ export const [GameProvider, useGame] = createContextHook(() => {
         }
         const production = getTotalProduction();
         const newHoney = Math.min(current + production / 3600, maxCapacity);
+
+        // Save to local storage every second so no progress is lost on close
+        AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
+          if (stored) {
+            const state = JSON.parse(stored);
+            state.honey = newHoney;
+            AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          }
+        });
+
         return newHoney;
       });
     }, 1000);
@@ -886,7 +1003,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
     const interval = setInterval(() => {
       saveGameState(
-        honey,
+        honeyRef.current,
         flowers,
         diamonds,
         tickets,
@@ -906,15 +1023,16 @@ export const [GameProvider, useGame] = createContextHook(() => {
         diamondsThisYear,
         yearStartDate,
         allUsersLeaderboard,
-        virtualBeeStartTime
+        virtualBeeStartTime,
+        true // forceSync: bypasses debounce to ensure backend save
       );
-    }, 60000); // Save every 60 seconds
+    }, 10000); // Save every 10 seconds
 
     return () => clearInterval(interval);
   }, [
     isLoaded,
     currentUserId,
-    honey,
+    // We EXCLUDE honey here so the interval isn't cleared every second
     flowers,
     diamonds,
     tickets,
