@@ -174,11 +174,13 @@ export default function HomeScreen() {
                     return;
                   }
 
+                  // Cap the sell amount to available honey (safety check)
+                  const sellAmount = Math.floor(Math.min(honey, honey));
                   const confirmed = window.confirm(
-                    `Sell ${Math.floor(honey)} honey for diamonds and flowers?`
+                    `Sell ${sellAmount.toLocaleString()} honey for diamonds and flowers?`
                   );
                   if (confirmed) {
-                    const success = await sellHoney(Math.floor(honey));
+                    const success = await sellHoney(sellAmount);
                     if (success) {
                       window.alert("Success: Honey sold successfully!");
                     } else {

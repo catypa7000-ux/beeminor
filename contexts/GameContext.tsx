@@ -18,7 +18,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "baby",
     name: "Baby Bee",
     nameFr: "Abeille 1",
-    honeyPerHour: 416.67,
+    honeyPerHour: 416.67, // Original rate restored
     cost: 24990,
     emoji: "🐝",
     imageUrl:
@@ -28,7 +28,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "worker",
     name: "Worker Bee",
     nameFr: "Abeille 2",
-    honeyPerHour: 833.33,
+    honeyPerHour: 833.33, // Original rate restored
     cost: 49990,
     emoji: "🐝",
   },
@@ -36,7 +36,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "elite",
     name: "Elite Bee",
     nameFr: "Abeille 3",
-    honeyPerHour: 2083.33,
+    honeyPerHour: 2083.33, // Original rate restored
     cost: 99990,
     emoji: "🐝",
     imageUrl:
@@ -46,7 +46,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "royal",
     name: "Royal Bee",
     nameFr: "Abeille 4",
-    honeyPerHour: 4583.33,
+    honeyPerHour: 4583.33, // Original rate restored
     cost: 199000,
     emoji: "🐝",
     imageUrl:
@@ -56,7 +56,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "queen",
     name: "Queen Bee",
     nameFr: "Abeille 5",
-    honeyPerHour: 8750.0,
+    honeyPerHour: 8750.0, // Original rate restored
     cost: 389000,
     emoji: "🐝",
     imageUrl:
@@ -69,7 +69,7 @@ export const VIRTUAL_BEE_TYPES: BeeType[] = [
     id: "virtual1",
     name: "Virtual Bee 1",
     nameFr: "Abeille Virtuelle 1",
-    honeyPerHour: 10,
+    honeyPerHour: 10, // Original rate restored
     cost: 0,
     emoji: "🐝",
   },
@@ -77,7 +77,7 @@ export const VIRTUAL_BEE_TYPES: BeeType[] = [
     id: "virtual2",
     name: "Virtual Bee 2",
     nameFr: "Abeille Virtuelle 2",
-    honeyPerHour: 20,
+    honeyPerHour: 20, // Original rate restored
     cost: 0,
     emoji: "🐝",
   },
@@ -85,7 +85,7 @@ export const VIRTUAL_BEE_TYPES: BeeType[] = [
     id: "virtual3",
     name: "Virtual Bee 3",
     nameFr: "Abeille Virtuelle 3",
-    honeyPerHour: 30,
+    honeyPerHour: 30, // Original rate restored
     cost: 0,
     emoji: "🐝",
   },
@@ -383,37 +383,17 @@ export const [GameProvider, useGame] = createContextHook(() => {
           setSponsorCode((state as any).sponsorCode);
         }
 
-        // Offline production: If backend has a lastUpdated, calculate catch-up honey
-        // But only if it's more than what's currently in front (Math.max)
-        let backendHoney = state.honey ?? 100;
-        if ((state as any).lastUpdated) {
-          const lastUpdateDate = new Date((state as any).lastUpdated);
-          const now = new Date();
-          const secondsPassed = Math.floor(
-            (now.getTime() - lastUpdateDate.getTime()) / 1000
-          );
-
-          if (secondsPassed > 0) {
-            // Use current local production rate
-            const productionRate = getTotalProduction();
-            const offlineHoney = (productionRate / 3600) * secondsPassed;
-            backendHoney += offlineHoney;
-            console.log(
-              `🕒 Offline production (sync): +${offlineHoney.toFixed(
-                2
-              )} honey over ${secondsPassed}s`
-            );
-          }
-          setLastUpdated((state as any).lastUpdated);
+        // Backend now calculates offline production automatically, so use the honey value directly
+        // The backend GET endpoint calculates and saves offline production before returning
+        const backendHoney = state.honey ?? 100;
+        
+        if (state.lastUpdated) {
+          setLastUpdated(state.lastUpdated);
         }
-
-        // Avoid downgrading honey if local state is ahead (unless it's a huge jump or buy)
-        setHoney((prevLocal) => {
-          // If we just loaded and it's default 100, backend always wins
-          if (prevLocal === 100) return backendHoney;
-          // Otherwise, don't jump back to a stale value
-          return Math.max(prevLocal, backendHoney);
-        });
+        
+        // Set honey to backend value (backend has already calculated offline production)
+        setHoney(backendHoney);
+        console.log(`🍯 Loaded honey from backend: ${backendHoney} (offline production already calculated server-side)`);
       }
     } catch (error) {
       console.error("Failed to sync game state from backend:", error);
@@ -539,38 +519,16 @@ export const [GameProvider, useGame] = createContextHook(() => {
               setAlveoles(state.alveoles);
             }
 
-            // Calculate offline production
-            let backendTotalHoney = state.honey ?? 100;
-            if ((state as any).lastUpdated) {
-              const lastUpdatedTime = new Date(
-                (state as any).lastUpdated
-              ).getTime();
-              const now = new Date().getTime();
-              const secondsPassed = Math.floor((now - lastUpdatedTime) / 1000);
-
-              if (secondsPassed > 0) {
-                // Calculate production rate from bees in the state
-                let offlineProduction = 0;
-                BEE_TYPES.forEach((beeType) => {
-                  const count = currentBees[beeType.id] || 0;
-                  offlineProduction += count * beeType.honeyPerHour;
-                });
-                VIRTUAL_BEE_TYPES.forEach((beeType) => {
-                  const count = currentVirtualBees[beeType.id] || 0;
-                  offlineProduction += count * beeType.honeyPerHour;
-                });
-
-                const earned = (offlineProduction / 3600) * secondsPassed;
-                backendTotalHoney += earned;
-                console.log(
-                  `🕒 Offline production (load): +${earned.toFixed(
-                    2
-                  )} honey over ${secondsPassed}s`
-                );
-              }
-              setLastUpdated((state as any).lastUpdated);
+            // Backend now calculates offline production automatically in GET endpoint
+            // So we just use the honey value directly (backend has already applied offline production)
+            const backendTotalHoney = state.honey ?? 100;
+            
+            if (state.lastUpdated) {
+              setLastUpdated(state.lastUpdated);
             }
+            
             setHoney(backendTotalHoney);
+            console.log(`🍯 Loaded honey from backend: ${backendTotalHoney} (offline production already calculated server-side)`);
 
             // Important: Set referral code from backend
             const backendReferralCode = (state as any).referralCode;
@@ -1347,16 +1305,32 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const sellHoney = useCallback(
     async (amount: number) => {
       // Optimistic check - validate locally first
-      if (honey < amount) return false;
       if (amount < 100) return false;
+      
+      // Cap amount to available honey to prevent sync issues
+      const actualAmount = Math.min(amount, Math.floor(honey));
+      if (actualAmount < 100) {
+        console.warn(`Cannot sell: only ${honey} honey available, need at least 100`);
+        return false;
+      }
+      
+      // Use capped amount
+      const sellAmount = actualAmount;
 
       // If user is authenticated, use backend validation
       if (currentUserId) {
         try {
-          const response = await gameAPI.sellHoney(currentUserId, amount);
+          const response = await gameAPI.sellHoney(currentUserId, sellAmount);
           if (response.success && response.gameState) {
             // Update state with backend response
-            setHoney(response.gameState.honey);
+            const newHoney = response.gameState.honey;
+            console.log(`🍯 Sold ${sellAmount} honey. Old: ${honey}, New: ${newHoney}`);
+            
+            // Update all state immediately using functional update to ensure we override any pending updates
+            setHoney(() => {
+              honeyRef.current = newHoney; // Update ref first
+              return newHoney;
+            });
             setDiamonds(response.gameState.diamonds);
             setFlowers(response.gameState.flowers);
             setBvrCoins(response.gameState.bvrCoins);
@@ -1367,6 +1341,14 @@ export const [GameProvider, useGame] = createContextHook(() => {
               referralCode,
               response.gameState.diamondsThisYear
             );
+
+            // The backend has already saved the state, but force a refresh to ensure UI is in sync
+            // Wait a tiny bit to ensure state update is processed
+            setTimeout(async () => {
+              if (currentUserId) {
+                await syncGameStateFromBackend(currentUserId);
+              }
+            }, 100);
 
             return true;
           }
@@ -1379,11 +1361,11 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
       // Fallback: local-only update (for offline or unauthenticated users)
       // 100 miel = 1 diamant + 0.10 fleurs + 0.5 BVR
-      const diamondsEarned = Math.floor(amount / 100);
+      const diamondsEarned = Math.floor(sellAmount / 100);
       const flowersEarned = diamondsEarned * 0.1;
       const bvrEarned = diamondsEarned * 0.5;
 
-      setHoney((current) => current - amount);
+      setHoney((current) => current - sellAmount);
       setDiamonds((current) => current + diamondsEarned);
       setFlowers((current) => current + flowersEarned);
       setBvrCoins((current) => current + bvrEarned);

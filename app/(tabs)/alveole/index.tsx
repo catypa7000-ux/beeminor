@@ -47,7 +47,10 @@ export default function AlveoleScreen() {
   };
 
   const handleQuickSell = (percentage: number) => {
-    const amount = Math.floor(honey * percentage);
+    // Cap amount to available honey to prevent sync issues
+    const calculatedAmount = Math.floor(honey * percentage);
+    const amount = Math.min(calculatedAmount, Math.floor(honey));
+    
     if (amount < 100) {
       window.alert(
         `${t.insufficientHoney}\n\nVous avez besoin d'au moins 100 miel pour vendre.`
