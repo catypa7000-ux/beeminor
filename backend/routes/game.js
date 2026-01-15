@@ -62,6 +62,88 @@ router.get("/:userId", async (req, res) => {
       );
     }
 
+    // Calculate and apply offline production if lastUpdated exists
+    if (gameState.lastUpdated) {
+      const lastUpdateTime = new Date(gameState.lastUpdated).getTime();
+      const now = new Date().getTime();
+      const secondsPassed = Math.floor((now - lastUpdateTime) / 1000);
+
+      if (secondsPassed > 0) {
+        // Calculate production rate from bees
+        let productionRate = 0;
+        
+        // Physical bees production rates (per hour) - Original rates restored
+        const BEE_PRODUCTION_RATES = {
+          baby: 416.67,
+          worker: 833.33,
+          elite: 2083.33,
+          royal: 4583.33,
+          queen: 8750.0,
+        };
+        
+        // Virtual bees production rates (per hour) - Original rates restored
+        const VIRTUAL_BEE_PRODUCTION_RATES = {
+          virtual1: 10,
+          virtual2: 20,
+          virtual3: 30,
+        };
+        
+        // Calculate from physical bees
+        if (gameState.bees && gameState.bees.size > 0) {
+          for (const [beeType, count] of gameState.bees.entries()) {
+            if (BEE_PRODUCTION_RATES[beeType]) {
+              productionRate += count * BEE_PRODUCTION_RATES[beeType];
+            }
+          }
+        }
+        
+        // Calculate from virtual bees
+        if (gameState.virtualBees && gameState.virtualBees.size > 0) {
+          for (const [beeType, count] of gameState.virtualBees.entries()) {
+            if (VIRTUAL_BEE_PRODUCTION_RATES[beeType]) {
+              productionRate += count * VIRTUAL_BEE_PRODUCTION_RATES[beeType];
+            }
+          }
+        }
+        
+        // Calculate offline honey earned
+        const offlineHoney = (productionRate / 3600) * secondsPassed;
+        
+        // Apply capacity limit
+        const ALVEOLE_CAPACITIES = {
+          1: 1000000,
+          2: 3000000,
+          3: 6000000,
+          4: 14000000,
+          5: 30000000,
+          6: 48000000,
+        };
+        
+        let maxCapacity = 0;
+        if (gameState.alveoles && gameState.alveoles.size > 0) {
+          for (const [level, unlocked] of gameState.alveoles.entries()) {
+            if (unlocked && ALVEOLE_CAPACITIES[level]) {
+              maxCapacity = Math.max(maxCapacity, ALVEOLE_CAPACITIES[level]);
+            }
+          }
+        }
+        
+        // Apply offline production with capacity limit
+        const honeyWithProduction = gameState.honey + offlineHoney;
+        gameState.honey = Math.min(honeyWithProduction, maxCapacity || honeyWithProduction);
+        
+        // Update lastUpdated to now (so next calculation starts from here)
+        gameState.lastUpdated = new Date();
+        
+        if (offlineHoney > 0) {
+          console.log(
+            `🕒 Backend offline production: +${offlineHoney.toFixed(2)} honey over ${secondsPassed}s (${(secondsPassed / 3600).toFixed(2)} hours) for user ${req.params.userId}`
+          );
+          await gameState.save();
+        }
+      }
+    }
+
     // Ensure virtualBees exists (migration for old accounts)
     if (!gameState.virtualBees || gameState.virtualBees.size === 0) {
       gameState.virtualBees = new Map([
@@ -157,6 +239,7 @@ router.get("/:userId", async (req, res) => {
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
         yearStartDate: gameState.yearStartDate,
+        lastUpdated: gameState.lastUpdated, // Include lastUpdated for offline production calculation
         referralCode: user ? user.referralCode : null,
         sponsorCode: user ? user.sponsorCode : null,
         email: user ? user.email : null,
@@ -226,6 +309,7 @@ router.put("/:userId", async (req, res) => {
         transactions: gameState.transactions,
         diamondsThisYear: gameState.diamondsThisYear,
         yearStartDate: gameState.yearStartDate,
+        lastUpdated: gameState.lastUpdated, // Include lastUpdated in response
         referralCode: user ? user.referralCode : null,
         sponsorCode: user ? user.sponsorCode : null,
         email: user ? user.email : null,
@@ -373,21 +457,28 @@ router.post("/:userId/sell-honey", async (req, res) => {
       });
     }
 
-    // Check if user has enough honey
+    // Check if user has enough honey - cap to available amount if trying to sell more
+    let actualAmount = amount;
     if (gameState.honey < amount) {
-      return res.status(400).json({
-        success: false,
-        message: `Not enough honey. Have ${gameState.honey}, trying to sell ${amount}`,
-      });
+      console.log(`⚠️  User trying to sell ${amount} but only has ${gameState.honey}. Capping to available amount.`);
+      actualAmount = Math.floor(gameState.honey);
+      
+      // Still need minimum 100 honey
+      if (actualAmount < 100) {
+        return res.status(400).json({
+          success: false,
+          message: `Not enough honey. Have ${gameState.honey}, minimum ${MIN_HONEY} required to sell`,
+        });
+      }
     }
 
     // Calculate rewards (100 honey = 1 diamond + 0.10 flower + 0.5 BVR)
-    const diamondsEarned = Math.floor(amount / 100);
+    const diamondsEarned = Math.floor(actualAmount / 100);
     const flowersEarned = diamondsEarned * 0.1;
     const bvrEarned = diamondsEarned * 0.5;
 
     // Update game state
-    gameState.honey -= amount;
+    gameState.honey -= actualAmount;
     gameState.diamonds += diamondsEarned;
     gameState.flowers += flowersEarned;
     gameState.bvrCoins += bvrEarned;
@@ -398,7 +489,9 @@ router.post("/:userId/sell-honey", async (req, res) => {
 
     res.json({
       success: true,
-      message: `Successfully sold ${amount} honey`,
+      message: actualAmount < amount 
+        ? `Successfully sold ${actualAmount} honey (requested ${amount}, but only ${gameState.honey + actualAmount} available)`
+        : `Successfully sold ${actualAmount} honey`,
       rewards: {
         diamonds: diamondsEarned,
         flowers: flowersEarned,

@@ -63,8 +63,20 @@ router.post('/withdraw', async (req, res) => {
       });
     }
 
-    // Determine what to deduct based on currency
-    if (currency === 'BVR') {
+    // Determine what to deduct based on transaction type and currency
+    if (type === 'withdrawal_diamond' || currency === 'Diamond' || currency === 'DIAMOND') {
+      // For diamond withdrawals, deduct diamonds
+      if (gameState.diamonds < amount) {
+        return res.status(400).json({
+          success: false,
+          message: 'Insufficient diamonds',
+          current: gameState.diamonds,
+          required: amount
+        });
+      }
+      gameState.diamonds -= amount;
+      console.log(`💎 Deducted ${amount} diamonds from user ${userId}. Remaining: ${gameState.diamonds}`);
+    } else if (currency === 'BVR' || type === 'withdrawal_bvr') {
       // For BVR withdrawals, deduct bvrCoins
       if (gameState.bvrCoins < amount) {
         return res.status(400).json({
@@ -75,6 +87,7 @@ router.post('/withdraw', async (req, res) => {
         });
       }
       gameState.bvrCoins -= amount;
+      console.log(`🪙 Deducted ${amount} BVR from user ${userId}. Remaining: ${gameState.bvrCoins}`);
     } else {
       // For USD/crypto withdrawals, deduct flowers
       if (gameState.flowers < amount) {
@@ -86,6 +99,7 @@ router.post('/withdraw', async (req, res) => {
         });
       }
       gameState.flowers -= amount;
+      console.log(`🌸 Deducted ${amount} flowers from user ${userId}. Remaining: ${gameState.flowers}`);
     }
 
     await gameState.save();
@@ -131,7 +145,9 @@ router.post('/withdraw', async (req, res) => {
         cryptoAddress: transaction.cryptoAddress,
         createdAt: transaction.createdAt
       },
-      remainingFlowers: gameState.flowers
+      remainingFlowers: gameState.flowers,
+      remainingDiamonds: gameState.diamonds,
+      remainingBvrCoins: gameState.bvrCoins
     });
   } catch (error) {
     console.error('Withdrawal request error:', error);

@@ -62,7 +62,7 @@ const connectDB = async () => {
       return cachedDb;
     }
     const mongoURI =
-      process.env.MONGODB_URI || "mongodb://localhost:27017/beeminor";
+      process.env.MONGODB_URI || "mongodb://admin:admin123@localhost:27017/beeminor?authSource=admin";
 
     // if (!process.env.MONGODB_URI) {
     //   console.warn(
