@@ -1541,8 +1541,8 @@ router.post("/:userId/exchange", async (req, res) => {
         });
       }
 
-      // 100 BVR = 1 flower
-      flowersReceived = amount / 100;
+      // 100 BVR = 0.1 flower
+      flowersReceived = amount / 1000;
       gameState.bvrCoins -= amount;
       gameState.flowers += flowersReceived;
       exchangedResource = `${amount} BVR`;

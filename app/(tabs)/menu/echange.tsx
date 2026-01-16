@@ -26,7 +26,7 @@ export default function EchangeScreen() {
     if (type === "DIAMONDS_TO_FLOWERS") {
       return amount * 0.0001;
     } else if (type === "BVR_TO_FLOWERS") {
-      return amount / 100;
+      return amount / 1000; // 100 BVR = 0.1 flower
     }
     return 0;
   };
@@ -76,7 +76,7 @@ export default function EchangeScreen() {
 
       if (amount < 100) {
         window.alert(
-          "Erreur: Le montant minimum est de 100 BVR pour obtenir 1 fleur"
+          "Erreur: Le montant minimum est de 100 BVR pour obtenir 0.1 fleur"
         );
         return;
       }
@@ -179,7 +179,7 @@ export default function EchangeScreen() {
               )}
             </View>
             <Text style={styles.exchangeName}>BVR vers Fleurs</Text>
-            <Text style={styles.exchangeRate}>100 BVR = 1 fleur</Text>
+            <Text style={styles.exchangeRate}>100 BVR = 0.1 fleur</Text>
           </TouchableOpacity>
         </View>
 
@@ -238,7 +238,7 @@ export default function EchangeScreen() {
           <Text style={styles.infoTitle}>ℹ️ {t.importantInfo}</Text>
           <Text style={styles.infoText}>
             • {t.diamondsToFlowers}: {t.diamondExchangeRate}
-            {"\n"}• {t.bvrToFlowers}: 100 BVR = 1 {t.flowers}
+            {"\n"}• {t.bvrToFlowers}: 100 BVR = 0.1 {t.flowers}
             {"\n"}• {t.instant}
             {"\n"}• {t.noFees}
           </Text>
