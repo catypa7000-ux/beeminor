@@ -1494,7 +1494,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
         setDiamonds((current) => current - amount);
         setFlowers((current) => current + flowersReceived);
       } else if (type === "BVR_TO_FLOWERS") {
-        flowersReceived = amount / 100;
+        flowersReceived = amount / 1000; // 100 BVR = 0.1 flower
         setBvrCoins((current) => current - amount);
         setFlowers((current) => current + flowersReceived);
       }
