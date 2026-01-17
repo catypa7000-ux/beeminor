@@ -333,6 +333,36 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
   const syncGameStateFromBackend = useCallback(async (userId: string) => {
     try {
+      // First, save current frontend honey to backend to update lastUpdated timestamp
+      // This ensures backend knows the current state before calculating offline production
+      const currentFrontendHoney = honeyRef.current;
+      try {
+        await gameAPI.updateGameState(userId, {
+          honey: currentFrontendHoney,
+          flowers,
+          diamonds,
+          tickets,
+          bvrCoins,
+          bees,
+          virtualBees,
+          alveoles,
+          invitedFriends,
+          claimedMissions,
+          referralCode,
+          referrals,
+          totalReferralEarnings,
+          sponsorCode,
+          isAffiliatedToDev,
+          hasPendingFunds,
+          transactions,
+          diamondsThisYear,
+          yearStartDate,
+        });
+      } catch (updateError) {
+        console.warn("Failed to update backend before sync:", updateError);
+      }
+
+      // Now get the updated game state from backend
       const response = await gameAPI.getGameState(userId);
       if (response.success && response.gameState) {
         const state = response.gameState;
@@ -383,24 +413,26 @@ export const [GameProvider, useGame] = createContextHook(() => {
           setSponsorCode((state as any).sponsorCode);
         }
 
-        // Backend now calculates offline production automatically, so use the honey value directly
-        // The backend GET endpoint calculates and saves offline production before returning
+        // Use the maximum of frontend and backend honey to ensure we don't lose any production
+        // Backend calculates offline production, but frontend has been producing in real-time
         const backendHoney = state.honey ?? 100;
+        const maxHoney = Math.max(currentFrontendHoney, backendHoney);
         
         if (state.lastUpdated) {
           setLastUpdated(state.lastUpdated);
         }
         
-        // Set honey to backend value (backend has already calculated offline production)
-        setHoney(backendHoney);
-        console.log(`🍯 Loaded honey from backend: ${backendHoney} (offline production already calculated server-side)`);
+        // Set honey to the maximum value to preserve real-time production
+        setHoney(maxHoney);
+        honeyRef.current = maxHoney;
+        console.log(`🍯 Synced honey: frontend=${currentFrontendHoney.toFixed(2)}, backend=${backendHoney.toFixed(2)}, using=${maxHoney.toFixed(2)}`);
       }
     } catch (error) {
       console.error("Failed to sync game state from backend:", error);
       // Fallback to local storage if backend fails
       console.log("Falling back to local storage...");
     }
-  }, []);
+  }, [flowers, diamonds, tickets, bvrCoins, bees, virtualBees, alveoles, invitedFriends, claimedMissions, referralCode, referrals, totalReferralEarnings, sponsorCode, isAffiliatedToDev, hasPendingFunds, transactions, diamondsThisYear, yearStartDate]);
 
   // Function to set user ID (called when user logs in)
   const setUserId = useCallback(
