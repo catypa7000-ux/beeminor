@@ -222,11 +222,26 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const honeyRef = useRef<number>(honey);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const beesRef = useRef<Record<string, number>>(bees);
+  const virtualBeesRef = useRef<Record<string, number>>(virtualBees);
+  const alveolesRef = useRef<Record<number, boolean>>(alveoles);
 
-  // Keep honeyRef in sync
+  // Keep refs in sync
   useEffect(() => {
     honeyRef.current = honey;
   }, [honey]);
+  
+  useEffect(() => {
+    beesRef.current = bees;
+  }, [bees]);
+  
+  useEffect(() => {
+    virtualBeesRef.current = virtualBees;
+  }, [virtualBees]);
+  
+  useEffect(() => {
+    alveolesRef.current = alveoles;
+  }, [alveoles]);
 
   const generateReferralCode = useCallback(() => {
     setReferralCode((current) => {
@@ -333,39 +348,12 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
   const syncGameStateFromBackend = useCallback(async (userId: string) => {
     try {
-      // First, save current frontend honey to backend to update lastUpdated timestamp
-      // This ensures backend knows the current state before calculating offline production
-      const currentFrontendHoney = honeyRef.current;
-      try {
-        await gameAPI.updateGameState(userId, {
-          honey: currentFrontendHoney,
-          flowers,
-          diamonds,
-          tickets,
-          bvrCoins,
-          bees,
-          virtualBees,
-          alveoles,
-          invitedFriends,
-          claimedMissions,
-          referralCode,
-          referrals,
-          totalReferralEarnings,
-          sponsorCode,
-          isAffiliatedToDev,
-          hasPendingFunds,
-          transactions,
-          diamondsThisYear,
-          yearStartDate,
-        });
-      } catch (updateError) {
-        console.warn("Failed to update backend before sync:", updateError);
-      }
-
-      // Now get the updated game state from backend
+      // Get game state from backend (backend calculates offline production)
       const response = await gameAPI.getGameState(userId);
       if (response.success && response.gameState) {
         const state = response.gameState;
+        const currentFrontendHoney = honeyRef.current;
+        
         setFlowers(state.flowers ?? 0);
         setDiamonds(state.diamonds ?? 0);
         setTickets(state.tickets ?? 0);
@@ -413,26 +401,35 @@ export const [GameProvider, useGame] = createContextHook(() => {
           setSponsorCode((state as any).sponsorCode);
         }
 
-        // Use the maximum of frontend and backend honey to ensure we don't lose any production
-        // Backend calculates offline production, but frontend has been producing in real-time
+        // For honey: Only update if backend has significantly MORE honey (from offline production)
+        // Otherwise, keep frontend honey (which is producing in real-time)
+        // Use a threshold to avoid small discrepancies from causing resets
         const backendHoney = state.honey ?? 100;
-        const maxHoney = Math.max(currentFrontendHoney, backendHoney);
+        const honeyDifference = backendHoney - currentFrontendHoney;
+        const threshold = 1000; // Only update if backend has at least 1000 more honey
+        
+        if (honeyDifference > threshold) {
+          // Backend has significantly more (offline production), use it
+          setHoney(backendHoney);
+          honeyRef.current = backendHoney;
+          console.log(`🍯 Synced honey from backend (offline production): ${backendHoney.toFixed(2)} (was ${currentFrontendHoney.toFixed(2)})`);
+        } else {
+          // Frontend has more or similar (real-time production), keep it
+          // Don't update honey state - let production continue
+          // Backend will be updated by periodic save (every 10 seconds)
+          console.log(`🍯 Keeping frontend honey: ${currentFrontendHoney.toFixed(2)} (backend: ${backendHoney.toFixed(2)})`);
+        }
         
         if (state.lastUpdated) {
           setLastUpdated(state.lastUpdated);
         }
-        
-        // Set honey to the maximum value to preserve real-time production
-        setHoney(maxHoney);
-        honeyRef.current = maxHoney;
-        console.log(`🍯 Synced honey: frontend=${currentFrontendHoney.toFixed(2)}, backend=${backendHoney.toFixed(2)}, using=${maxHoney.toFixed(2)}`);
       }
     } catch (error) {
       console.error("Failed to sync game state from backend:", error);
       // Fallback to local storage if backend fails
       console.log("Falling back to local storage...");
     }
-  }, [flowers, diamonds, tickets, bvrCoins, bees, virtualBees, alveoles, invitedFriends, claimedMissions, referralCode, referrals, totalReferralEarnings, sponsorCode, isAffiliatedToDev, hasPendingFunds, transactions, diamondsThisYear, yearStartDate]);
+  }, []);
 
   // Function to set user ID (called when user logs in)
   const setUserId = useCallback(
@@ -908,16 +905,44 @@ export const [GameProvider, useGame] = createContextHook(() => {
   }, [alveoles]);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded) {
+      console.log("⏸️ Production interval not started: isLoaded = false");
+      return;
+    }
+
+    console.log("✅ Starting honey production interval");
 
     const interval = setInterval(() => {
       setHoney((current) => {
-        const maxCapacity = getMaxCapacity();
+        // Calculate production from refs (always current, no dependency issues)
+        let production = 0;
+        BEE_TYPES.forEach((beeType) => {
+          const count = beesRef.current[beeType.id] || 0;
+          production += count * beeType.honeyPerHour;
+        });
+        VIRTUAL_BEE_TYPES.forEach((beeType) => {
+          const count = virtualBeesRef.current[beeType.id] || 0;
+          production += count * beeType.honeyPerHour;
+        });
+
+        // Calculate max capacity from refs
+        let maxCapacity = 0;
+        ALVEOLE_LEVELS.forEach((level) => {
+          if (alveolesRef.current[level.level]) {
+            maxCapacity = Math.max(maxCapacity, level.capacity);
+          }
+        });
+
         if (current >= maxCapacity) {
+          honeyRef.current = current; // Update ref even if at capacity
           return current;
         }
-        const production = getTotalProduction();
-        const newHoney = Math.min(current + production / 3600, maxCapacity);
+        
+        const productionPerSecond = production / 3600;
+        const newHoney = Math.min(current + productionPerSecond, maxCapacity);
+        
+        // Update ref immediately to keep it in sync
+        honeyRef.current = newHoney;
 
         // Save to local storage every second so no progress is lost on close
         AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
@@ -932,8 +957,11 @@ export const [GameProvider, useGame] = createContextHook(() => {
       });
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [bees, isLoaded, getTotalProduction, getMaxCapacity]);
+    return () => {
+      console.log("🛑 Stopping honey production interval");
+      clearInterval(interval);
+    };
+  }, [isLoaded]); // Only depend on isLoaded, use refs for everything else
 
   useEffect(() => {
     if (!isLoaded) return;
