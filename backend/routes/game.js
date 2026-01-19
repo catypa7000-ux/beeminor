@@ -135,12 +135,19 @@ router.get("/:userId", async (req, res) => {
         // Update lastUpdated to now (so next calculation starts from here)
         gameState.lastUpdated = new Date();
         
+        // Always save to update lastUpdated, even if at capacity (honey didn't increase)
+        // This ensures next offline calculation starts from the correct time
         if (offlineHoney > 0) {
           console.log(
             `🕒 Backend offline production: +${offlineHoney.toFixed(2)} honey over ${secondsPassed}s (${(secondsPassed / 3600).toFixed(2)} hours) for user ${req.params.userId}`
           );
-          await gameState.save();
+        } else if (secondsPassed > 0) {
+          // Even if at capacity, update lastUpdated to prevent calculating from old timestamp
+          console.log(
+            `🕒 User at capacity, updating lastUpdated after ${secondsPassed}s for user ${req.params.userId}`
+          );
         }
+        await gameState.save();
       }
     }
 
