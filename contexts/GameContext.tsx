@@ -1,6 +1,7 @@
 import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import { gameAPI, transactionsAPI } from "../lib/api";
 
 export type BeeType = {
@@ -1051,6 +1052,73 @@ export const [GameProvider, useGame] = createContextHook(() => {
     isLoaded,
     currentUserId,
     // We EXCLUDE honey here so the interval isn't cleared every second
+    flowers,
+    diamonds,
+    tickets,
+    bvrCoins,
+    bees,
+    virtualBees,
+    alveoles,
+    invitedFriends,
+    claimedMissions,
+    referralCode,
+    referrals,
+    totalReferralEarnings,
+    sponsorCode,
+    isAffiliatedToDev,
+    hasPendingFunds,
+    transactions,
+    diamondsThisYear,
+    yearStartDate,
+    allUsersLeaderboard,
+    virtualBeeStartTime,
+    saveGameState,
+  ]);
+
+  // Save game state when app goes to background or closes
+  // This ensures lastUpdated is current when the session ends
+  useEffect(() => {
+    if (!isLoaded || !currentUserId) return;
+
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === "background" || nextAppState === "inactive") {
+        // App is going to background - save immediately to ensure lastUpdated is current
+        console.log("📱 App going to background, saving game state...");
+        saveGameState(
+          honeyRef.current,
+          flowers,
+          diamonds,
+          tickets,
+          bvrCoins,
+          bees,
+          virtualBees,
+          alveoles,
+          invitedFriends,
+          claimedMissions,
+          referralCode,
+          referrals,
+          totalReferralEarnings,
+          sponsorCode,
+          isAffiliatedToDev,
+          hasPendingFunds,
+          transactions,
+          diamondsThisYear,
+          yearStartDate,
+          allUsersLeaderboard,
+          virtualBeeStartTime,
+          true // forceSync: save immediately, no debounce
+        );
+      }
+    };
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [
+    isLoaded,
+    currentUserId,
     flowers,
     diamonds,
     tickets,
