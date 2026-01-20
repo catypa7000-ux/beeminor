@@ -226,20 +226,21 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const beesRef = useRef<Record<string, number>>(bees);
   const virtualBeesRef = useRef<Record<string, number>>(virtualBees);
   const alveolesRef = useRef<Record<number, boolean>>(alveoles);
+  const lastProductionTick = useRef<number>(Date.now());
 
   // Keep refs in sync
   useEffect(() => {
     honeyRef.current = honey;
   }, [honey]);
-  
+
   useEffect(() => {
     beesRef.current = bees;
   }, [bees]);
-  
+
   useEffect(() => {
     virtualBeesRef.current = virtualBees;
   }, [virtualBees]);
-  
+
   useEffect(() => {
     alveolesRef.current = alveoles;
   }, [alveoles]);
@@ -354,7 +355,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       if (response.success && response.gameState) {
         const state = response.gameState;
         const currentFrontendHoney = honeyRef.current;
-        
+
         setFlowers(state.flowers ?? 0);
         setDiamonds(state.diamonds ?? 0);
         setTickets(state.tickets ?? 0);
@@ -408,7 +409,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
         const backendHoney = state.honey ?? 100;
         const honeyDifference = backendHoney - currentFrontendHoney;
         const threshold = 1000; // Only update if backend has at least 1000 more honey
-        
+
         if (honeyDifference > threshold) {
           // Backend has significantly more (offline production), use it
           setHoney(backendHoney);
@@ -420,7 +421,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
           // Backend will be updated by periodic save (every 10 seconds)
           console.log(`🍯 Keeping frontend honey: ${currentFrontendHoney.toFixed(2)} (backend: ${backendHoney.toFixed(2)})`);
         }
-        
+
         if (state.lastUpdated) {
           setLastUpdated(state.lastUpdated);
         }
@@ -552,11 +553,11 @@ export const [GameProvider, useGame] = createContextHook(() => {
             // Backend now calculates offline production automatically in GET endpoint
             // So we just use the honey value directly (backend has already applied offline production)
             const backendTotalHoney = state.honey ?? 100;
-            
+
             if (state.lastUpdated) {
               setLastUpdated(state.lastUpdated);
             }
-            
+
             setHoney(backendTotalHoney);
             console.log(`🍯 Loaded honey from backend: ${backendTotalHoney} (offline production already calculated server-side)`);
 
@@ -846,8 +847,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
                     t.status === "approved"
                       ? "completed"
                       : t.status === "rejected"
-                      ? "failed"
-                      : "pending",
+                        ? "failed"
+                        : "pending",
                   createdAt: new Date(t.createdAt),
                   address: t.walletAddress || null,
                 })),
@@ -913,7 +914,16 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
     console.log("✅ Starting honey production interval");
 
+    lastProductionTick.current = Date.now();
+
     const interval = setInterval(() => {
+      const now = Date.now();
+      const elapsedSeconds = (now - lastProductionTick.current) / 1000;
+      lastProductionTick.current = now;
+
+      // Skip if elapsed time is negligible or negative
+      if (elapsedSeconds <= 0) return;
+
       setHoney((current) => {
         // Calculate production from refs (always current, no dependency issues)
         let production = 0;
@@ -938,10 +948,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
           honeyRef.current = current; // Update ref even if at capacity
           return current;
         }
-        
-        const productionPerSecond = production / 3600;
-        const newHoney = Math.min(current + productionPerSecond, maxCapacity);
-        
+
+        const productionAmount = (production / 3600) * elapsedSeconds;
+        const newHoney = Math.min(current + productionAmount, maxCapacity);
+
         // Update ref immediately to keep it in sync
         honeyRef.current = newHoney;
 
@@ -1434,14 +1444,14 @@ export const [GameProvider, useGame] = createContextHook(() => {
     async (amount: number) => {
       // Optimistic check - validate locally first
       if (amount < 100) return false;
-      
+
       // Cap amount to available honey to prevent sync issues
       const actualAmount = Math.min(amount, Math.floor(honey));
       if (actualAmount < 100) {
         console.warn(`Cannot sell: only ${honey} honey available, need at least 100`);
         return false;
       }
-      
+
       // Use capped amount
       const sellAmount = actualAmount;
 
@@ -1453,7 +1463,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
             // Update state with backend response
             const newHoney = response.gameState.honey;
             console.log(`🍯 Sold ${sellAmount} honey. Old: ${honey}, New: ${newHoney}`);
-            
+
             // Update all state immediately using functional update to ensure we override any pending updates
             setHoney(() => {
               honeyRef.current = newHoney; // Update ref first
@@ -1783,10 +1793,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
             current.map((txn) =>
               txn.id === transactionId
                 ? {
-                    ...txn,
-                    status: "approved" as TransactionStatus,
-                    processedAt: new Date().toISOString(),
-                  }
+                  ...txn,
+                  status: "approved" as TransactionStatus,
+                  processedAt: new Date().toISOString(),
+                }
                 : txn
             )
           );
@@ -1837,10 +1847,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
             current.map((txn) =>
               txn.id === transactionId
                 ? {
-                    ...txn,
-                    status: "rejected" as TransactionStatus,
-                    processedAt: new Date().toISOString(),
-                  }
+                  ...txn,
+                  status: "rejected" as TransactionStatus,
+                  processedAt: new Date().toISOString(),
+                }
                 : txn
             )
           );
@@ -1857,10 +1867,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
           current.map((txn) =>
             txn.id === transactionId && txn.status === "pending"
               ? {
-                  ...txn,
-                  status: "rejected" as TransactionStatus,
-                  processedAt: new Date().toISOString(),
-                }
+                ...txn,
+                status: "rejected" as TransactionStatus,
+                processedAt: new Date().toISOString(),
+              }
               : txn
           )
         );
