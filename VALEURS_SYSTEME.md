@@ -223,6 +223,17 @@ input: 10 → +10 BVR (= 10 USD)
 | $50.00 | 50,000 | 500,000 | 50 |
 | $100.00 | 100,000 | 1,000,000 | 100 |
 
+### Taux d'Échange BVR → Fleurs
+```
+100 BVR coins = 0.01 fleur
+10,000 BVR coins = 1 fleur
+```
+
+### Taux de Retrait BVR
+```
+100 BVR coins (jeu) = 1 BVR token (blockchain)
+```
+
 ---
 
 ## 🚨 Points Critiques à Vérifier
@@ -292,6 +303,14 @@ const fleursToDiamants = (fleurs: number): number => fleurs * DIAMANTS_PER_FLEUR
 
 // BVR → USD (1:1)
 const bvrToUSD = (bvr: number): number => bvr;
+
+// BVR Coins → Fleurs (échange)
+const bvrCoinsToFleurs = (bvrCoins: number): number => bvrCoins / 10000;
+// 100 BVR coins = 0.01 fleur
+
+// BVR Coins → BVR Tokens (retrait)
+const bvrCoinsToTokens = (bvrCoins: number): number => bvrCoins / 100;
+// 100 BVR coins = 1 BVR token
 ```
 
 ---

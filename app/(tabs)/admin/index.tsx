@@ -852,7 +852,7 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
                 {txn.type === 'deposit_crypto' && txn.flowersAmount 
                   ? `${txn.flowersAmount.toLocaleString()} fleurs`
                   : txn.type === 'withdrawal_bvr'
-                  ? `${txn.amount.toLocaleString()} BVR`
+                  ? `${txn.amount.toLocaleString()} BVR tokens`
                   : `${txn.amount.toLocaleString()} fleurs`}
               </Text>
             </View>
