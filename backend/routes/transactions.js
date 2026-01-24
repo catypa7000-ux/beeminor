@@ -77,7 +77,8 @@ router.post('/withdraw', async (req, res) => {
       gameState.diamonds -= amount;
       console.log(`💎 Deducted ${amount} diamonds from user ${userId}. Remaining: ${gameState.diamonds}`);
     } else if (currency === 'BVR' || type === 'withdrawal_bvr') {
-      // For BVR withdrawals, deduct bvrCoins
+      // For BVR withdrawals: 100 BVR coins = 1 BVR token
+      // amount is in coins, we need to deduct coins but store token amount
       if (gameState.bvrCoins < amount) {
         return res.status(400).json({
           success: false,
@@ -87,7 +88,9 @@ router.post('/withdraw', async (req, res) => {
         });
       }
       gameState.bvrCoins -= amount;
-      console.log(`🪙 Deducted ${amount} BVR from user ${userId}. Remaining: ${gameState.bvrCoins}`);
+      // Convert coins to tokens: 100 coins = 1 token
+      const tokenAmount = amount / 100;
+      console.log(`🪙 Deducted ${amount} BVR coins from user ${userId}. Converting to ${tokenAmount} BVR tokens. Remaining: ${gameState.bvrCoins}`);
     } else {
       // For USD/crypto withdrawals, deduct flowers
       if (gameState.flowers < amount) {
@@ -105,10 +108,13 @@ router.post('/withdraw', async (req, res) => {
     await gameState.save();
 
     // Create withdrawal transaction
+    // For BVR withdrawals, store token amount (what will actually be sent)
+    // For other withdrawals, store the amount as-is
+    const transactionAmount = (currency === 'BVR' || type === 'withdrawal_bvr') ? (amount / 100) : amount;
     const transaction = new Transaction({
       userId,
       type: type || 'withdrawal',
-      amount,
+      amount: transactionAmount,
       currency,
       address: address || null,
       cryptoAddress: cryptoAddress || null,
@@ -368,8 +374,10 @@ router.put('/:id/status', async (req, res) => {
         
         // Refund based on currency type
         if (transaction.currency === 'BVR') {
-          gameState.bvrCoins += transaction.amount;
-          console.log('Refunding BVR:', transaction.amount);
+          // Convert token amount back to coins: 1 token = 100 coins
+          const coinsToRefund = transaction.amount * 100;
+          gameState.bvrCoins += coinsToRefund;
+          console.log('Refunding BVR:', transaction.amount, 'tokens =', coinsToRefund, 'coins');
         } else {
           gameState.flowers += transaction.amount;
           console.log('Refunding flowers:', transaction.amount);

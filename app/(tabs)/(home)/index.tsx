@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
   Platform,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -91,24 +92,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={["#2d5016", "#3d6b1f", "#4a7c26"]}
-        style={styles.forestGradient}
-      >
-        <View style={[styles.webContainer, { backgroundColor: "transparent" }]}>
-          <View style={styles.forestBackground}>
-            <Text style={[styles.tree, { top: 100, left: 20 }]}>🌲</Text>
-            <Text style={[styles.tree, { top: 120, left: width * 0.7 }]}>
-              🌲
-            </Text>
-            <Text style={[styles.tree, { top: 80, right: 40 }]}>🌳</Text>
-            <Text style={[styles.tree, { top: 150, left: width * 0.4 }]}>
-              🌲
-            </Text>
-            <Text style={[styles.tree, { top: 140, right: width * 0.25 }]}>
-              🌳
-            </Text>
-          </View>
+      <Image
+        source={require("../../../assets/images/beeminor-new-logo.jpeg")}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
+      <View style={[styles.webContainer, { backgroundColor: "transparent" }]}>
 
           <View
             style={[styles.sceneContainer, { paddingTop: isWeb ? 20 : 40 }]}
@@ -243,8 +232,7 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
           </Modal>
-        </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
@@ -254,8 +242,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  forestGradient: {
-    flex: 1,
+  backgroundImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
   },
   webContainer: {
     flex: 1,
@@ -284,19 +278,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600" as const,
     color: "#fff",
-  },
-
-  forestBackground: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 300,
-  },
-  tree: {
-    position: "absolute",
-    fontSize: 60,
-    opacity: 0.8,
   },
   flowersContainer: {
     position: "absolute",

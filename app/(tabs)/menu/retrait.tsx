@@ -169,7 +169,8 @@ export default function RetraitScreen() {
 
       // Use window.confirm for web compatibility
       const confirmed = window.confirm(
-        `Vous allez retirer ${amount.toLocaleString()} BVR\n` +
+        `Vous allez retirer ${amount.toLocaleString()} BVR coins (jeu)\n` +
+          `Vous recevrez: ${(amount / 100).toLocaleString()} BVR tokens\n` +
           `Réseau: Solana\n` +
           `Aucun frais\n` +
           `Adresse: ${walletAddress.substring(0, 10)}...\n\n` +
@@ -448,7 +449,7 @@ export default function RetraitScreen() {
           <View style={styles.summaryCard}>
             <Text style={styles.summaryTitle}>Résumé</Text>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>BVR</Text>
+              <Text style={styles.summaryLabel}>BVR Coins (jeu)</Text>
               <Text style={styles.summaryValue}>
                 {amount.toLocaleString()} 🪙
               </Text>
@@ -460,7 +461,7 @@ export default function RetraitScreen() {
             <View style={[styles.summaryRow, styles.summaryRowTotal]}>
               <Text style={styles.summaryLabelTotal}>Vous recevrez</Text>
               <Text style={styles.summaryValueTotal}>
-                {amount.toLocaleString()} BVR
+                {(amount / 100).toLocaleString()} BVR tokens
               </Text>
             </View>
           </View>

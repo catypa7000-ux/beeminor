@@ -1632,7 +1632,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
         setDiamonds((current) => current - amount);
         setFlowers((current) => current + flowersReceived);
       } else if (type === "BVR_TO_FLOWERS") {
-        flowersReceived = amount / 1000; // 100 BVR = 0.1 flower
+        flowersReceived = amount / 10000; // 100 BVR = 0.01 flower
         setBvrCoins((current) => current - amount);
         setFlowers((current) => current + flowersReceived);
       }
@@ -1746,11 +1746,16 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
         if (response.success) {
           // Update local state with backend response
+          // For BVR withdrawals: backend stores token amount, frontend should use it for consistency
           const newTransaction: Transaction = {
             ...transaction,
             id: response.transaction.id,
             status: "pending",
             createdAt: response.transaction.createdAt,
+            // For BVR withdrawals, use backend token amount; for others, keep original
+            amount: (transaction.type === "withdrawal_bvr") 
+              ? response.transaction.amount  // Backend returns token amount
+              : transaction.amount,           // Keep original for other types
           };
           setTransactions((current) => [newTransaction, ...current]);
 
@@ -1815,7 +1820,11 @@ export const [GameProvider, useGame] = createContextHook(() => {
               if (txn.type === "withdrawal_diamond") {
                 setDiamonds((curr) => Math.max(0, curr - txn.amount));
               } else if (txn.type === "withdrawal_bvr") {
-                setBvrCoins((curr) => Math.max(0, curr - txn.amount));
+                // Frontend transaction amount is now in tokens (from backend response)
+                // Backend already deducted coins when withdrawal was submitted
+                // This fallback should not deduct - backend handles balance, we just sync
+                // If backend call failed, we shouldn't deduct locally (coins already deducted on submission)
+                console.warn("Backend approval failed - balance already synced from backend on submission");
               }
               return {
                 ...txn,

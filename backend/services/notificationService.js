@@ -7,10 +7,14 @@ const { sendEmail } = require('../config/email');
 
 /**
  * Format currency for display
+ * @param {number} amount - The amount to format
+ * @param {string} currency - The currency type
+ * @param {boolean} isRefund - If true, formats BVR as coins (for refunds), otherwise as tokens
  */
-const formatCurrency = (amount, currency) => {
+const formatCurrency = (amount, currency, isRefund = false) => {
   if (currency === 'BVR') {
-    return `${amount.toLocaleString()} BVR`;
+    // For refunds, show coins; for transactions, show tokens
+    return `${amount.toLocaleString()} BVR ${isRefund ? 'coins' : 'tokens'}`;
   } else if (currency === 'USD') {
     return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   } else if (currency === 'Diamond' || currency === 'DIAMOND') {
@@ -360,7 +364,7 @@ const sendWithdrawalRejectedNotification = async (userEmail, transaction, refund
           <div class="refund-box">
             <h3 style="margin-top: 0; color: #0c5460;">💰 Automatic Refund Processed</h3>
             <p style="margin: 0;">
-              <strong style="font-size: 18px; color: #17a2b8;">${formatCurrency(refundedAmount, refundedCurrency)}</strong> 
+              <strong style="font-size: 18px; color: #17a2b8;">${formatCurrency(refundedAmount, refundedCurrency, true)}</strong> 
               has been automatically refunded to your account.
             </p>
           </div>
@@ -377,7 +381,7 @@ const sendWithdrawalRejectedNotification = async (userEmail, transaction, refund
             </div>
             <div class="info-row">
               <span class="info-label">Refunded Amount:</span>
-              <span style="font-weight: bold; color: #17a2b8;">${formatCurrency(refundedAmount, refundedCurrency)}</span>
+              <span style="font-weight: bold; color: #17a2b8;">${formatCurrency(refundedAmount, refundedCurrency, true)}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Status:</span>
@@ -422,12 +426,12 @@ Unfortunately, your withdrawal request could not be approved at this time.
 ${transaction.adminNotes ? `Rejection Reason: ${transaction.adminNotes}\n` : ''}
 
 💰 AUTOMATIC REFUND PROCESSED
-${formatCurrency(refundedAmount, refundedCurrency)} has been automatically refunded to your account.
+${formatCurrency(refundedAmount, refundedCurrency, true)} has been automatically refunded to your account.
 
 Transaction Details:
 - Type: ${formatTransactionType(transaction.type)}
 - Requested Amount: ${formatCurrency(transaction.amount, transaction.currency)}
-- Refunded Amount: ${formatCurrency(refundedAmount, refundedCurrency)}
+- Refunded Amount: ${formatCurrency(refundedAmount, refundedCurrency, true)}
 - Status: ❌ Rejected
 - Transaction ID: ${transaction._id}
 
