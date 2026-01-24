@@ -19,6 +19,7 @@ import { useRouter } from "expo-router";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const isWeb = Platform.OS === "web";
 const ADMIN_EMAIL = "martinremy100@gmail.com";
+const SMALL_SCREEN_WIDTH = 400; // Threshold for small screens
 
 export default function TopBar() {
   const { flowers, diamonds, bvrCoins } = useGame();
@@ -64,13 +65,16 @@ export default function TopBar() {
 
   const isAdmin =
     currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  
+  const isSmallScreen = SCREEN_WIDTH < SMALL_SCREEN_WIDTH;
 
   const menuItems = [
-    { label: t.faq, path: "/(tabs)/(home)/faq" },
-    { label: t.help, path: "/(tabs)/(home)/aide" },
-    { label: t.account, path: "/(tabs)/(home)/compte" },
-    { label: t.history, path: "/(tabs)/(home)/historique" },
-    ...(isAdmin ? [{ label: "Admin", path: "/(tabs)/admin" }] : []),
+    { label: t.faq, path: "/(tabs)/(home)/faq", icon: null },
+    { label: t.help, path: "/(tabs)/(home)/aide", icon: null },
+    { label: t.account, path: "/(tabs)/(home)/compte", icon: null },
+    { label: t.history, path: "/(tabs)/(home)/historique", icon: null },
+    ...(isSmallScreen ? [{ label: t.leaderboard, path: "/(tabs)/(home)/leaderboard", icon: "crown" }] : []),
+    ...(isAdmin ? [{ label: "Admin", path: "/(tabs)/admin", icon: null }] : []),
   ];
 
   const styles = createStyles(insets);
@@ -106,14 +110,16 @@ export default function TopBar() {
         </View>
       </View>
 
-      <View style={styles.rightSection}>
-        <TouchableOpacity
-          style={styles.crownButton}
-          onPress={() => router.push("/(tabs)/(home)/leaderboard")}
-        >
-          <Crown size={20} color="#FFD700" fill="#FFD700" />
-        </TouchableOpacity>
-      </View>
+      {!isSmallScreen && (
+        <View style={styles.rightSection}>
+          <TouchableOpacity
+            style={styles.crownButton}
+            onPress={() => router.push("/(tabs)/(home)/leaderboard")}
+          >
+            <Crown size={20} color="#FFD700" fill="#FFD700" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal
         visible={showLanguages}
@@ -195,7 +201,14 @@ export default function TopBar() {
                     router.push(item.path as any);
                   }}
                 >
-                  <Text style={styles.menuOptionText}>{item.label}</Text>
+                  <View style={styles.menuOptionContent}>
+                    {item.icon === "crown" && (
+                      <View style={styles.menuIcon}>
+                        <Crown size={20} color="#FFD700" fill="#FFD700" />
+                      </View>
+                    )}
+                    <Text style={styles.menuOptionText}>{item.label}</Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -346,6 +359,15 @@ const createStyles = (insets: { top: number }) =>
       marginBottom: 8,
       borderWidth: 1,
       borderColor: "rgba(139, 69, 19, 0.1)",
+    },
+    menuOptionContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+    },
+    menuIcon: {
+      marginRight: 4,
     },
     menuOptionText: {
       fontSize: isWeb ? 16 : 18,
