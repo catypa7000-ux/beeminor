@@ -109,15 +109,6 @@ export default function HomeScreen() {
               <Text style={styles.infoButtonText}>🐝❓</Text>
             </TouchableOpacity>
 
-            <View style={styles.flowersContainer}>
-              <Text style={[styles.flower, { top: -40, left: -30 }]}>🌸</Text>
-              <Text style={[styles.flower, { top: -35, left: 20 }]}>🌼</Text>
-              <Text style={[styles.flower, { top: 0, left: -45 }]}>🌺</Text>
-              <Text style={[styles.flower, { top: 0, left: 35 }]}>🌷</Text>
-              <Text style={[styles.flower, { top: 30, left: -20 }]}>🌻</Text>
-              <Text style={[styles.flower, { top: 35, left: 10 }]}>🌹</Text>
-            </View>
-
             <View style={styles.beesContainer}>
               {beesAnimated.current.map((bee) => (
                 <Animated.View
@@ -275,17 +266,6 @@ const styles = StyleSheet.create({
     fontWeight: "600" as const,
     color: "#fff",
   },
-  flowersContainer: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: [{ translateX: -30 }, { translateY: -30 }],
-  },
-  flower: {
-    position: "absolute",
-    fontSize: 32,
-  },
-
   honeyDisplayContainer: {
     flexDirection: "row",
     alignItems: "center",
