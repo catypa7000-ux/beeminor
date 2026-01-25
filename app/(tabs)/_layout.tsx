@@ -17,7 +17,9 @@ export default function TabsLayout() {
         paddingTop: isWeb ? 0 : insets.top, 
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.1)'
+        borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+        zIndex: 10000,
+        elevation: 10000,
       }}>
         <TopBar />
       </View>
