@@ -5,7 +5,7 @@
 
 const http = require('http');
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://960wd305-3001.inc1.devtunnels.ms';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
 
 console.log('🔍 Checking backend status...\n');
 console.log(`📍 API Base URL: ${API_BASE_URL}\n`);

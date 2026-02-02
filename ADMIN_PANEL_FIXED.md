@@ -149,7 +149,7 @@ useEffect(() => {
 const [globalStats, setGlobalStats] = useState(null);
 useEffect(() => {
   const loadGlobalStats = async () => {
-    const response = await fetch('https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/stats');
+    const response = await fetch('http://localhost:3001/api/leaderboard/stats');
     const data = await response.json();
     setGlobalStats(data.stats);
   };
@@ -164,7 +164,7 @@ useEffect(() => {
 game.addFlowers(amount);
 
 // After: Updates selected user via backend
-await fetch(`https://960wd305-3001.inc1.devtunnels.ms/api/game/${selectedUserId}/admin/add-resources`, {
+await fetch(`http://localhost:3001/api/game/${selectedUserId}/admin/add-resources`, {
   method: 'POST',
   body: JSON.stringify({ flowers: amount })
 });
@@ -202,7 +202,7 @@ return response.transactions.map(...); // Returns backend data
 ### Test Transactions Tab
 1. Create withdrawal via Postman:
    ```bash
-   POST https://960wd305-3001.inc1.devtunnels.ms/api/transactions/withdraw
+   POST http://localhost:3001/api/transactions/withdraw
    Body: { "userId": "...", "amount": 50000, "currency": "USD", "cryptoAddress": "0x..." }
    ```
 2. Open Admin Panel → Transactions tab

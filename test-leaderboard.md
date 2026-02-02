@@ -4,7 +4,7 @@
 
 ### 1. Top Diamonds Leaderboard
 ```
-GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/top-diamonds?limit=10
+GET http://localhost:3001/api/leaderboard/top-diamonds?limit=10
 ```
 Expected:
 - List of top 10 users sorted by diamonds
@@ -12,7 +12,7 @@ Expected:
 
 ### 2. Top Honey Leaderboard
 ```
-GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/top-honey?limit=10
+GET http://localhost:3001/api/leaderboard/top-honey?limit=10
 ```
 Expected:
 - List of top 10 users sorted by honey
@@ -20,7 +20,7 @@ Expected:
 
 ### 3. Top Referrers Leaderboard
 ```
-GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/top-referrers?limit=10
+GET http://localhost:3001/api/leaderboard/top-referrers?limit=10
 ```
 Expected:
 - List of top 10 users sorted by referral earnings
@@ -28,7 +28,7 @@ Expected:
 
 ### 4. User Rank (Your Position)
 ```
-GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/user-rank/6930a425b2468df4e5b54e4e
+GET http://localhost:3001/api/leaderboard/user-rank/6930a425b2468df4e5b54e4e
 ```
 Expected:
 - Your rank in diamonds category (e.g., "rank: 1, total: 5, value: 150")
@@ -38,7 +38,7 @@ Expected:
 
 ### 5. Global Statistics
 ```
-GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/stats
+GET http://localhost:3001/api/leaderboard/stats
 ```
 Expected:
 - Total users in the game
@@ -54,11 +54,11 @@ Expected:
 ### Scenario 1: Verify Your Rank
 1. Get your game state to see your stats:
    ```
-   GET https://960wd305-3001.inc1.devtunnels.ms/api/game/6930a425b2468df4e5b54e4e
+   GET http://localhost:3001/api/game/6930a425b2468df4e5b54e4e
    ```
 2. Get your rank:
    ```
-   GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/user-rank/6930a425b2468df4e5b54e4e
+   GET http://localhost:3001/api/leaderboard/user-rank/6930a425b2468df4e5b54e4e
    ```
 3. Compare your diamonds/honey values with leaderboard position
 
@@ -66,38 +66,38 @@ Expected:
 1. Note your current diamond rank
 2. Sell honey to get more diamonds:
    ```
-   POST https://960wd305-3001.inc1.devtunnels.ms/api/game/6930a425b2468df4e5b54e4e/sell-honey
+   POST http://localhost:3001/api/game/6930a425b2468df4e5b54e4e/sell-honey
    Body: {"amount": 1000}
    ```
 3. Check rank again - it should update:
    ```
-   GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/user-rank/6930a425b2468df4e5b54e4e
+   GET http://localhost:3001/api/leaderboard/user-rank/6930a425b2468df4e5b54e4e
    ```
 
 ### Scenario 3: Global Stats Match
 1. Get global stats:
    ```
-   GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/stats
+   GET http://localhost:3001/api/leaderboard/stats
    ```
 2. Get top diamonds leaderboard:
    ```
-   GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/top-diamonds?limit=100
+   GET http://localhost:3001/api/leaderboard/top-diamonds?limit=100
    ```
 3. Manually add up top users' diamonds - should be close to global total
 
 ### Scenario 4: Referral Leaderboard
 1. Check current referral ranking:
    ```
-   GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/top-referrers?limit=10
+   GET http://localhost:3001/api/leaderboard/top-referrers?limit=10
    ```
 2. Process a referral bonus:
    ```
-   POST https://960wd305-3001.inc1.devtunnels.ms/api/game/6930a425b2468df4e5b54e4e/process-referral
+   POST http://localhost:3001/api/game/6930a425b2468df4e5b54e4e/process-referral
    Body: {"amount": 10000}
    ```
 3. Check if totalReferralEarnings increased:
    ```
-   GET https://960wd305-3001.inc1.devtunnels.ms/api/leaderboard/user-rank/6930a425b2468df4e5b54e4e
+   GET http://localhost:3001/api/leaderboard/user-rank/6930a425b2468df4e5b54e4e
    ```
 
 ## Expected Results Summary

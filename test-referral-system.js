@@ -1,7 +1,7 @@
 const http = require('http');
 
 const sponsorUserId = '6930a425b2468df4e5b54e4e'; // Your user (the sponsor)
-const baseUrl = 'https://960wd305-3001.inc1.devtunnels.ms/api';
+const baseUrl = 'http://localhost:3001/api';
 
 // Helper function to make HTTP requests
 function makeRequest(url, method = 'GET', body = null) {

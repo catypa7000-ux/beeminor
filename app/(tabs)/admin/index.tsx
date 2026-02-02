@@ -217,7 +217,7 @@ function StatsTab({ game }: { game: ReturnType<typeof useGame> }) {
   useEffect(() => {
     const loadGlobalStats = async () => {
       try {
-        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://960wd305-3001.inc1.devtunnels.ms';
+        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
         const response = await fetch(`${apiBaseUrl}/api/leaderboard/stats`);
         const data = await response.json();
         if (data.success) {
@@ -696,7 +696,7 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
 
       // Load processed transaction history from backend
       try {
-        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://960wd305-3001.inc1.devtunnels.ms';
+        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
         const response = await fetch(`${apiBaseUrl}/api/transactions/history/all`);
         const data = await response.json();
         if (data.success) {
