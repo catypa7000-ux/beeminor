@@ -35,13 +35,13 @@ type Mission = {
 };
 
 const MISSIONS: Mission[] = [
-  { id: 1, friendsRequired: 1, flowersReward: 500, ticketsReward: 0 },
-  { id: 2, friendsRequired: 3, flowersReward: 1500, ticketsReward: 0 },
-  { id: 3, friendsRequired: 10, flowersReward: 4000, ticketsReward: 0 },
-  { id: 4, friendsRequired: 50, flowersReward: 12000, ticketsReward: 1 },
-  { id: 5, friendsRequired: 100, flowersReward: 30000, ticketsReward: 2 },
-  { id: 6, friendsRequired: 300, flowersReward: 70000, ticketsReward: 3 },
-  { id: 7, friendsRequired: 500, flowersReward: 160000, ticketsReward: 5 },
+  { id: 1, friendsRequired: 1, flowersReward: 50, ticketsReward: 0 },
+  { id: 2, friendsRequired: 3, flowersReward: 150, ticketsReward: 0 },
+  { id: 3, friendsRequired: 10, flowersReward: 400, ticketsReward: 0 },
+  { id: 4, friendsRequired: 50, flowersReward: 1200, ticketsReward: 1 },
+  { id: 5, friendsRequired: 100, flowersReward: 3000, ticketsReward: 2 },
+  { id: 6, friendsRequired: 300, flowersReward: 7000, ticketsReward: 3 },
+  { id: 7, friendsRequired: 500, flowersReward: 16000, ticketsReward: 5 },
 ];
 
 export default function TachesScreen() {
@@ -80,10 +80,10 @@ export default function TachesScreen() {
         if (Platform.OS === 'web') {
           window.alert(
             `${t.success}\n\n${t.inviteFriendBonus
-            } +200 ${t.flowers.toLowerCase()} ${t.perFriend}`
+            } +20 ${t.flowers.toLowerCase()} ${t.perFriend}`
           );
         } else {
-          Alert.alert(t.success, `${t.inviteFriendBonus} +200 ${t.flowers.toLowerCase()} ${t.perFriend}`);
+          Alert.alert(t.success, `${t.inviteFriendBonus} +20 ${t.flowers.toLowerCase()} ${t.perFriend}`);
         }
       }
     } catch (error) {
@@ -234,7 +234,7 @@ export default function TachesScreen() {
               >
                 <Users size={20} color="#FFF" />
                 <Text style={styles.inviteButtonText}>
-                  {t.inviteFriendBonus} (+200 {t.flowers.toLowerCase()})
+                  {t.inviteFriendBonus} (+20 {t.flowers.toLowerCase()})
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -279,13 +279,13 @@ export default function TachesScreen() {
                 <View style={styles.infoContent}>
                   <Text style={styles.infoTitle}>{t.referralBonus}</Text>
                   <Text style={styles.infoText}>
-                    • 200 {t.flowers.toLowerCase()} {t.perFriend}
+                    • 20 {t.flowers.toLowerCase()} {t.perFriend}
                   </Text>
                   <Text style={styles.infoText}>
-                    • 3000 {t.flowers.toLowerCase()} {t.firstPurchaseBonus}
+                    • 100 {t.flowers.toLowerCase()} {t.firstPurchaseBonus}
                   </Text>
                   <Text style={styles.infoText}>
-                    • 6% à vie sur tous les dépôts du filleul
+                    • 5% à vie sur tous les dépôts du filleul
                   </Text>
                 </View>
               </View>

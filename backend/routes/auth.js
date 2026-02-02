@@ -113,7 +113,7 @@ router.post("/register", async (req, res) => {
             (r) => r.email === user.email
           );
           if (!alreadyLinked) {
-            const invitationBonus = 100;
+            const invitationBonus = 10;
             sponsorGameState.referrals.push({
               email: user.email,
               referralCode: user.referralCode,

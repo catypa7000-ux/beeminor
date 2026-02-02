@@ -692,17 +692,17 @@ router.post("/:userId/spin-roulette", async (req, res) => {
     const PRIZES = [
       {
         id: "1",
-        label: "100",
+        label: "10",
         type: "flowers",
-        flowersAmount: 100,
+        flowersAmount: 10,
         weight: 70,
         rarity: "common",
       },
       {
         id: "2",
-        label: "300",
+        label: "30",
         type: "flowers",
-        flowersAmount: 300,
+        flowersAmount: 30,
         weight: 30,
         rarity: "common",
       },
@@ -717,9 +717,9 @@ router.post("/:userId/spin-roulette", async (req, res) => {
       },
       {
         id: "4",
-        label: "500",
+        label: "50",
         type: "flowers",
-        flowersAmount: 500,
+        flowersAmount: 50,
         weight: 12,
         rarity: "uncommon",
       },
@@ -734,25 +734,25 @@ router.post("/:userId/spin-roulette", async (req, res) => {
       },
       {
         id: "6",
-        label: "100",
+        label: "10",
         type: "flowers",
-        flowersAmount: 100,
+        flowersAmount: 10,
         weight: 70,
         rarity: "common",
       },
       {
         id: "7",
-        label: "1000",
+        label: "100",
         type: "flowers",
-        flowersAmount: 1000,
+        flowersAmount: 100,
         weight: 3,
         rarity: "epic",
       },
       {
         id: "8",
-        label: "300",
+        label: "30",
         type: "flowers",
-        flowersAmount: 300,
+        flowersAmount: 30,
         weight: 30,
         rarity: "common",
       },
@@ -767,9 +767,9 @@ router.post("/:userId/spin-roulette", async (req, res) => {
       },
       {
         id: "10",
-        label: "500",
+        label: "50",
         type: "flowers",
-        flowersAmount: 500,
+        flowersAmount: 50,
         weight: 12,
         rarity: "uncommon",
       },
@@ -784,9 +784,9 @@ router.post("/:userId/spin-roulette", async (req, res) => {
       },
       {
         id: "12",
-        label: "100",
+        label: "10",
         type: "flowers",
-        flowersAmount: 100,
+        flowersAmount: 10,
         weight: 70,
         rarity: "common",
       },
@@ -801,17 +801,17 @@ router.post("/:userId/spin-roulette", async (req, res) => {
       },
       {
         id: "14",
-        label: "300",
+        label: "30",
         type: "flowers",
-        flowersAmount: 300,
+        flowersAmount: 30,
         weight: 30,
         rarity: "common",
       },
       {
         id: "15",
-        label: "500",
+        label: "50",
         type: "flowers",
-        flowersAmount: 500,
+        flowersAmount: 50,
         weight: 12,
         rarity: "uncommon",
       },
@@ -936,13 +936,13 @@ router.post("/:userId/claim-mission", async (req, res) => {
 
     // Mission configuration (server-side)
     const MISSIONS = [
-      { id: 1, friendsRequired: 1, flowersReward: 500, ticketsReward: 0 },
-      { id: 2, friendsRequired: 3, flowersReward: 1500, ticketsReward: 0 },
-      { id: 3, friendsRequired: 10, flowersReward: 4000, ticketsReward: 0 },
-      { id: 4, friendsRequired: 50, flowersReward: 12000, ticketsReward: 1 },
-      { id: 5, friendsRequired: 100, flowersReward: 30000, ticketsReward: 2 },
-      { id: 6, friendsRequired: 300, flowersReward: 70000, ticketsReward: 3 },
-      { id: 7, friendsRequired: 500, flowersReward: 160000, ticketsReward: 5 },
+      { id: 1, friendsRequired: 1, flowersReward: 50, ticketsReward: 0 },
+      { id: 2, friendsRequired: 3, flowersReward: 150, ticketsReward: 0 },
+      { id: 3, friendsRequired: 10, flowersReward: 400, ticketsReward: 0 },
+      { id: 4, friendsRequired: 50, flowersReward: 1200, ticketsReward: 1 },
+      { id: 5, friendsRequired: 100, flowersReward: 3000, ticketsReward: 2 },
+      { id: 6, friendsRequired: 300, flowersReward: 7000, ticketsReward: 3 },
+      { id: 7, friendsRequired: 500, flowersReward: 16000, ticketsReward: 5 },
     ];
 
     const mission = MISSIONS.find((m) => m.id === missionId);
@@ -1220,7 +1220,7 @@ router.post("/:userId/process-referral", async (req, res) => {
     );
 
     // Check if this is the first purchase (earnings > invitationBonus means already processed first purchase)
-    const invitationBonus = 100;
+    const invitationBonus = 10;
     const isFirstPurchase =
       existingReferral && existingReferral.earnings === invitationBonus;
 
@@ -1254,7 +1254,7 @@ router.post("/:userId/process-referral", async (req, res) => {
 
     // Calculate bonus: 5% of purchase amount + 1000 fleurs for first purchase
     const affiliationBonus = Math.floor(purchaseAmount * 0.05);
-    const firstPurchaseBonus = isFirstPurchase ? 1000 : 0;
+    const firstPurchaseBonus = isFirstPurchase ? 100 : 0;
     const totalBonus = affiliationBonus + firstPurchaseBonus;
 
     // Award bonus to sponsor
@@ -1283,7 +1283,7 @@ router.post("/:userId/process-referral", async (req, res) => {
     res.json({
       success: true,
       message: isFirstPurchase
-        ? "Referral bonus awarded (5% + 1000 first purchase)"
+        ? "Referral bonus awarded (5% + 100 first purchase)"
         : "Referral bonus awarded (5%)",
       bonusAwarded: true,
       bonus: {
@@ -1364,7 +1364,7 @@ router.post("/:userId/link-referral", async (req, res) => {
     }
 
     // Add referral entry and award 100 flowers for invitation
-    const invitationBonus = 100;
+    const invitationBonus = 10;
 
     // Safety check: Ensure we have valid data before pushing
     if (user.email && user.referralCode) {
