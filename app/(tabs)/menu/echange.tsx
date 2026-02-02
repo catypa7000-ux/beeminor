@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  Alert,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -35,69 +37,96 @@ export default function EchangeScreen() {
     const amount = parseFloat(exchangeAmount);
 
     if (!selectedExchange) {
-      window.alert("Erreur: Veuillez sélectionner un type d'échange");
+      if (Platform.OS === 'web') window.alert("Erreur: Veuillez sélectionner un type d'échange");
+      else Alert.alert("Erreur", "Veuillez sélectionner un type d'échange");
       return;
     }
 
     if (isNaN(amount) || amount <= 0) {
-      window.alert("Erreur: Veuillez entrer un montant valide");
+      if (Platform.OS === 'web') window.alert("Erreur: Veuillez entrer un montant valide");
+      else Alert.alert("Erreur", "Veuillez entrer un montant valide");
       return;
     }
 
     if (selectedExchange === "DIAMONDS_TO_FLOWERS") {
       if (diamonds < amount) {
-        window.alert("Erreur: Vous n'avez pas assez de diamants");
+        if (Platform.OS === 'web') window.alert("Erreur: Vous n'avez pas assez de diamants");
+        else Alert.alert("Erreur", "Vous n'avez pas assez de diamants");
         return;
       }
 
       const received = calculateReceived(selectedExchange, amount);
-      const confirmed = window.confirm(
-        `Vous allez échanger ${amount.toLocaleString()} diamants contre ${received.toLocaleString()} fleurs\n\nConfirmer?`
-      );
+      const confirmMsg = `Vous allez échanger ${amount.toLocaleString()} diamants contre ${received.toLocaleString()} fleurs\n\nConfirmer?`;
 
-      if (confirmed) {
+      const performExchange = async () => {
         const result = await exchangeResource("DIAMONDS_TO_FLOWERS", amount);
         if (result.success) {
-          window.alert(
-            `Succès: Vous avez reçu ${(
-              result.flowersReceived || 0
-            ).toLocaleString()} fleurs!`
-          );
+          const successMsg = `Succès: Vous avez reçu ${(result.flowersReceived || 0).toLocaleString()} fleurs!`;
+          if (Platform.OS === 'web') window.alert(successMsg);
+          else Alert.alert("Succès", successMsg);
           setExchangeAmount("");
         } else {
-          window.alert(`Erreur: ${result.message}`);
+          if (Platform.OS === 'web') window.alert(`Erreur: ${result.message}`);
+          else Alert.alert("Erreur", result.message || "Erreur lors de l'échange");
         }
+      };
+
+      if (Platform.OS === 'web') {
+        if (window.confirm(confirmMsg)) {
+          performExchange();
+        }
+      } else {
+        Alert.alert(
+          "Confirmation",
+          confirmMsg,
+          [
+            { text: "Annuler", style: "cancel" },
+            { text: "Confirmer", onPress: performExchange }
+          ]
+        );
       }
     } else if (selectedExchange === "BVR_TO_FLOWERS") {
       if (bvrCoins < amount) {
-        window.alert("Erreur: Vous n'avez pas assez de BVR");
+        if (Platform.OS === 'web') window.alert("Erreur: Vous n'avez pas assez de BVR");
+        else Alert.alert("Erreur", "Vous n'avez pas assez de BVR");
         return;
       }
 
       if (amount < 100) {
-        window.alert(
-          "Erreur: Le montant minimum est de 100 BVR pour obtenir 0.01 fleur"
-        );
+        if (Platform.OS === 'web') window.alert("Erreur: Le montant minimum est de 100 BVR pour obtenir 0.01 fleur");
+        else Alert.alert("Erreur", "Le montant minimum est de 100 BVR pour obtenir 0.01 fleur");
         return;
       }
 
       const received = calculateReceived(selectedExchange, amount);
-      const confirmed = window.confirm(
-        `Vous allez échanger ${amount.toLocaleString()} BVR contre ${received.toLocaleString()} fleurs\n\nConfirmer?`
-      );
+      const confirmMsg = `Vous allez échanger ${amount.toLocaleString()} BVR contre ${received.toLocaleString()} fleurs\n\nConfirmer?`;
 
-      if (confirmed) {
+      const performExchange = async () => {
         const result = await exchangeResource("BVR_TO_FLOWERS", amount);
         if (result.success) {
-          window.alert(
-            `Succès: Vous avez reçu ${(
-              result.flowersReceived || 0
-            ).toLocaleString()} fleurs!`
-          );
+          const successMsg = `Succès: Vous avez reçu ${(result.flowersReceived || 0).toLocaleString()} fleurs!`;
+          if (Platform.OS === 'web') window.alert(successMsg);
+          else Alert.alert("Succès", successMsg);
           setExchangeAmount("");
         } else {
-          window.alert(`Erreur: ${result.message}`);
+          if (Platform.OS === 'web') window.alert(`Erreur: ${result.message}`);
+          else Alert.alert("Erreur", result.message || "Erreur lors de l'échange");
         }
+      };
+
+      if (Platform.OS === 'web') {
+        if (window.confirm(confirmMsg)) {
+          performExchange();
+        }
+      } else {
+        Alert.alert(
+          "Confirmation",
+          confirmMsg,
+          [
+            { text: "Annuler", style: "cancel" },
+            { text: "Confirmer", onPress: performExchange }
+          ]
+        );
       }
     }
   };
@@ -146,7 +175,7 @@ export default function EchangeScreen() {
             style={[
               styles.exchangeCard,
               selectedExchange === "DIAMONDS_TO_FLOWERS" &&
-                styles.exchangeCardSelected,
+              styles.exchangeCardSelected,
             ]}
             onPress={() => setSelectedExchange("DIAMONDS_TO_FLOWERS")}
           >
@@ -166,7 +195,7 @@ export default function EchangeScreen() {
             style={[
               styles.exchangeCard,
               selectedExchange === "BVR_TO_FLOWERS" &&
-                styles.exchangeCardSelected,
+              styles.exchangeCardSelected,
             ]}
             onPress={() => setSelectedExchange("BVR_TO_FLOWERS")}
           >

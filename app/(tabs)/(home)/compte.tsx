@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '../../../contexts/GameContext';
@@ -19,15 +20,32 @@ export default function CompteScreen() {
   };
 
   const handleLogout = () => {
-    const confirmed = window.confirm('Are you sure you want to logout?');
-    if (confirmed) {
-      logout().then(() => {
-        window.alert('Logged out successfully!');
-        router.replace('/auth');
-      }).catch((error) => {
-        console.error('Logout error:', error);
-        window.alert('Error during logout');
-      });
+    const confirmLogout = () => {
+      // Perform logout
+      // setUserId(null); // Context update handled by useAuth
+      AsyncStorage.removeItem("USER_ID_KEY"); // Clear storage
+
+      if (Platform.OS === 'web') {
+        window.alert("Logged out successfully!");
+      } else {
+        Alert.alert("Succès", "Déconnexion réussie !");
+      }
+      router.replace("/auth");
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm("Are you sure you want to logout?")) {
+        confirmLogout();
+      }
+    } else {
+      Alert.alert(
+        "Déconnexion",
+        "Êtes-vous sûr de vouloir vous déconnecter ?",
+        [
+          { text: "Annuler", style: "cancel" },
+          { text: "Se déconnecter", style: "destructive", onPress: confirmLogout }
+        ]
+      );
     }
   };
 
@@ -43,8 +61,8 @@ export default function CompteScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen 
-        options={{ 
+      <Stack.Screen
+        options={{
           title: "Mon Compte",
           headerShown: true,
           headerStyle: {
@@ -54,13 +72,13 @@ export default function CompteScreen() {
           headerTitleStyle: {
             fontWeight: 'bold' as const,
           },
-        }} 
+        }}
       />
       <LinearGradient
         colors={['#2d5016', '#3d6b1f', '#4a7c26']}
         style={styles.gradient}
       >
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -78,7 +96,7 @@ export default function CompteScreen() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>📊 Statistiques du Compte</Text>
-            
+
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>Date d&apos;inscription</Text>
               <Text style={styles.statValue}>{userInfo.dateInscription}</Text>
@@ -107,7 +125,7 @@ export default function CompteScreen() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>💰 Mes Ressources</Text>
-            
+
             <View style={styles.resourceCard}>
               <Text style={styles.resourceEmoji}>🍯</Text>
               <View style={styles.resourceInfo}>

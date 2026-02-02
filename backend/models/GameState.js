@@ -110,6 +110,22 @@ const gameStateSchema = new mongoose.Schema({
 // Index is automatically created by unique: true and index: true
 // No need to manually add it again
 
+// Additional indexes for performance optimization
+// Compound index for offline production queries
+gameStateSchema.index({ userId: 1, lastUpdated: 1 });
+
+// Index for leaderboard queries (descending order for top rankings)
+gameStateSchema.index({ diamondsThisYear: -1 });
+
+// Index for honey leaderboard
+gameStateSchema.index({ honey: -1 });
+
+// Index for transaction status filtering
+gameStateSchema.index({ 'transactions.status': 1 });
+
+// Index for referral queries
+gameStateSchema.index({ invitedFriends: -1 });
+
 const GameState = mongoose.model('GameState', gameStateSchema);
 
 module.exports = GameState;

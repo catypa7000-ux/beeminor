@@ -10,6 +10,7 @@ import {
   Share,
   Clipboard,
   Platform,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -34,13 +35,13 @@ type Mission = {
 };
 
 const MISSIONS: Mission[] = [
-  { id: 1, friendsRequired: 1, flowersReward: 500, ticketsReward: 0 },
-  { id: 2, friendsRequired: 3, flowersReward: 1500, ticketsReward: 0 },
-  { id: 3, friendsRequired: 10, flowersReward: 4000, ticketsReward: 0 },
-  { id: 4, friendsRequired: 50, flowersReward: 12000, ticketsReward: 1 },
-  { id: 5, friendsRequired: 100, flowersReward: 30000, ticketsReward: 2 },
-  { id: 6, friendsRequired: 300, flowersReward: 70000, ticketsReward: 3 },
-  { id: 7, friendsRequired: 500, flowersReward: 160000, ticketsReward: 5 },
+  { id: 1, friendsRequired: 1, flowersReward: 50, ticketsReward: 0 },
+  { id: 2, friendsRequired: 3, flowersReward: 150, ticketsReward: 0 },
+  { id: 3, friendsRequired: 10, flowersReward: 400, ticketsReward: 0 },
+  { id: 4, friendsRequired: 50, flowersReward: 1200, ticketsReward: 1 },
+  { id: 5, friendsRequired: 100, flowersReward: 3000, ticketsReward: 2 },
+  { id: 6, friendsRequired: 300, flowersReward: 7000, ticketsReward: 3 },
+  { id: 7, friendsRequired: 500, flowersReward: 16000, ticketsReward: 5 },
 ];
 
 export default function TachesScreen() {
@@ -76,11 +77,14 @@ export default function TachesScreen() {
 
       if (result && result.action === Share.sharedAction) {
         inviteFriend();
-        window.alert(
-          `${t.success}\n\n${
-            t.inviteFriendBonus
-          } +200 ${t.flowers.toLowerCase()} ${t.perFriend}`
-        );
+        if (Platform.OS === 'web') {
+          window.alert(
+            `${t.success}\n\n${t.inviteFriendBonus
+            } +20 ${t.flowers.toLowerCase()} ${t.perFriend}`
+          );
+        } else {
+          Alert.alert(t.success, `${t.inviteFriendBonus} +20 ${t.flowers.toLowerCase()} ${t.perFriend}`);
+        }
       }
     } catch (error) {
       console.error("Error sharing:", error);
@@ -89,29 +93,44 @@ export default function TachesScreen() {
 
   const handleCopyReferralCode = () => {
     Clipboard.setString(referralCode);
-    window.alert(`${t.copyReferralCode}\n\n${t.copied}`);
+    if (Platform.OS === 'web') {
+      window.alert(`${t.copyReferralCode}\n\n${t.copied}`);
+    } else {
+      Alert.alert(t.copyReferralCode, t.copied);
+    }
   };
 
   const handleCopyInviteLink = () => {
     const inviteLink = getInviteLink();
     Clipboard.setString(inviteLink);
-    window.alert(
-      `${t.copyReferralCode}\n\n${t.inviteLink} ${t.copied.toLowerCase()}`
-    );
+    if (Platform.OS === 'web') {
+      window.alert(
+        `${t.copyReferralCode}\n\n${t.inviteLink} ${t.copied.toLowerCase()}`
+      );
+    } else {
+      Alert.alert(t.copyReferralCode, `${t.inviteLink} ${t.copied.toLowerCase()}`);
+    }
   };
 
   const handleClaimReward = async (mission: Mission) => {
     if (claimedMissions.includes(mission.id)) {
-      window.alert(`${t.claimed}\n\n${t.alreadyClaimed}`);
+      if (Platform.OS === 'web') {
+        window.alert(`${t.claimed}\n\n${t.alreadyClaimed}`);
+      } else {
+        Alert.alert(t.claimed, t.alreadyClaimed);
+      }
       return;
     }
 
     if (invitedFriends < mission.friendsRequired) {
-      window.alert(
-        `${t.missionIncomplete}\n\n${
-          mission.friendsRequired - invitedFriends
-        } ${t.friendsInvited.toLowerCase()} ${t.inProgress.toLowerCase()}`
-      );
+      if (Platform.OS === 'web') {
+        window.alert(
+          `${t.missionIncomplete}\n\n${mission.friendsRequired - invitedFriends
+          } ${t.friendsInvited.toLowerCase()} ${t.inProgress.toLowerCase()}`
+        );
+      } else {
+        Alert.alert(t.missionIncomplete, `${mission.friendsRequired - invitedFriends} ${t.friendsInvited.toLowerCase()} ${t.inProgress.toLowerCase()}`);
+      }
       return;
     }
 
@@ -123,13 +142,20 @@ export default function TachesScreen() {
     if (success) {
       let message = `+${mission.flowersReward} fleurs`;
       if (mission.ticketsReward > 0) {
-        message += ` et +${mission.ticketsReward} ticket${
-          mission.ticketsReward > 1 ? "s" : ""
-        } roulette`;
+        message += ` et +${mission.ticketsReward} ticket${mission.ticketsReward > 1 ? "s" : ""
+          } roulette`;
       }
-      window.alert(`${t.rewardClaimed}\n\n${message}`);
+      if (Platform.OS === 'web') {
+        window.alert(`${t.rewardClaimed}\n\n${message}`);
+      } else {
+        Alert.alert(t.rewardClaimed, message);
+      }
     } else {
-      window.alert(`${t.error}\n\n${t.claimFailed}`);
+      if (Platform.OS === 'web') {
+        window.alert(`${t.error}\n\n${t.claimFailed}`);
+      } else {
+        Alert.alert(t.error, t.claimFailed);
+      }
     }
   };
 
@@ -208,7 +234,7 @@ export default function TachesScreen() {
               >
                 <Users size={20} color="#FFF" />
                 <Text style={styles.inviteButtonText}>
-                  {t.inviteFriendBonus} (+200 {t.flowers.toLowerCase()})
+                  {t.inviteFriendBonus} (+20 {t.flowers.toLowerCase()})
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -253,13 +279,13 @@ export default function TachesScreen() {
                 <View style={styles.infoContent}>
                   <Text style={styles.infoTitle}>{t.referralBonus}</Text>
                   <Text style={styles.infoText}>
-                    • 200 {t.flowers.toLowerCase()} {t.perFriend}
+                    • 20 {t.flowers.toLowerCase()} {t.perFriend}
                   </Text>
                   <Text style={styles.infoText}>
-                    • 3000 {t.flowers.toLowerCase()} {t.firstPurchaseBonus}
+                    • 100 {t.flowers.toLowerCase()} {t.firstPurchaseBonus}
                   </Text>
                   <Text style={styles.infoText}>
-                    • 6% à vie sur tous les dépôts du filleul
+                    • 5% à vie sur tous les dépôts du filleul
                   </Text>
                 </View>
               </View>
@@ -319,8 +345,8 @@ export default function TachesScreen() {
                         styles.claimButton,
                         isClaimed && styles.claimButtonClaimed,
                         !isCompleted &&
-                          !isClaimed &&
-                          styles.claimButtonDisabled,
+                        !isClaimed &&
+                        styles.claimButtonDisabled,
                       ]}
                       onPress={() => handleClaimReward(mission)}
                       disabled={isClaimed || !isCompleted}
@@ -329,14 +355,14 @@ export default function TachesScreen() {
                         style={[
                           styles.claimButtonText,
                           (isClaimed || !isCompleted) &&
-                            styles.claimButtonTextDisabled,
+                          styles.claimButtonTextDisabled,
                         ]}
                       >
                         {isClaimed
                           ? `✓ ${t.claimed}`
                           : isCompleted
-                          ? t.claim
-                          : t.inProgress}
+                            ? t.claim
+                            : t.inProgress}
                       </Text>
                     </TouchableOpacity>
                   </View>

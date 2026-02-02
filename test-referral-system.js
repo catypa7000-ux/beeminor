@@ -110,7 +110,7 @@ async function testReferralSystem() {
     // Calculate expected values
     const expectedBonus = Math.floor(1000 * 0.1); // 10% of purchase
     const expectedFlowers = initialData.gameState.flowers + expectedBonus;
-    
+
     console.log('\n=== VERIFICATION ===');
     console.log('Expected bonus:', expectedBonus);
     console.log('Expected flowers:', expectedFlowers);

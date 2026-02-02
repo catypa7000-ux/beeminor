@@ -242,6 +242,7 @@ export const gameAPI = {
         transactions: any[];
         diamondsThisYear: number;
         yearStartDate: string;
+        lastUpdated?: string;
       };
     }>(`/api/game/${userId}/sell-honey`, {
       method: "POST",

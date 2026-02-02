@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { CircleDollarSign, Ticket, ArrowLeftRight, Wallet } from 'lucide-react-native';
@@ -12,7 +12,10 @@ export default function MenuScreen() {
 
   return (
     <View style={styles.background}>
-      <View style={[styles.content, isWeb && { maxWidth: MAX_WEB_WIDTH, width: '100%', alignSelf: 'center' }]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, isWeb && { maxWidth: MAX_WEB_WIDTH, width: '100%', alignSelf: 'center' }]}
+        showsVerticalScrollIndicator={false}
+      >
         <TouchableOpacity
           style={styles.menuCard}
           onPress={() => router.push('/(tabs)/menu/roulette')}
@@ -72,7 +75,7 @@ export default function MenuScreen() {
             </Text>
           </View>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 }

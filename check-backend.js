@@ -56,14 +56,14 @@ async function main() {
   // Check main endpoint
   console.log('1️⃣ Checking main API endpoint...');
   const mainCheck = await checkEndpoint(`${API_BASE_URL}/`);
-  
+
   if (mainCheck.success) {
     console.log(`✅ Backend is running! Status: ${mainCheck.status}`);
     console.log(`   Response: ${mainCheck.data}\n`);
   } else {
     console.log(`❌ Backend is NOT running`);
     console.log(`   Error: ${mainCheck.error}\n`);
-    
+
     console.log('📝 Troubleshooting steps:\n');
     console.log('   1. Start the backend server:');
     console.log('      npm run backend:dev\n');
@@ -71,14 +71,14 @@ async function main() {
     console.log('      npm run backend:install\n');
     console.log('   3. Check if backend/.env file exists with MongoDB connection\n');
     console.log('   4. Verify no other process is using port 3001\n');
-    
+
     return;
   }
 
   // Check API health
   console.log('2️⃣ Checking /api endpoint...');
   const apiCheck = await checkEndpoint(`${API_BASE_URL}/api`);
-  
+
   if (apiCheck.success) {
     console.log(`✅ API is responding! Status: ${apiCheck.status}`);
     console.log(`   Response: ${apiCheck.data}\n`);
