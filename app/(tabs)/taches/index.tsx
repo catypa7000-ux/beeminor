@@ -10,6 +10,7 @@ import {
   Share,
   Clipboard,
   Platform,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -76,11 +77,14 @@ export default function TachesScreen() {
 
       if (result && result.action === Share.sharedAction) {
         inviteFriend();
-        window.alert(
-          `${t.success}\n\n${
-            t.inviteFriendBonus
-          } +200 ${t.flowers.toLowerCase()} ${t.perFriend}`
-        );
+        if (Platform.OS === 'web') {
+          window.alert(
+            `${t.success}\n\n${t.inviteFriendBonus
+            } +200 ${t.flowers.toLowerCase()} ${t.perFriend}`
+          );
+        } else {
+          Alert.alert(t.success, `${t.inviteFriendBonus} +200 ${t.flowers.toLowerCase()} ${t.perFriend}`);
+        }
       }
     } catch (error) {
       console.error("Error sharing:", error);
@@ -89,29 +93,44 @@ export default function TachesScreen() {
 
   const handleCopyReferralCode = () => {
     Clipboard.setString(referralCode);
-    window.alert(`${t.copyReferralCode}\n\n${t.copied}`);
+    if (Platform.OS === 'web') {
+      window.alert(`${t.copyReferralCode}\n\n${t.copied}`);
+    } else {
+      Alert.alert(t.copyReferralCode, t.copied);
+    }
   };
 
   const handleCopyInviteLink = () => {
     const inviteLink = getInviteLink();
     Clipboard.setString(inviteLink);
-    window.alert(
-      `${t.copyReferralCode}\n\n${t.inviteLink} ${t.copied.toLowerCase()}`
-    );
+    if (Platform.OS === 'web') {
+      window.alert(
+        `${t.copyReferralCode}\n\n${t.inviteLink} ${t.copied.toLowerCase()}`
+      );
+    } else {
+      Alert.alert(t.copyReferralCode, `${t.inviteLink} ${t.copied.toLowerCase()}`);
+    }
   };
 
   const handleClaimReward = async (mission: Mission) => {
     if (claimedMissions.includes(mission.id)) {
-      window.alert(`${t.claimed}\n\n${t.alreadyClaimed}`);
+      if (Platform.OS === 'web') {
+        window.alert(`${t.claimed}\n\n${t.alreadyClaimed}`);
+      } else {
+        Alert.alert(t.claimed, t.alreadyClaimed);
+      }
       return;
     }
 
     if (invitedFriends < mission.friendsRequired) {
-      window.alert(
-        `${t.missionIncomplete}\n\n${
-          mission.friendsRequired - invitedFriends
-        } ${t.friendsInvited.toLowerCase()} ${t.inProgress.toLowerCase()}`
-      );
+      if (Platform.OS === 'web') {
+        window.alert(
+          `${t.missionIncomplete}\n\n${mission.friendsRequired - invitedFriends
+          } ${t.friendsInvited.toLowerCase()} ${t.inProgress.toLowerCase()}`
+        );
+      } else {
+        Alert.alert(t.missionIncomplete, `${mission.friendsRequired - invitedFriends} ${t.friendsInvited.toLowerCase()} ${t.inProgress.toLowerCase()}`);
+      }
       return;
     }
 
@@ -123,13 +142,20 @@ export default function TachesScreen() {
     if (success) {
       let message = `+${mission.flowersReward} fleurs`;
       if (mission.ticketsReward > 0) {
-        message += ` et +${mission.ticketsReward} ticket${
-          mission.ticketsReward > 1 ? "s" : ""
-        } roulette`;
+        message += ` et +${mission.ticketsReward} ticket${mission.ticketsReward > 1 ? "s" : ""
+          } roulette`;
       }
-      window.alert(`${t.rewardClaimed}\n\n${message}`);
+      if (Platform.OS === 'web') {
+        window.alert(`${t.rewardClaimed}\n\n${message}`);
+      } else {
+        Alert.alert(t.rewardClaimed, message);
+      }
     } else {
-      window.alert(`${t.error}\n\n${t.claimFailed}`);
+      if (Platform.OS === 'web') {
+        window.alert(`${t.error}\n\n${t.claimFailed}`);
+      } else {
+        Alert.alert(t.error, t.claimFailed);
+      }
     }
   };
 
@@ -319,8 +345,8 @@ export default function TachesScreen() {
                         styles.claimButton,
                         isClaimed && styles.claimButtonClaimed,
                         !isCompleted &&
-                          !isClaimed &&
-                          styles.claimButtonDisabled,
+                        !isClaimed &&
+                        styles.claimButtonDisabled,
                       ]}
                       onPress={() => handleClaimReward(mission)}
                       disabled={isClaimed || !isCompleted}
@@ -329,14 +355,14 @@ export default function TachesScreen() {
                         style={[
                           styles.claimButtonText,
                           (isClaimed || !isCompleted) &&
-                            styles.claimButtonTextDisabled,
+                          styles.claimButtonTextDisabled,
                         ]}
                       >
                         {isClaimed
                           ? `✓ ${t.claimed}`
                           : isCompleted
-                          ? t.claim
-                          : t.inProgress}
+                            ? t.claim
+                            : t.inProgress}
                       </Text>
                     </TouchableOpacity>
                   </View>

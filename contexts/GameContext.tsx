@@ -228,6 +228,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const alveolesRef = useRef<Record<number, boolean>>(alveoles);
   const lastProductionTick = useRef<number>(Date.now());
 
+  // ✅ NEW: Refs for smart background sync
+  const hasUnsyncedChanges = useRef<boolean>(false);
+  const latestStateRef = useRef<any>(null); // Holds latest state for background sync
+
   // Keep refs in sync
   useEffect(() => {
     honeyRef.current = honey;
@@ -449,15 +453,29 @@ export const [GameProvider, useGame] = createContextHook(() => {
   );
 
   // Periodic sync: refresh from backend every 30 seconds to ensure cross-device sync
+  // ✅ OPTIMIZED: Unified background sync (every 30 seconds)
+  // Only syncs when there are actual changes
   useEffect(() => {
     if (!currentUserId) return;
 
-    const syncInterval = setInterval(() => {
-      syncGameStateFromBackend(currentUserId);
+    const syncInterval = setInterval(async () => {
+      // Only sync if there are changes
+      if (hasUnsyncedChanges.current && latestStateRef.current) {
+        // console.log('📤 Syncing changes to backend...');
+
+        try {
+          // Use the latest state from ref to avoid closure staleness
+          const state = latestStateRef.current;
+          await gameAPI.updateGameState(currentUserId, state);
+          hasUnsyncedChanges.current = false;
+        } catch (error) {
+          console.error("Failed to background sync:", error);
+        }
+      }
     }, 30000); // 30 seconds
 
     return () => clearInterval(syncInterval);
-  }, [currentUserId, syncGameStateFromBackend]);
+  }, [currentUserId]); // No state dependencies to avoid interval reset
 
   const initializeMockLeaderboard = () => {
     const mockUsers: LeaderboardUser[] = [];
@@ -863,20 +881,12 @@ export const [GameProvider, useGame] = createContextHook(() => {
           };
 
           if (forceSync) {
-            // If forced, clear any pending debounce and sync immediately
-            if (saveTimeoutRef.current) {
-              clearTimeout(saveTimeoutRef.current);
-              saveTimeoutRef.current = null;
-            }
+            // Immediate sync requested
             syncAction();
           } else {
-            // Clear existing timeout and restart debounce
-            if (saveTimeoutRef.current) {
-              clearTimeout(saveTimeoutRef.current);
-            }
-
-            // Debounce backend sync (save after 3 seconds of no changes)
-            saveTimeoutRef.current = setTimeout(syncAction, 3000);
+            // Default behavior: just mark as changed
+            // The 30s interval will pick it up
+            hasUnsyncedChanges.current = true;
           }
         }
       } catch (error) {
@@ -885,6 +895,65 @@ export const [GameProvider, useGame] = createContextHook(() => {
     },
     [currentUserId]
   );
+
+  // ✅ NEW: Track state changes for background sync
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    // Update latest state ref whenever state changes
+    latestStateRef.current = {
+      honey: honeyRef.current, // Always use ref for honey
+      flowers,
+      diamonds,
+      tickets,
+      bvrCoins,
+      bees,
+      virtualBees,
+      alveoles,
+      invitedFriends,
+      claimedMissions,
+      referralCode,
+      referrals,
+      totalReferralEarnings,
+      sponsorCode,
+      isAffiliatedToDev,
+      hasPendingFunds,
+      transactions,
+      diamondsThisYear,
+      yearStartDate,
+      allUsersLeaderboard,
+      virtualBeeStartTime,
+    };
+
+    // Mark as unsynced (except on initial load)
+    hasUnsyncedChanges.current = true;
+
+  }, [
+    // Depend on all saveable state (EXCEPT honey which changes too often)
+    // Honey is handled by honeyRef in the latestStateRef object
+    isLoaded,
+    flowers,
+    diamonds,
+    tickets,
+    bvrCoins,
+    bees,
+    virtualBees,
+    alveoles,
+    invitedFriends,
+    claimedMissions,
+    referralCode,
+    referrals,
+    totalReferralEarnings,
+    sponsorCode,
+    isAffiliatedToDev,
+    hasPendingFunds,
+    transactions,
+    diamondsThisYear,
+    yearStartDate,
+    allUsersLeaderboard,
+    virtualBeeStartTime,
+  ]);
+
 
   const getMaxCapacity = useCallback(() => {
     let maxCapacity = 0;
@@ -955,22 +1024,33 @@ export const [GameProvider, useGame] = createContextHook(() => {
         // Update ref immediately to keep it in sync
         honeyRef.current = newHoney;
 
-        // Save to local storage every second so no progress is lost on close
-        AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
-          if (stored) {
-            const state = JSON.parse(stored);
-            state.honey = newHoney;
-            AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-          }
-        });
+        // ✅ REMOVED: AsyncStorage write from here (was causing UI jank)
+        // AsyncStorage writes now happen in separate interval below
 
         return newHoney;
       });
     }, 1000);
 
+    // ✅ NEW: Separate interval for AsyncStorage saves (every 10 seconds)
+    // This reduces AsyncStorage writes from 60/min to 6/min (90% reduction)
+    const saveToStorageInterval = setInterval(async () => {
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const state = JSON.parse(stored);
+          // Update honey with latest value from ref
+          state.honey = honeyRef.current;
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+      } catch (error) {
+        console.error('Failed to save honey to AsyncStorage:', error);
+      }
+    }, 10000); // Save every 10 seconds instead of every 1 second
+
     return () => {
       console.log("🛑 Stopping honey production interval");
       clearInterval(interval);
+      clearInterval(saveToStorageInterval);
     };
   }, [isLoaded]); // Only depend on isLoaded, use refs for everything else
 
@@ -1026,64 +1106,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
     saveGameState,
   ]);
 
-  // Periodic save for honey production (every 60 seconds)
-  useEffect(() => {
-    if (!isLoaded || !currentUserId) return;
-
-    const interval = setInterval(() => {
-      saveGameState(
-        honeyRef.current,
-        flowers,
-        diamonds,
-        tickets,
-        bvrCoins,
-        bees,
-        virtualBees,
-        alveoles,
-        invitedFriends,
-        claimedMissions,
-        referralCode,
-        referrals,
-        totalReferralEarnings,
-        sponsorCode,
-        isAffiliatedToDev,
-        hasPendingFunds,
-        transactions,
-        diamondsThisYear,
-        yearStartDate,
-        allUsersLeaderboard,
-        virtualBeeStartTime,
-        true // forceSync: bypasses debounce to ensure backend save
-      );
-    }, 10000); // Save every 10 seconds
-
-    return () => clearInterval(interval);
-  }, [
-    isLoaded,
-    currentUserId,
-    // We EXCLUDE honey here so the interval isn't cleared every second
-    flowers,
-    diamonds,
-    tickets,
-    bvrCoins,
-    bees,
-    virtualBees,
-    alveoles,
-    invitedFriends,
-    claimedMissions,
-    referralCode,
-    referrals,
-    totalReferralEarnings,
-    sponsorCode,
-    isAffiliatedToDev,
-    hasPendingFunds,
-    transactions,
-    diamondsThisYear,
-    yearStartDate,
-    allUsersLeaderboard,
-    virtualBeeStartTime,
-    saveGameState,
-  ]);
+  // ✅ REMOVED: Periodic forced save (redundant with new smart sync)
+  // The new 30s interval handles this more efficiently
 
   // Save game state when app goes to background or closes
   // This ensures lastUpdated is current when the session ends
@@ -1094,30 +1118,13 @@ export const [GameProvider, useGame] = createContextHook(() => {
       if (nextAppState === "background" || nextAppState === "inactive") {
         // App is going to background - save immediately to ensure lastUpdated is current
         console.log("📱 App going to background, saving game state...");
-        saveGameState(
-          honeyRef.current,
-          flowers,
-          diamonds,
-          tickets,
-          bvrCoins,
-          bees,
-          virtualBees,
-          alveoles,
-          invitedFriends,
-          claimedMissions,
-          referralCode,
-          referrals,
-          totalReferralEarnings,
-          sponsorCode,
-          isAffiliatedToDev,
-          hasPendingFunds,
-          transactions,
-          diamondsThisYear,
-          yearStartDate,
-          allUsersLeaderboard,
-          virtualBeeStartTime,
-          true // forceSync: save immediately, no debounce
-        );
+
+        // ✅ OPTIMIZED: Use latestStateRef to avoid stale closure dependency
+        if (latestStateRef.current) {
+          gameAPI.updateGameState(currentUserId, latestStateRef.current)
+            .then(() => console.log("✅ Saved state on background"))
+            .catch(err => console.error("❌ Failed to save on background:", err));
+        }
       }
     };
 
@@ -1162,47 +1169,31 @@ export const [GameProvider, useGame] = createContextHook(() => {
         return false;
       }
 
-      // If user is authenticated, use backend validation
-      if (currentUserId) {
-        try {
-          const response = await gameAPI.buyBee(currentUserId, beeTypeId);
-          if (response.success && response.gameState) {
-            // Update state with backend response
-            setFlowers(response.gameState.flowers);
-            setBees(response.gameState.bees);
+      // usage:
+      // ✅ OPTIMISTIC UPDATE: Instant validation and update
+      // We update local state immediately and let background sync handle the backend save
 
-            // Process referral bonus for sponsor (10% of purchase)
-            try {
-              await gameAPI.processReferral(
-                currentUserId,
-                beeType.cost,
-                "bee_purchase"
-              );
-            } catch (refError) {
-              console.log("Referral processing note:", refError);
-              // Non-blocking - purchase succeeded regardless
-            }
-
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error("Failed to buy bee from backend:", error);
-          // Fallback to local update if backend fails
-        }
-      }
-
-      // Fallback: local-only update (for offline or unauthenticated users)
       const newFlowers = flowers - beeType.cost;
       const newBees = {
         ...bees,
         [beeTypeId]: (bees[beeTypeId] || 0) + 1,
       };
+
       setFlowers(newFlowers);
       setBees(newBees);
+
+      // Mark as changed so background sync picks it up
+      hasUnsyncedChanges.current = true; // IMPORTANT: flag change
+
+      // Process referral bonus in background (non-blocking)
+      if (currentUserId) {
+        gameAPI.processReferral(currentUserId, beeType.cost, "bee_purchase")
+          .catch(err => console.log("Referral processing note:", err));
+      }
+
       return true;
     },
-    [flowers, bees, currentUserId]
+    [bees, flowers, currentUserId]
   );
 
   const buyFlowers = useCallback(
@@ -1371,42 +1362,29 @@ export const [GameProvider, useGame] = createContextHook(() => {
         return false;
       }
 
-      // If user is authenticated, use backend validation
+      // ✅ OPTIMISTIC UPDATE: Instant validation and update
+
+      const newFlowers = flowers - alveoleInfo.cost;
+      const newAlveoles = {
+        ...alveoles,
+        [level]: true
+      };
+
+      setFlowers(newFlowers);
+      setAlveoles(newAlveoles);
+
+      // Mark as changed so background sync picks it up
+      hasUnsyncedChanges.current = true;
+
+      // Process referral bonus in background (non-blocking)
       if (currentUserId) {
-        try {
-          const response = await gameAPI.buyAlveole(currentUserId, level);
-          if (response.success && response.gameState) {
-            // Update state with backend response
-            setFlowers(response.gameState.flowers);
-            setAlveoles(response.gameState.alveoles);
-
-            // Process referral bonus for sponsor (10% of purchase)
-            try {
-              await gameAPI.processReferral(
-                currentUserId,
-                alveoleInfo.cost,
-                "alveole_upgrade"
-              );
-            } catch (refError) {
-              console.log("Referral processing note:", refError);
-              // Non-blocking - purchase succeeded regardless
-            }
-
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error("Failed to buy alveole from backend:", error);
-          // Fallback to local update if backend fails
-        }
+        gameAPI.processReferral(currentUserId, alveoleInfo.cost, "alveole_upgrade")
+          .catch(err => console.log("Referral processing note:", err));
       }
 
-      // Fallback: local-only update (for offline or unauthenticated users)
-      setFlowers((current) => current - alveoleInfo.cost);
-      setAlveoles((current) => ({ ...current, [level]: true }));
       return true;
     },
-    [flowers, alveoles, currentUserId]
+    [alveoles, flowers, currentUserId]
   );
 
   const updateLeaderboard = useCallback(
@@ -1442,78 +1420,100 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
   const sellHoney = useCallback(
     async (amount: number) => {
-      // Optimistic check - validate locally first
-      if (amount < 100) return false;
+      // 1. Check updated ref (not stale state)
+      const currentHoney = honeyRef.current;
 
-      // Cap amount to available honey to prevent sync issues
-      const actualAmount = Math.min(amount, Math.floor(honey));
+      // Basic validation based on LATEST known value
+      if (currentHoney < 100) return false;
+
+      // 2. Calculate actual sellable amount locally
+      // We process the sell LOCALLY immediately to prevent double-clicks
+      const actualAmount = Math.min(amount, Math.floor(currentHoney));
+
       if (actualAmount < 100) {
-        console.warn(`Cannot sell: only ${honey} honey available, need at least 100`);
+        console.warn(`Cannot sell: only ${currentHoney} honey available, need at least 100`);
         return false;
       }
 
-      // Use capped amount
-      const sellAmount = actualAmount;
-
-      // If user is authenticated, use backend validation
-      if (currentUserId) {
-        try {
-          const response = await gameAPI.sellHoney(currentUserId, sellAmount);
-          if (response.success && response.gameState) {
-            // Update state with backend response
-            const newHoney = response.gameState.honey;
-            console.log(`🍯 Sold ${sellAmount} honey. Old: ${honey}, New: ${newHoney}`);
-
-            // Update all state immediately using functional update to ensure we override any pending updates
-            setHoney(() => {
-              honeyRef.current = newHoney; // Update ref first
-              return newHoney;
-            });
-            setDiamonds(response.gameState.diamonds);
-            setFlowers(response.gameState.flowers);
-            setBvrCoins(response.gameState.bvrCoins);
-            setDiamondsThisYear(response.gameState.diamondsThisYear);
-
-            // Update leaderboard
-            updateLeaderboard(
-              referralCode,
-              response.gameState.diamondsThisYear
-            );
-
-            // The backend has already saved the state, but force a refresh to ensure UI is in sync
-            // Wait a tiny bit to ensure state update is processed
-            setTimeout(async () => {
-              if (currentUserId) {
-                await syncGameStateFromBackend(currentUserId);
-              }
-            }, 100);
-
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error("Failed to sell honey from backend:", error);
-          // Fallback to local update if backend fails
-        }
-      }
-
-      // Fallback: local-only update (for offline or unauthenticated users)
+      // 3. Optimistic Update - Apply changes immediately to UI
       // 100 miel = 1 diamant + 0.10 fleurs + 0.5 BVR
-      const diamondsEarned = Math.floor(sellAmount / 100);
+      const diamondsEarned = Math.floor(actualAmount / 100);
       const flowersEarned = diamondsEarned * 0.1;
       const bvrEarned = diamondsEarned * 0.5;
 
-      setHoney((current) => current - sellAmount);
-      setDiamonds((current) => current + diamondsEarned);
-      setFlowers((current) => current + flowersEarned);
-      setBvrCoins((current) => current + bvrEarned);
-      setDiamondsThisYear((current) => current + diamondsEarned);
+      // Backup state in case we need to revert
+      const previousState = {
+        honey: honey,
+        diamonds: diamonds,
+        flowers: flowers,
+        bvrCoins: bvrCoins
+      };
 
-      updateLeaderboard(referralCode, diamondsThisYear + diamondsEarned);
+      // Apply optimistic update
+      const optHoney = currentHoney - actualAmount;
+      setHoney(optHoney);
+      honeyRef.current = optHoney; // CRITICAL: Update ref immediately so next click sees reduced amount
 
-      return true;
+      setDiamonds(d => d + diamondsEarned);
+      setFlowers(f => f + flowersEarned);
+      setBvrCoins(b => b + bvrEarned);
+      setDiamondsThisYear(d => d + diamondsEarned);
+
+      console.log(`🍯 Optimistic sell: -${actualAmount} honey (Client side)`);
+
+      // 4. Send to backend
+      if (currentUserId) {
+        try {
+          const response = await gameAPI.sellHoney(currentUserId, actualAmount);
+          if (response.success && response.gameState) {
+            const state = response.gameState;
+
+            // Update with authoritative backend state (should match closely)
+            // But be careful not to overwrite accumulated production if backend is lagged
+            // Usually valid to just sync fully after a transaction
+            setHoney(state.honey ?? 0);
+            honeyRef.current = state.honey ?? 0;
+
+            setDiamonds(state.diamonds ?? 0);
+            setFlowers(state.flowers ?? 0);
+            setBvrCoins(state.bvrCoins ?? 0);
+            setDiamondsThisYear(state.diamondsThisYear ?? 0);
+            setTransactions(state.transactions ?? []);
+
+            if (state.lastUpdated) {
+              setLastUpdated(state.lastUpdated);
+            }
+
+            updateLeaderboard(referralCode, state.diamondsThisYear ?? 0);
+            return true;
+          } else {
+            console.error("Failed to sell honey (backend error): " + response.message);
+            // Revert!
+            setHoney(previousState.honey);
+            honeyRef.current = previousState.honey;
+            setDiamonds(previousState.diamonds);
+            setFlowers(previousState.flowers);
+            setBvrCoins(previousState.bvrCoins);
+            return false;
+          }
+        } catch (error) {
+          console.error("Network error selling honey:", error);
+          // Revert!
+          setHoney(previousState.honey);
+          honeyRef.current = previousState.honey;
+          setDiamonds(previousState.diamonds);
+          setFlowers(previousState.flowers);
+          setBvrCoins(previousState.bvrCoins);
+          return false;
+        }
+      } else {
+        // Guest mode (no backend) - Optimistic update is final
+        updateLeaderboard(referralCode, diamondsThisYear + diamondsEarned);
+        hasUnsyncedChanges.current = true;
+        return true;
+      }
     },
-    [honey, referralCode, diamondsThisYear, updateLeaderboard, currentUserId]
+    [honey, diamonds, flowers, bvrCoins, currentUserId, referralCode, diamondsThisYear, updateLeaderboard]
   );
 
   const inviteFriend = useCallback(() => {
@@ -1753,7 +1753,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
             status: "pending",
             createdAt: response.transaction.createdAt,
             // For BVR withdrawals, use backend token amount; for others, keep original
-            amount: (transaction.type === "withdrawal_bvr") 
+            amount: (transaction.type === "withdrawal_bvr")
               ? response.transaction.amount  // Backend returns token amount
               : transaction.amount,           // Keep original for other types
           };

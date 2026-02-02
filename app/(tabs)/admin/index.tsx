@@ -51,7 +51,7 @@ export default function AdminPanel() {
           <Shield color="#FF8C00" size={80} />
           <Text style={styles.loginTitle}>Panel Admin</Text>
           <Text style={styles.loginSubtitle}>Entrez votre email et code PIN</Text>
-          
+
           <TextInput
             style={styles.emailInput}
             value={email}
@@ -61,7 +61,7 @@ export default function AdminPanel() {
             autoCapitalize="none"
             autoComplete="email"
           />
-          
+
           <TextInput
             style={styles.pinInput}
             value={pin}
@@ -71,7 +71,7 @@ export default function AdminPanel() {
             keyboardType="number-pad"
             maxLength={6}
           />
-          
+
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
             <Text style={styles.loginButtonText}>Se connecter</Text>
           </TouchableOpacity>
@@ -97,14 +97,14 @@ function AdminDashboard({ logout }: { logout: () => Promise<void> }) {
       setPendingTransactions(txns);
     };
     loadTransactions();
-    
-    // Refresh every 10 seconds when on transactions tab
+
+    // Refresh every 30 seconds when on transactions tab (reduced from 10s)
     const interval = setInterval(() => {
       if (activeTab === 'transactions') {
         loadTransactions();
       }
-    }, 10000);
-    
+    }, 30000);
+
     return () => clearInterval(interval);
   }, [activeTab, game]);
 
@@ -217,7 +217,7 @@ function StatsTab({ game }: { game: ReturnType<typeof useGame> }) {
   useEffect(() => {
     const loadGlobalStats = async () => {
       try {
-        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://960wd305-3001.inc1.devtunnels.ms';
         const response = await fetch(`${apiBaseUrl}/api/leaderboard/stats`);
         const data = await response.json();
         if (data.success) {
@@ -228,9 +228,9 @@ function StatsTab({ game }: { game: ReturnType<typeof useGame> }) {
       }
     };
     loadGlobalStats();
-    
-    // Refresh every 10 seconds
-    const interval = setInterval(loadGlobalStats, 10000);
+
+    // Refresh every 60 seconds (reduced from 10s)
+    const interval = setInterval(loadGlobalStats, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -243,8 +243,8 @@ function StatsTab({ game }: { game: ReturnType<typeof useGame> }) {
   }, [game.transactions]);
 
   const withdrawalTransactions = useMemo(() => {
-    return game.transactions.filter(txn => 
-      (txn.type === 'withdrawal_diamond' || txn.type === 'withdrawal_bvr') && 
+    return game.transactions.filter(txn =>
+      (txn.type === 'withdrawal_diamond' || txn.type === 'withdrawal_bvr') &&
       txn.status === 'approved'
     );
   }, [game.transactions]);
@@ -260,7 +260,7 @@ function StatsTab({ game }: { game: ReturnType<typeof useGame> }) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>🌍 Statistiques Globales (Tous les Utilisateurs)</Text>
-      
+
       {globalStats && (
         <>
           <View style={styles.statCard}>
@@ -301,7 +301,7 @@ function StatsTab({ game }: { game: ReturnType<typeof useGame> }) {
       )}
 
       <Text style={styles.sectionTitle}>📊 Statistiques Utilisateur Actuel</Text>
-      
+
       <View style={styles.statCard}>
         <Text style={styles.statLabel}>Production totale</Text>
         <Text style={styles.statValue}>{totalProduction.toLocaleString('fr-FR')} miel/h</Text>
@@ -331,7 +331,7 @@ function StatsTab({ game }: { game: ReturnType<typeof useGame> }) {
       </View>
 
       <Text style={styles.sectionTitle}>👥 Suivi Utilisateur</Text>
-      
+
       <View style={styles.userStatsCard}>
         <View style={styles.userStatsRow}>
           <Text style={styles.userStatsLabel}>💰 Montant global reçu:</Text>
@@ -344,7 +344,7 @@ function StatsTab({ game }: { game: ReturnType<typeof useGame> }) {
       </View>
 
       <Text style={styles.sectionTitle}>💰 Transactions Financières</Text>
-      
+
       <View style={styles.statCard}>
         <Text style={styles.statLabel}>Total des dépôts</Text>
         <Text style={styles.statValue}>${totalDeposited.toFixed(2)}</Text>
@@ -369,7 +369,7 @@ function StatsTab({ game }: { game: ReturnType<typeof useGame> }) {
       {BEE_TYPES.map((bee) => {
         const count = game.bees[bee.id] || 0;
         const production = count * bee.honeyPerHour;
-        
+
         return (
           <View key={bee.id} style={styles.beeCard}>
             <Text style={styles.beeName}>{bee.nameFr}</Text>
@@ -417,18 +417,18 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
 
   const getUserStats = useCallback((userId: string) => {
     const userTransactions = game.transactions.filter((txn) => txn.userId === userId);
-    
+
     const totalDeposited = userTransactions
       .filter((txn) => txn.type === 'deposit_crypto' && txn.status === 'approved')
       .reduce((sum, txn) => sum + (txn.usdAmount || 0), 0);
-    
+
     const totalWithdrawn = userTransactions
-      .filter((txn) => 
-        (txn.type === 'withdrawal_diamond' || txn.type === 'withdrawal_bvr') && 
+      .filter((txn) =>
+        (txn.type === 'withdrawal_diamond' || txn.type === 'withdrawal_bvr') &&
         txn.status === 'approved'
       )
       .reduce((sum, txn) => sum + (txn.usdAmount || 0), 0);
-    
+
     return { totalDeposited, totalWithdrawn };
   }, [game.transactions]);
 
@@ -447,7 +447,7 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
       try {
         const { gameAPI } = await import('../../../lib/api');
         const response = await gameAPI.addResources(selectedUserId, { flowers: amount });
-        
+
         if (response.success) {
           setFlowersInput('');
           if (Platform.OS === 'web') {
@@ -478,7 +478,7 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
       try {
         const { gameAPI } = await import('../../../lib/api');
         const response = await gameAPI.addResources(selectedUserId, { flowers: -amount });
-        
+
         if (response.success) {
           setRemoveFlowersInput('');
           if (Platform.OS === 'web') {
@@ -509,7 +509,7 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
       try {
         const { gameAPI } = await import('../../../lib/api');
         const response = await gameAPI.addResources(selectedUserId, { tickets: amount });
-        
+
         if (response.success) {
           setTicketsInput('');
           if (Platform.OS === 'web') {
@@ -528,7 +528,7 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>👥 Utilisateurs Inscrits</Text>
-      
+
       <ScrollView horizontal style={styles.userTableContainer}>
         <View style={styles.userTable}>
           <View style={styles.userTableHeader}>
@@ -547,8 +547,8 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
             auth.users.map((user) => {
               const stats = getUserStats(user.id);
               return (
-                <View 
-                  key={user.id} 
+                <View
+                  key={user.id}
                   style={[
                     styles.userTableRow,
                     selectedUserId === user.id && styles.userTableRowSelected
@@ -569,7 +569,7 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
                   <Text style={[styles.userTableCell, styles.userTableColAmount]}>
                     ${stats.totalWithdrawn.toFixed(2)}
                   </Text>
-                  <View style={[styles.userTableCell, styles.userTableColAction]}>
+                  <View style={[styles.userTableColAction]}>
                     <TouchableOpacity
                       style={[
                         styles.selectUserButton,
@@ -613,8 +613,8 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
             keyboardType="number-pad"
             editable={!!selectedUserId}
           />
-          <TouchableOpacity 
-            style={[styles.addButton, !selectedUserId && styles.actionButtonDisabled]} 
+          <TouchableOpacity
+            style={[styles.addButton, !selectedUserId && styles.actionButtonDisabled]}
             onPress={handleAddFlowers}
             disabled={!selectedUserId}
           >
@@ -634,12 +634,12 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
             keyboardType="number-pad"
             editable={!!selectedUserId}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              styles.addButton, 
+              styles.addButton,
               styles.removeButton,
               !selectedUserId && styles.actionButtonDisabled
-            ]} 
+            ]}
             onPress={handleRemoveFlowers}
             disabled={!selectedUserId}
           >
@@ -661,8 +661,8 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
             keyboardType="number-pad"
             editable={!!selectedUserId}
           />
-          <TouchableOpacity 
-            style={[styles.addButton, !selectedUserId && styles.actionButtonDisabled]} 
+          <TouchableOpacity
+            style={[styles.addButton, !selectedUserId && styles.actionButtonDisabled]}
             onPress={handleAddTickets}
             disabled={!selectedUserId}
           >
@@ -693,10 +693,10 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
       // Load pending transactions
       const pending = await game.getPendingTransactions();
       setPendingTransactions(pending);
-      
+
       // Load processed transaction history from backend
       try {
-        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+        const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://960wd305-3001.inc1.devtunnels.ms';
         const response = await fetch(`${apiBaseUrl}/api/transactions/history/all`);
         const data = await response.json();
         if (data.success) {
@@ -720,9 +720,9 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
       }
     };
     loadTransactions();
-    
-    // Refresh every 5 seconds
-    const interval = setInterval(loadTransactions, 5000);
+
+    // Refresh every 30 seconds (reduced from 5s)
+    const interval = setInterval(loadTransactions, 30000);
     return () => clearInterval(interval);
   }, [game]);
 
@@ -798,14 +798,24 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
 
   const handleReject = async (transactionId: string) => {
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Êtes-vous sûr de vouloir rejeter cette transaction?');
-      if (confirmed) {
-        await game.rejectTransaction(transactionId);
-        alert('Transaction rejetée et fleurs remboursées!');
-        // Refresh transactions list
-        const txns = await game.getPendingTransactions();
-        setPendingTransactions(txns);
-      }
+      Alert.alert(
+        'Rejeter la transaction',
+        'Êtes-vous sûr de vouloir rejeter cette transaction?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Rejeter',
+            style: 'destructive',
+            onPress: async () => {
+              await game.rejectTransaction(transactionId);
+              Alert.alert('Succès', 'Transaction rejetée!');
+              // Refresh transactions list
+              const txns = await game.getPendingTransactions();
+              setPendingTransactions(txns);
+            },
+          },
+        ]
+      );
     } else {
       Alert.alert(
         'Rejeter la transaction',
@@ -817,7 +827,7 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
             style: 'destructive',
             onPress: async () => {
               await game.rejectTransaction(transactionId);
-              Alert.alert('Info', 'Transaction rejetée et fleurs remboursées!');
+              Alert.alert('Succès', 'Transaction rejetée!');
               // Refresh transactions list
               const txns = await game.getPendingTransactions();
               setPendingTransactions(txns);
@@ -831,7 +841,7 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>💳 Transactions en attente ({pendingTransactions.length})</Text>
-      
+
       {pendingTransactions.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyText}>Aucune transaction en attente</Text>
@@ -849,11 +859,11 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
             <View style={styles.transactionDetail}>
               <Text style={styles.transactionLabel}>Montant:</Text>
               <Text style={styles.transactionValue}>
-                {txn.type === 'deposit_crypto' && txn.flowersAmount 
+                {txn.type === 'deposit_crypto' && txn.flowersAmount
                   ? `${txn.flowersAmount.toLocaleString()} fleurs`
                   : txn.type === 'withdrawal_bvr'
-                  ? `${txn.amount.toLocaleString()} BVR tokens`
-                  : `${txn.amount.toLocaleString()} fleurs`}
+                    ? `${txn.amount.toLocaleString()} BVR tokens`
+                    : `${txn.amount.toLocaleString()} fleurs`}
               </Text>
             </View>
 
@@ -939,7 +949,7 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
       )}
 
       <Text style={styles.sectionTitle}>📜 Historique ({processedTransactions.length})</Text>
-      
+
       {processedTransactions.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyText}>Aucune transaction traitée</Text>
@@ -1100,7 +1110,7 @@ function MessagesTab({ admin }: { admin: ReturnType<typeof useAdmin> }) {
 
       <View style={styles.passwordSection}>
         <Text style={styles.passwordLabel}>Email de Support</Text>
-        
+
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Adresse Email</Text>
           <TextInput
@@ -1114,8 +1124,8 @@ function MessagesTab({ admin }: { admin: ReturnType<typeof useAdmin> }) {
           />
         </View>
 
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.updateAddressButton]} 
+        <TouchableOpacity
+          style={[styles.actionButton, styles.updateAddressButton]}
           onPress={handleUpdateSupportEmail}
         >
           <Text style={styles.actionButtonText}>💾 Mettre à jour l&apos;email</Text>
@@ -1129,7 +1139,7 @@ function MessagesTab({ admin }: { admin: ReturnType<typeof useAdmin> }) {
       </View>
 
       <Text style={styles.sectionTitle}>📨 Messages non lus ({unreadMessages.length})</Text>
-      
+
       {unreadMessages.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyText}>Aucun message non lu</Text>
@@ -1162,7 +1172,7 @@ function MessagesTab({ admin }: { admin: ReturnType<typeof useAdmin> }) {
       )}
 
       <Text style={styles.sectionTitle}>📧 Messages lus ({readMessages.length})</Text>
-      
+
       {readMessages.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyText}>Aucun message lu</Text>
@@ -1206,19 +1216,19 @@ function MessagesTab({ admin }: { admin: ReturnType<typeof useAdmin> }) {
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.modalBody}>
               <Text style={styles.modalLabel}>Sujet:</Text>
               <Text style={styles.modalValue}>{selectedMessage.subject}</Text>
-              
+
               <Text style={styles.modalLabel}>De:</Text>
               <Text style={styles.modalValue}>{selectedMessage.userEmail}</Text>
-              
+
               <Text style={styles.modalLabel}>Date:</Text>
               <Text style={styles.modalValue}>
                 {new Date(selectedMessage.createdAt).toLocaleString('fr-FR')}
               </Text>
-              
+
               <Text style={styles.modalLabel}>Message:</Text>
               <Text style={styles.modalMessageText}>{selectedMessage.message}</Text>
             </ScrollView>
@@ -1236,12 +1246,12 @@ function MessagesTab({ admin }: { admin: ReturnType<typeof useAdmin> }) {
   );
 }
 
-function ConfigTab({ 
-  game, 
+function ConfigTab({
+  game,
   admin,
-  currentLanguage, 
-  changeLanguage 
-}: { 
+  currentLanguage,
+  changeLanguage
+}: {
   game: ReturnType<typeof useGame>;
   admin: ReturnType<typeof useAdmin>;
   currentLanguage: string;
@@ -1288,7 +1298,7 @@ function ConfigTab({
     }
 
     const result = await admin.changePassword(oldPin, newPin);
-    
+
     if (result.success) {
       setOldPin('');
       setNewPin('');
@@ -1309,7 +1319,7 @@ function ConfigTab({
 
   const handleUpdateCryptoAddresses = async () => {
     const result = await admin.updateCryptoAddresses(tonAddressInput, solanaAddressInput);
-    
+
     if (result.success) {
       if (Platform.OS === 'web') {
         alert('Adresses crypto mises à jour avec succès!');
@@ -1331,7 +1341,7 @@ function ConfigTab({
 
       <View style={styles.passwordSection}>
         <Text style={styles.passwordLabel}>Changer le code PIN</Text>
-        
+
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Ancien code PIN</Text>
           <TextInput
@@ -1371,8 +1381,8 @@ function ConfigTab({
           />
         </View>
 
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.changePasswordButton]} 
+        <TouchableOpacity
+          style={[styles.actionButton, styles.changePasswordButton]}
           onPress={handleChangePassword}
         >
           <Text style={styles.actionButtonText}>🔐 Changer le code PIN</Text>
@@ -1380,10 +1390,10 @@ function ConfigTab({
       </View>
 
       <Text style={styles.sectionTitle}>💰 Adresses Crypto</Text>
-      
+
       <View style={styles.passwordSection}>
         <Text style={styles.passwordLabel}>Adresses de réception pour les dépôts</Text>
-        
+
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>💎 Adresse TON</Text>
           <TextInput
@@ -1408,8 +1418,8 @@ function ConfigTab({
           />
         </View>
 
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.updateAddressButton]} 
+        <TouchableOpacity
+          style={[styles.actionButton, styles.updateAddressButton]}
           onPress={handleUpdateCryptoAddresses}
         >
           <Text style={styles.actionButtonText}>💾 Sauvegarder les adresses</Text>

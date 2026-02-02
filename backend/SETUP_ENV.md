@@ -61,7 +61,7 @@ Before starting, make sure:
 Once the backend starts, you can test it:
 
 ```bash
-curl http://localhost:3001/
+curl https://960wd305-3001.inc1.devtunnels.ms/
 ```
 
 Should return:

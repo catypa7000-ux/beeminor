@@ -11,7 +11,7 @@ const getBaseUrl = () => {
   // Default to localhost for local development
   const isDev = process.env.NODE_ENV !== "production";
   if (isDev) {
-    return "http://localhost:3001";
+    return "https://960wd305-3001.inc1.devtunnels.ms";
   }
 
   throw new Error("No base url found, please set EXPO_PUBLIC_API_BASE_URL");
@@ -242,6 +242,7 @@ export const gameAPI = {
         transactions: any[];
         diamondsThisYear: number;
         yearStartDate: string;
+        lastUpdated?: string;
       };
     }>(`/api/game/${userId}/sell-honey`, {
       method: "POST",

@@ -88,7 +88,7 @@ npm run backend:dev    # Development
 npm run backend:start  # Production
 ```
 
-The server will start on `http://localhost:3001`
+The server will start on `https://960wd305-3001.inc1.devtunnels.ms`
 
 ## 📁 Project Structure
 
@@ -151,7 +151,7 @@ backend/
 ### Register User
 
 ```bash
-curl -X POST http://localhost:3001/api/auth/register \
+curl -X POST https://960wd305-3001.inc1.devtunnels.ms/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -163,7 +163,7 @@ curl -X POST http://localhost:3001/api/auth/register \
 ### Login
 
 ```bash
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST https://960wd305-3001.inc1.devtunnels.ms/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -174,7 +174,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 ### Get Game State
 
 ```bash
-curl http://localhost:3001/api/game/USER_ID
+curl https://960wd305-3001.inc1.devtunnels.ms/api/game/USER_ID
 ```
 
 ## 🔐 Security Notes

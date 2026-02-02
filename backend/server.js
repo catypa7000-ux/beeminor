@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const compression = require("compression");
 require("dotenv").config();
 
 const app = express();
@@ -11,7 +12,7 @@ const corsOptions = {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
 
-    
+
     const allowedOrigins = [
       "http://localhost:8081",
       "exp://localhost:8081",
@@ -46,6 +47,17 @@ app.use(cors(corsOptions));
 
 // Handle preflight requests explicitly
 app.options("*", cors(corsOptions));
+
+// Enable gzip compression for all responses
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6 // Compression level (0-9, 6 is default)
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -83,11 +95,13 @@ const connectDB = async () => {
 
     // Connection options optimized for serverless
     const options = {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-      maxPoolSize: 10,
-      minPoolSize: 1,
-      maxIdleTimeMS: 30000,
+      serverSelectionTimeoutMS: 5000, // Reduced from 10s for faster failures
+      socketTimeoutMS: 30000, // Reduced from 45s
+      maxPoolSize: 5, // Reduced from 10 (better for serverless)
+      minPoolSize: 0, // Changed from 1 (no minimum for serverless)
+      maxIdleTimeMS: 10000, // Reduced from 30s (close idle connections faster)
+      retryWrites: true, // Added: retry failed writes
+      retryReads: true, // Added: retry failed reads
     };
 
     // // Connection options for MongoDB Atlas
@@ -107,20 +121,20 @@ const connectDB = async () => {
     console.log(`📊 Database: ${conn.connection.name}`);
 
     return cachedDb;
-  } 
+  }
 
   catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
-    
+
     // Don't exit process in serverless environment
     if (process.env.NODE_ENV !== 'production') {
       process.exit(1);
     }
-    
+
     throw error;
   }
 
-  
+
   // catch (error) {
   //   console.error("\n❌ MongoDB connection error:", error.message);
   //   console.error("Error details:", error.name);
@@ -230,10 +244,10 @@ app.use((req, res) => {
 // Local development server
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3001;
-  
+
   const startServer = async () => {
     await connectDB();
-    
+
     // Verify email configuration (optional, comment out if causing issues)
     try {
       const { verifyEmailConfig } = require('./config/email');
@@ -241,14 +255,14 @@ if (process.env.NODE_ENV !== 'production') {
     } catch (err) {
       console.warn('⚠️  Email verification skipped:', err.message);
     }
-    
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Backend server running on 0.0.0.0:${PORT}`);
       console.log(`📍 API endpoint: http://localhost:${PORT}/api`);
       console.log(`📍 Health check: http://localhost:${PORT}/`);
     });
   };
-  
+
   startServer();
 }
 

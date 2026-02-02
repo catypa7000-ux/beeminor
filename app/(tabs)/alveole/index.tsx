@@ -51,10 +51,34 @@ export default function AlveoleScreen() {
     const calculatedAmount = Math.floor(honey * percentage);
     const amount = Math.min(calculatedAmount, Math.floor(honey));
     
+    const performSell = () => {
+      sellHoney(amount).then((success) => {
+        if (success) {
+          if (Platform.OS === 'web') {
+            window.alert(`${t.sold}\n\n${t.transactionSuccess}`);
+          } else {
+            const { Alert } = require('react-native');
+            Alert.alert(t.sold, t.transactionSuccess);
+          }
+        } else {
+          if (Platform.OS === 'web') {
+            window.alert(`${t.error}\n\n${t.transactionFailed}`);
+          } else {
+            const { Alert } = require('react-native');
+            Alert.alert(t.error, t.transactionFailed);
+          }
+        }
+      });
+    };
+
     if (amount < 100) {
-      window.alert(
-        `${t.insufficientHoney}\n\nVous avez besoin d'au moins 100 miel pour vendre.`
-      );
+      const msg = `${t.insufficientHoney}\n\nVous avez besoin d'au moins 100 miel pour vendre.`;
+      if (Platform.OS === 'web') {
+        window.alert(msg);
+      } else {
+        const { Alert } = require('react-native');
+        Alert.alert(t.insufficientHoney, "Vous avez besoin d'au moins 100 miel pour vendre.");
+      }
       return;
     }
 
@@ -62,20 +86,24 @@ export default function AlveoleScreen() {
     const flowersEarned = Math.floor((amount / 100) * 0.01 * 100) / 100;
     const bvrEarned = Math.floor((amount / 100) * 0.5 * 100) / 100;
 
-    const confirmed = window.confirm(
-      `${t.sellHoney} ${formatNumber(amount)} ${t.honey.toLowerCase()} (${
-        percentage * 100
-      }%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n🌸 ${flowersEarned} ${t.flowers.toLowerCase()}\n🐝 ${bvrEarned} BVR\n\nConfirmer?`
-    );
+    const confirmMsg = `${t.sellHoney} ${formatNumber(amount)} ${t.honey.toLowerCase()} (${
+      percentage * 100
+    }%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n🌸 ${flowersEarned} ${t.flowers.toLowerCase()}\n🐝 ${bvrEarned} BVR\n\nConfirmer?`;
 
-    if (confirmed) {
-      sellHoney(amount).then((success) => {
-        if (success) {
-          window.alert(`${t.sold}\n\n${t.transactionSuccess}`);
-        } else {
-          window.alert(`${t.error}\n\n${t.transactionFailed}`);
-        }
-      });
+    if (Platform.OS === 'web') {
+      if (window.confirm(confirmMsg)) {
+        performSell();
+      }
+    } else {
+      const { Alert } = require('react-native');
+      Alert.alert(
+        "Confirmation",
+        confirmMsg,
+        [
+          { text: "Annuler", style: "cancel" },
+          { text: "Confirmer", onPress: performSell }
+        ]
+      );
     }
   };
 
@@ -183,19 +211,29 @@ export default function AlveoleScreen() {
                     onPress={async () => {
                       const success = await buyAlveole(alveole.level);
                       if (success) {
-                        window.alert(
-                          `${t.success}\n\n${t.alveoleUnlocked.replace(
-                            "{level}",
-                            alveole.level.toString()
-                          )}`
-                        );
+                        if (Platform.OS === 'web') {
+                          window.alert(
+                            `${t.success}\n\n${t.alveoleUnlocked.replace(
+                              "{level}",
+                              alveole.level.toString()
+                            )}`
+                          );
+                        } else {
+                          const { Alert } = require('react-native');
+                          Alert.alert(t.success, t.alveoleUnlocked.replace("{level}", alveole.level.toString()));
+                        }
                       } else {
-                        window.alert(
-                          `${t.insufficientFlowers}\n\n${t.needFlowers.replace(
-                            "{amount}",
-                            formatNumber(alveole.cost)
-                          )}`
-                        );
+                        if (Platform.OS === 'web') {
+                          window.alert(
+                            `${t.insufficientFlowers}\n\n${t.needFlowers.replace(
+                              "{amount}",
+                              formatNumber(alveole.cost)
+                            )}`
+                          );
+                        } else {
+                          const { Alert } = require('react-native');
+                          Alert.alert(t.insufficientFlowers, t.needFlowers.replace("{amount}", formatNumber(alveole.cost)));
+                        }
                       }
                     }}
                     disabled={flowers < alveole.cost}

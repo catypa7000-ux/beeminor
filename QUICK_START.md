@@ -51,7 +51,7 @@ Make sure the database user has read/write permissions:
    ```
    ✅ MongoDB Connected: cluster0-shard-00-XX.r3ihxch.mongodb.net
    🚀 Backend server running on port 3001
-   📍 API endpoint: http://localhost:3001/api
+   📍 API endpoint: https://960wd305-3001.inc1.devtunnels.ms/api
    ```
 
 ## 🧪 Test the Connection
@@ -59,10 +59,10 @@ Make sure the database user has read/write permissions:
 Once the backend is running, test it:
 
 ```bash
-curl http://localhost:3001/
+curl https://960wd305-3001.inc1.devtunnels.ms/
 ```
 
-Or open in browser: `http://localhost:3001/`
+Or open in browser: `https://960wd305-3001.inc1.devtunnels.ms/`
 
 Should return:
 ```json

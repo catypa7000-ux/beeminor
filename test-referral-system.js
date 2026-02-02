@@ -1,7 +1,7 @@
 const http = require('http');
 
 const sponsorUserId = '6930a425b2468df4e5b54e4e'; // Your user (the sponsor)
-const baseUrl = 'http://localhost:3001/api';
+const baseUrl = 'https://960wd305-3001.inc1.devtunnels.ms/api';
 
 // Helper function to make HTTP requests
 function makeRequest(url, method = 'GET', body = null) {
@@ -110,7 +110,7 @@ async function testReferralSystem() {
     // Calculate expected values
     const expectedBonus = Math.floor(1000 * 0.1); // 10% of purchase
     const expectedFlowers = initialData.gameState.flowers + expectedBonus;
-    
+
     console.log('\n=== VERIFICATION ===');
     console.log('Expected bonus:', expectedBonus);
     console.log('Expected flowers:', expectedFlowers);

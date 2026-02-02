@@ -46,11 +46,27 @@ export default function ShopScreen() {
 
   const handleBuyFlowers = async (amount: number, price: number) => {
     if (!hasPendingFunds) {
-      const confirmed = window.confirm(
-        "Vous devez d'abord envoyer les fonds nécessaires. Voulez-vous accéder à la page Wallet pour envoyer des fonds ?"
-      );
-      if (confirmed) {
-        router.push("/menu/wallet");
+      if (Platform.OS === 'web') {
+        const confirmed = window.confirm(
+          "Vous devez d'abord envoyer les fonds nécessaires. Voulez-vous accéder à la page Wallet pour envoyer des fonds ?"
+        );
+        if (confirmed) {
+          router.push("/menu/wallet");
+        }
+      } else {
+        // Mobile alert
+        const { Alert } = require('react-native');
+        Alert.alert(
+          "Fonds manquants",
+          "Vous devez d'abord envoyer les fonds nécessaires. Voulez-vous accéder à la page Wallet pour envoyer des fonds ?",
+          [
+            { text: "Annuler", style: "cancel" },
+            {
+              text: "Aller au Wallet",
+              onPress: () => router.push("/menu/wallet")
+            }
+          ]
+        );
       }
       return;
     }
@@ -59,7 +75,12 @@ export default function ShopScreen() {
       console.log(
         `Purchased ${amount} flowers for ${price}$ and received tickets`
       );
-      window.alert(`Succès: ${amount} fleurs achetées avec succès!`);
+      if (Platform.OS === 'web') {
+        window.alert(`Succès: ${amount} fleurs achetées avec succès!`);
+      } else {
+        const { Alert } = require('react-native');
+        Alert.alert("Succès", `${amount} fleurs achetées avec succès!`);
+      }
     }
   };
 
@@ -311,14 +332,16 @@ const styles = StyleSheet.create({
   },
   resourcesRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 10,
   },
   resourceBadge: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFF8DC",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 16,
   },
   resourceEmoji: {

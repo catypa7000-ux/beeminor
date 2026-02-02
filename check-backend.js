@@ -5,7 +5,7 @@
 
 const http = require('http');
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://960wd305-3001.inc1.devtunnels.ms';
 
 console.log('🔍 Checking backend status...\n');
 console.log(`📍 API Base URL: ${API_BASE_URL}\n`);
@@ -56,14 +56,14 @@ async function main() {
   // Check main endpoint
   console.log('1️⃣ Checking main API endpoint...');
   const mainCheck = await checkEndpoint(`${API_BASE_URL}/`);
-  
+
   if (mainCheck.success) {
     console.log(`✅ Backend is running! Status: ${mainCheck.status}`);
     console.log(`   Response: ${mainCheck.data}\n`);
   } else {
     console.log(`❌ Backend is NOT running`);
     console.log(`   Error: ${mainCheck.error}\n`);
-    
+
     console.log('📝 Troubleshooting steps:\n');
     console.log('   1. Start the backend server:');
     console.log('      npm run backend:dev\n');
@@ -71,14 +71,14 @@ async function main() {
     console.log('      npm run backend:install\n');
     console.log('   3. Check if backend/.env file exists with MongoDB connection\n');
     console.log('   4. Verify no other process is using port 3001\n');
-    
+
     return;
   }
 
   // Check API health
   console.log('2️⃣ Checking /api endpoint...');
   const apiCheck = await checkEndpoint(`${API_BASE_URL}/api`);
-  
+
   if (apiCheck.success) {
     console.log(`✅ API is responding! Status: ${apiCheck.status}`);
     console.log(`   Response: ${apiCheck.data}\n`);

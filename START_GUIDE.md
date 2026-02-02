@@ -112,7 +112,7 @@ Once logged in, you'll see tabs:
 ### Backend not connecting?
 Check `lib/api.ts` - make sure `API_BASE_URL` is:
 ```typescript
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = 'https://960wd305-3001.inc1.devtunnels.ms';
 ```
 
 ### Admin panel not showing?
@@ -144,7 +144,7 @@ npm run start-web
 
 **Your App:**
 - Frontend: http://localhost:8081
-- Backend API: http://localhost:3001/api
+- Backend API: https://960wd305-3001.inc1.devtunnels.ms/api
 - Admin Panel: http://localhost:8081/admin
 
 ---

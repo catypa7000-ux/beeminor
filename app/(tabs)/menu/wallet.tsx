@@ -54,7 +54,11 @@ export default function WalletScreen() {
 
   const copyToClipboard = async (address: string) => {
     await ExpoClipboard.setStringAsync(address);
-    window.alert('Adresse copiée dans le presse-papier');
+    if (Platform.OS === 'web') {
+      window.alert('Adresse copiée dans le presse-papier');
+    } else {
+      Alert.alert('Succès', 'Adresse copiée dans le presse-papier');
+    }
   };
 
   const calculateFlowersEarned = (usdValue: number): number => {
@@ -65,18 +69,24 @@ export default function WalletScreen() {
 
   const handleExchange = () => {
     if (!selectedNetwork || !usdAmount) {
-      window.alert(t.error + ': ' + (t.selectNetworkError || 'Veuillez sélectionner un réseau et entrer un montant'));
+      const msg = t.error + ': ' + (t.selectNetworkError || 'Veuillez sélectionner un réseau et entrer un montant');
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Erreur', msg);
       return;
     }
 
     const usdValue = parseFloat(usdAmount);
     if (isNaN(usdValue) || usdValue <= 0) {
-      window.alert(t.error + ': ' + t.invalidAmount);
+      const msg = t.error + ': ' + t.invalidAmount;
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Erreur', msg);
       return;
     }
-    
+
     if (usdValue < 5) {
-      window.alert(`${t.error}\n\n${t.minAmountWarning}\n\nLes envois en dessous de 5$ ne seront pas comptabilisés.`);
+      const msg = `${t.error}\n\n${t.minAmountWarning}\n\nLes envois en dessous de 5$ ne seront pas comptabilisés.`;
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Erreur', msg);
       return;
     }
 
@@ -84,17 +94,8 @@ export default function WalletScreen() {
     const selectedNetworkData = CRYPTO_NETWORKS.find(n => n.id === selectedNetwork);
 
     const cryptoSymbol = selectedNetworkData?.symbol || selectedNetwork.toUpperCase();
-    
-    const confirmed = window.confirm(
-      `Confirmer l'envoi:\n\n` +
-      `Réseau: ${cryptoSymbol}\n` +
-      `Montant envoyé: ${usdValue.toFixed(2)}$\n` +
-      `Taxe: 1.00$\n` +
-      `Net: ${(usdValue - 1).toFixed(2)}$\n\n` +
-      `Vous recevrez: ${flowersToAdd.toLocaleString()} fleurs\n\n` +
-      `Votre dépôt sera soumis pour validation par l'administrateur. Vous recevrez une notification une fois validé.`
-    );
-    if (confirmed) {
+
+    const performExchange = () => {
       const transaction: Omit<Transaction, 'id' | 'status' | 'createdAt'> = {
         userId: currentUser?.id || 'unknown',
         userEmail: currentUser?.email || 'unknown',
@@ -107,15 +108,43 @@ export default function WalletScreen() {
         receivedAmount: usdValue - 1,
         flowersAmount: flowersToAdd,
       };
-      
+
       submitWithdrawal(transaction);
       setUsdAmount('');
       setSelectedNetwork('');
-      window.alert(
-        `Demande envoyée!\n\n` +
+
+      const successMsg = `Demande envoyée!\n\n` +
         `Votre dépôt de ${usdValue.toFixed(2)}$ en ${cryptoSymbol} a été soumis.\n\n` +
         `Les ${flowersToAdd.toLocaleString()} fleurs seront ajoutées après validation par l'admin.\n\n` +
-        `Vous recevrez une notification une fois la transaction validée ou rejetée.`
+        `Vous recevrez une notification une fois la transaction validée ou rejetée.`;
+
+      if (Platform.OS === 'web') {
+        window.alert(successMsg);
+      } else {
+        Alert.alert('Succès', successMsg);
+      }
+    };
+
+    const confirmMsg = `Confirmer l'envoi:\n\n` +
+      `Réseau: ${cryptoSymbol}\n` +
+      `Montant envoyé: ${usdValue.toFixed(2)}$\n` +
+      `Taxe: 1.00$\n` +
+      `Net: ${(usdValue - 1).toFixed(2)}$\n\n` +
+      `Vous recevrez: ${flowersToAdd.toLocaleString()} fleurs\n\n` +
+      `Votre dépôt sera soumis pour validation par l'administrateur. Vous recevrez une notification une fois validé.`;
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(confirmMsg)) {
+        performExchange();
+      }
+    } else {
+      Alert.alert(
+        "Confirmation",
+        confirmMsg,
+        [
+          { text: "Annuler", style: "cancel" },
+          { text: "Confirmer", onPress: performExchange }
+        ]
       );
     }
   };

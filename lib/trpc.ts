@@ -15,7 +15,7 @@ const getBaseUrl = () => {
   // You can override this by setting EXPO_PUBLIC_RORK_API_BASE_URL in your .env file
   const isDev = process.env.NODE_ENV !== "production";
   if (isDev) {
-    return "http://localhost:3001";
+    return "https://960wd305-3001.inc1.devtunnels.ms";
   }
 
   throw new Error(

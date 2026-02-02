@@ -23,6 +23,7 @@ const createDefaultGameState = (userId) => {
       ["virtual1", 1],
       ["virtual2", 0],
       ["virtual3", 0],
+      ["virtual3", 0],
     ]),
     alveoles: new Map([
       ["1", true],
@@ -41,6 +42,102 @@ const createDefaultGameState = (userId) => {
     diamondsThisYear: 0,
     yearStartDate: new Date().getFullYear().toString(),
   });
+};
+
+// Helper function to calculate offline production and update state
+const calculateOfflineProduction = async (gameState) => {
+  if (!gameState.lastUpdated) return;
+
+  const lastUpdateTime = new Date(gameState.lastUpdated).getTime();
+  const now = new Date().getTime();
+  const secondsPassed = Math.floor((now - lastUpdateTime) / 1000);
+
+  if (secondsPassed > 0) {
+    // Calculate production rate from bees
+    let productionRate = 0;
+
+    // Physical bees production rates (per hour) - Original rates restored
+    const BEE_PRODUCTION_RATES = {
+      baby: 416.67,
+      worker: 833.33,
+      elite: 2083.33,
+      royal: 4583.33,
+      queen: 8750.0,
+    };
+
+    // Virtual bees production rates (per hour) - Original rates restored
+    const VIRTUAL_BEE_PRODUCTION_RATES = {
+      virtual1: 10,
+      virtual2: 20,
+      virtual3: 30,
+    };
+
+    // Calculate from physical bees
+    if (gameState.bees && gameState.bees.size > 0) {
+      for (const [beeType, count] of gameState.bees.entries()) {
+        if (BEE_PRODUCTION_RATES[beeType]) {
+          productionRate += count * BEE_PRODUCTION_RATES[beeType];
+        }
+      }
+    }
+
+    // Calculate from virtual bees
+    if (gameState.virtualBees && gameState.virtualBees.size > 0) {
+      for (const [beeType, count] of gameState.virtualBees.entries()) {
+        if (VIRTUAL_BEE_PRODUCTION_RATES[beeType]) {
+          productionRate += count * VIRTUAL_BEE_PRODUCTION_RATES[beeType];
+        }
+      }
+    }
+
+    // Calculate offline honey earned
+    const offlineHoney = (productionRate / 3600) * secondsPassed;
+
+    // Apply capacity limit
+    const ALVEOLE_CAPACITIES = {
+      1: 1000000,
+      2: 3000000,
+      3: 6000000,
+      4: 14000000,
+      5: 30000000,
+      6: 48000000,
+    };
+
+    let maxCapacity = 0;
+    if (gameState.alveoles && gameState.alveoles.size > 0) {
+      for (const [level, unlocked] of gameState.alveoles.entries()) {
+        if (unlocked && ALVEOLE_CAPACITIES[level]) {
+          maxCapacity = Math.max(maxCapacity, ALVEOLE_CAPACITIES[level]);
+        }
+      }
+    }
+
+    // Apply offline production with capacity limit
+    const honeyWithProduction = gameState.honey + offlineHoney;
+
+    // If not already at max, add production
+    if (gameState.honey < maxCapacity) {
+      const newHoney = Math.min(honeyWithProduction, maxCapacity || honeyWithProduction);
+      const added = newHoney - gameState.honey;
+
+      gameState.honey = newHoney;
+
+      if (added > 0) {
+        console.log(
+          `🕒 Backend offline production: +${added.toFixed(2)} honey over ${secondsPassed}s (${(secondsPassed / 3600).toFixed(2)} hours) for user ${gameState.userId}`
+        );
+      }
+    } else if (secondsPassed > 60) {
+      // Log occasionally if at capacity
+      console.log(
+        `🕒 User at capacity, updating lastUpdated after ${secondsPassed}s for user ${gameState.userId}`
+      );
+    }
+
+    // Update lastUpdated to now (so next calculation starts from here)
+    gameState.lastUpdated = new Date();
+    await gameState.save();
+  }
 };
 
 // @route   GET /api/game/:userId
@@ -64,91 +161,7 @@ router.get("/:userId", async (req, res) => {
 
     // Calculate and apply offline production if lastUpdated exists
     if (gameState.lastUpdated) {
-      const lastUpdateTime = new Date(gameState.lastUpdated).getTime();
-      const now = new Date().getTime();
-      const secondsPassed = Math.floor((now - lastUpdateTime) / 1000);
-
-      if (secondsPassed > 0) {
-        // Calculate production rate from bees
-        let productionRate = 0;
-        
-        // Physical bees production rates (per hour) - Original rates restored
-        const BEE_PRODUCTION_RATES = {
-          baby: 416.67,
-          worker: 833.33,
-          elite: 2083.33,
-          royal: 4583.33,
-          queen: 8750.0,
-        };
-        
-        // Virtual bees production rates (per hour) - Original rates restored
-        const VIRTUAL_BEE_PRODUCTION_RATES = {
-          virtual1: 10,
-          virtual2: 20,
-          virtual3: 30,
-        };
-        
-        // Calculate from physical bees
-        if (gameState.bees && gameState.bees.size > 0) {
-          for (const [beeType, count] of gameState.bees.entries()) {
-            if (BEE_PRODUCTION_RATES[beeType]) {
-              productionRate += count * BEE_PRODUCTION_RATES[beeType];
-            }
-          }
-        }
-        
-        // Calculate from virtual bees
-        if (gameState.virtualBees && gameState.virtualBees.size > 0) {
-          for (const [beeType, count] of gameState.virtualBees.entries()) {
-            if (VIRTUAL_BEE_PRODUCTION_RATES[beeType]) {
-              productionRate += count * VIRTUAL_BEE_PRODUCTION_RATES[beeType];
-            }
-          }
-        }
-        
-        // Calculate offline honey earned
-        const offlineHoney = (productionRate / 3600) * secondsPassed;
-        
-        // Apply capacity limit
-        const ALVEOLE_CAPACITIES = {
-          1: 1000000,
-          2: 3000000,
-          3: 6000000,
-          4: 14000000,
-          5: 30000000,
-          6: 48000000,
-        };
-        
-        let maxCapacity = 0;
-        if (gameState.alveoles && gameState.alveoles.size > 0) {
-          for (const [level, unlocked] of gameState.alveoles.entries()) {
-            if (unlocked && ALVEOLE_CAPACITIES[level]) {
-              maxCapacity = Math.max(maxCapacity, ALVEOLE_CAPACITIES[level]);
-            }
-          }
-        }
-        
-        // Apply offline production with capacity limit
-        const honeyWithProduction = gameState.honey + offlineHoney;
-        gameState.honey = Math.min(honeyWithProduction, maxCapacity || honeyWithProduction);
-        
-        // Update lastUpdated to now (so next calculation starts from here)
-        gameState.lastUpdated = new Date();
-        
-        // Always save to update lastUpdated, even if at capacity (honey didn't increase)
-        // This ensures next offline calculation starts from the correct time
-        if (offlineHoney > 0) {
-          console.log(
-            `🕒 Backend offline production: +${offlineHoney.toFixed(2)} honey over ${secondsPassed}s (${(secondsPassed / 3600).toFixed(2)} hours) for user ${req.params.userId}`
-          );
-        } else if (secondsPassed > 0) {
-          // Even if at capacity, update lastUpdated to prevent calculating from old timestamp
-          console.log(
-            `🕒 User at capacity, updating lastUpdated after ${secondsPassed}s for user ${req.params.userId}`
-          );
-        }
-        await gameState.save();
-      }
+      await calculateOfflineProduction(gameState);
     }
 
     // Ensure virtualBees exists (migration for old accounts)
@@ -176,8 +189,7 @@ router.get("/:userId", async (req, res) => {
       );
       if (validReferrals.length !== gameState.referrals.length) {
         console.log(
-          `[SYNC] Removed ${
-            gameState.referrals.length - validReferrals.length
+          `[SYNC] Removed ${gameState.referrals.length - validReferrals.length
           } corrupted referrals for user ${user.email}`
         );
         gameState.referrals = validReferrals;
@@ -301,11 +313,11 @@ router.put("/:userId", async (req, res) => {
         bees: Object.fromEntries(gameState.bees),
         virtualBees: Object.fromEntries(
           gameState.virtualBees ||
-            new Map([
-              ["virtual1", 1],
-              ["virtual2", 0],
-              ["virtual3", 0],
-            ])
+          new Map([
+            ["virtual1", 1],
+            ["virtual2", 0],
+            ["virtual3", 0],
+          ])
         ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
@@ -404,11 +416,11 @@ router.post("/:userId/buy-bee", async (req, res) => {
         bees: Object.fromEntries(gameState.bees),
         virtualBees: Object.fromEntries(
           gameState.virtualBees ||
-            new Map([
-              ["virtual1", 1],
-              ["virtual2", 0],
-              ["virtual3", 0],
-            ])
+          new Map([
+            ["virtual1", 1],
+            ["virtual2", 0],
+            ["virtual3", 0],
+          ])
         ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
@@ -464,12 +476,15 @@ router.post("/:userId/sell-honey", async (req, res) => {
       });
     }
 
+    // Calculate and apply offline production FIRST (so user has max honey available)
+    await calculateOfflineProduction(gameState);
+
     // Check if user has enough honey - cap to available amount if trying to sell more
     let actualAmount = amount;
     if (gameState.honey < amount) {
       console.log(`⚠️  User trying to sell ${amount} but only has ${gameState.honey}. Capping to available amount.`);
       actualAmount = Math.floor(gameState.honey);
-      
+
       // Still need minimum 100 honey
       if (actualAmount < 100) {
         return res.status(400).json({
@@ -496,7 +511,7 @@ router.post("/:userId/sell-honey", async (req, res) => {
 
     res.json({
       success: true,
-      message: actualAmount < amount 
+      message: actualAmount < amount
         ? `Successfully sold ${actualAmount} honey (requested ${amount}, but only ${gameState.honey + actualAmount} available)`
         : `Successfully sold ${actualAmount} honey`,
       rewards: {
@@ -514,11 +529,11 @@ router.post("/:userId/sell-honey", async (req, res) => {
         bees: Object.fromEntries(gameState.bees),
         virtualBees: Object.fromEntries(
           gameState.virtualBees ||
-            new Map([
-              ["virtual1", 1],
-              ["virtual2", 0],
-              ["virtual3", 0],
-            ])
+          new Map([
+            ["virtual1", 1],
+            ["virtual2", 0],
+            ["virtual3", 0],
+          ])
         ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
@@ -624,11 +639,11 @@ router.post("/:userId/upgrade-alveole", async (req, res) => {
         bees: Object.fromEntries(gameState.bees),
         virtualBees: Object.fromEntries(
           gameState.virtualBees ||
-            new Map([
-              ["virtual1", 1],
-              ["virtual2", 0],
-              ["virtual3", 0],
-            ])
+          new Map([
+            ["virtual1", 1],
+            ["virtual2", 0],
+            ["virtual3", 0],
+          ])
         ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
@@ -877,11 +892,11 @@ router.post("/:userId/spin-roulette", async (req, res) => {
         bees: Object.fromEntries(gameState.bees),
         virtualBees: Object.fromEntries(
           gameState.virtualBees ||
-            new Map([
-              ["virtual1", 1],
-              ["virtual2", 0],
-              ["virtual3", 0],
-            ])
+          new Map([
+            ["virtual1", 1],
+            ["virtual2", 0],
+            ["virtual3", 0],
+          ])
         ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
@@ -989,11 +1004,11 @@ router.post("/:userId/claim-mission", async (req, res) => {
         bees: Object.fromEntries(gameState.bees),
         virtualBees: Object.fromEntries(
           gameState.virtualBees ||
-            new Map([
-              ["virtual1", 1],
-              ["virtual2", 0],
-              ["virtual3", 0],
-            ])
+          new Map([
+            ["virtual1", 1],
+            ["virtual2", 0],
+            ["virtual3", 0],
+          ])
         ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
@@ -1126,11 +1141,11 @@ router.post("/:userId/add-test-resources", async (req, res) => {
         bees: Object.fromEntries(gameState.bees),
         virtualBees: Object.fromEntries(
           gameState.virtualBees ||
-            new Map([
-              ["virtual1", 1],
-              ["virtual2", 0],
-              ["virtual3", 0],
-            ])
+          new Map([
+            ["virtual1", 1],
+            ["virtual2", 0],
+            ["virtual3", 0],
+          ])
         ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,
@@ -1456,11 +1471,11 @@ router.post("/:userId/purchase-flowers", async (req, res) => {
         bees: Object.fromEntries(gameState.bees),
         virtualBees: Object.fromEntries(
           gameState.virtualBees ||
-            new Map([
-              ["virtual1", 1],
-              ["virtual2", 0],
-              ["virtual3", 0],
-            ])
+          new Map([
+            ["virtual1", 1],
+            ["virtual2", 0],
+            ["virtual3", 0],
+          ])
         ),
         alveoles: Object.fromEntries(gameState.alveoles),
         invitedFriends: gameState.invitedFriends,

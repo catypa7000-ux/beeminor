@@ -99,126 +99,160 @@ export default function HomeScreen() {
       />
       <View style={[styles.webContainer, { backgroundColor: "transparent" }]}>
 
-          <View
-            style={[styles.sceneContainer, { paddingTop: isWeb ? 20 : 40 }]}
+        <View
+          style={[styles.sceneContainer, { paddingTop: isWeb ? 20 : 40 }]}
+        >
+          <TouchableOpacity
+            style={styles.infoButton}
+            onPress={() => setShowStats(true)}
           >
-            <TouchableOpacity
-              style={styles.infoButton}
-              onPress={() => setShowStats(true)}
-            >
-              <Text style={styles.infoButtonText}>🐝❓</Text>
-            </TouchableOpacity>
+            <Text style={styles.infoButtonText}>🐝❓</Text>
+          </TouchableOpacity>
 
-            <View style={styles.beesContainer}>
-              {beesAnimated.current.map((bee) => (
-                <Animated.View
-                  key={bee.id}
-                  style={[
-                    styles.bee,
-                    {
-                      transform: [{ translateX: bee.x }, { translateY: bee.y }],
-                    },
-                  ]}
-                >
-                  <Text style={styles.beeEmoji}>🐝</Text>
-                </Animated.View>
-              ))}
-            </View>
+          <View style={styles.beesContainer}>
+            {beesAnimated.current.map((bee) => (
+              <Animated.View
+                key={bee.id}
+                style={[
+                  styles.bee,
+                  {
+                    transform: [{ translateX: bee.x }, { translateY: bee.y }],
+                  },
+                ]}
+              >
+                <Text style={styles.beeEmoji}>🐝</Text>
+              </Animated.View>
+            ))}
           </View>
+        </View>
 
-          <LinearGradient
-            colors={["rgba(0,0,0,0)", "#fff9e6", "#fffaed"]}
-            style={[
-              styles.bottomGradient,
-              {
-                maxWidth: isWeb ? MAX_WEB_WIDTH : undefined,
-                width: "100%",
-                alignSelf: "center",
-              },
-            ]}
-          >
-            <View style={styles.honeyDisplayContainer}>
-              <View style={styles.honeyDisplay}>
-                <Text style={styles.honeyEmoji}>🍯</Text>
-                <Text style={styles.honeyAmount}>{formatNumber(honey)}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.sellButton}
-                onPress={async () => {
-                  if (honey < 100) {
+        <LinearGradient
+          colors={["rgba(0,0,0,0)", "#fff9e6", "#fffaed"]}
+          style={[
+            styles.bottomGradient,
+            {
+              maxWidth: isWeb ? MAX_WEB_WIDTH : undefined,
+              width: "100%",
+              alignSelf: "center",
+            },
+          ]}
+        >
+          <View style={styles.honeyDisplayContainer}>
+            <View style={styles.honeyDisplay}>
+              <Text style={styles.honeyEmoji}>🍯</Text>
+              <Text style={styles.honeyAmount}>{formatNumber(honey)}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.sellButton}
+              onPress={async () => {
+                if (honey < 100) {
+                  if (isWeb) {
                     window.alert("Error: You need at least 100 honey to sell!");
-                    return;
+                  } else {
+                    Alert.alert("Error", "You need at least 100 honey to sell!");
                   }
+                  return;
+                }
 
-                  // Cap the sell amount to available honey (safety check)
-                  const sellAmount = Math.floor(Math.min(honey, honey));
-                  const confirmed = window.confirm(
-                    `Sell ${sellAmount.toLocaleString()} honey for diamonds and flowers?`
-                  );
-                  if (confirmed) {
-                    const success = await sellHoney(sellAmount);
-                    if (success) {
+                // Cap the sell amount to available honey (safety check)
+                const sellAmount = Math.floor(Math.min(honey, honey));
+                const message = `Sell ${sellAmount.toLocaleString()} honey for diamonds and flowers?`;
+
+                const handleSell = async () => {
+                  const success = await sellHoney(sellAmount);
+                  if (success) {
+                    if (isWeb) {
                       window.alert("Success: Honey sold successfully!");
                     } else {
+                      Alert.alert("Success", "Honey sold successfully!");
+                    }
+                  } else {
+                    if (isWeb) {
                       window.alert("Error: Failed to sell honey");
+                    } else {
+                      Alert.alert("Error", "Failed to sell honey");
                     }
                   }
-                }}
+                };
+
+                if (isWeb) {
+                  const confirmed = window.confirm(message);
+                  if (confirmed) {
+                    await handleSell();
+                  }
+                } else {
+                  Alert.alert(
+                    "Sell Honey",
+                    message,
+                    [
+                      {
+                        text: "Cancel",
+                        style: "cancel",
+                      },
+                      {
+                        text: "OK",
+                        onPress: handleSell,
+                      },
+                    ],
+                    { cancelable: false }
+                  );
+                }
+              }}
+            >
+              <Text style={styles.sellButtonText}>{t.sellHoney}</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+
+        <Modal
+          visible={showStats}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowStats(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowStats(false)}
+          >
+            <View style={styles.statsModal}>
+              <Text style={styles.statsTitle}>{t.statistics}</Text>
+
+              <View style={styles.statCardModal}>
+                <Text style={styles.statLabelModal}>{t.totalProduction}</Text>
+                <Text style={styles.statValueModal}>
+                  {formatNumber(getTotalProduction())} 🍯/h
+                </Text>
+              </View>
+
+              <View style={styles.statCardModal}>
+                <Text style={styles.statLabelModal}>{t.totalBees}</Text>
+                <Text style={styles.statValueModal}>{getTotalBees()}</Text>
+              </View>
+
+              <View style={styles.statCardModal}>
+                <Text style={styles.statLabelModal}>{t.honeyPerSec}</Text>
+                <Text style={styles.statValueModal}>
+                  {formatNumber(getTotalProduction() / 3600)} 🍯/s
+                </Text>
+              </View>
+
+              <View style={styles.statCardModal}>
+                <Text style={styles.statLabelModal}>{t.maxCapacity}</Text>
+                <Text style={styles.statValueModal}>
+                  {formatNumber(getMaxCapacity())} 🍯
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowStats(false)}
               >
-                <Text style={styles.sellButtonText}>{t.sellHoney}</Text>
+                <Text style={styles.closeButtonText}>{t.close}</Text>
               </TouchableOpacity>
             </View>
-          </LinearGradient>
-
-          <Modal
-            visible={showStats}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowStats(false)}
-          >
-            <TouchableOpacity
-              style={styles.modalOverlay}
-              activeOpacity={1}
-              onPress={() => setShowStats(false)}
-            >
-              <View style={styles.statsModal}>
-                <Text style={styles.statsTitle}>{t.statistics}</Text>
-
-                <View style={styles.statCardModal}>
-                  <Text style={styles.statLabelModal}>{t.totalProduction}</Text>
-                  <Text style={styles.statValueModal}>
-                    {formatNumber(getTotalProduction())} 🍯/h
-                  </Text>
-                </View>
-
-                <View style={styles.statCardModal}>
-                  <Text style={styles.statLabelModal}>{t.totalBees}</Text>
-                  <Text style={styles.statValueModal}>{getTotalBees()}</Text>
-                </View>
-
-                <View style={styles.statCardModal}>
-                  <Text style={styles.statLabelModal}>{t.honeyPerSec}</Text>
-                  <Text style={styles.statValueModal}>
-                    {formatNumber(getTotalProduction() / 3600)} 🍯/s
-                  </Text>
-                </View>
-
-                <View style={styles.statCardModal}>
-                  <Text style={styles.statLabelModal}>{t.maxCapacity}</Text>
-                  <Text style={styles.statValueModal}>
-                    {formatNumber(getMaxCapacity())} 🍯
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setShowStats(false)}
-                >
-                  <Text style={styles.closeButtonText}>{t.close}</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </Modal>
+          </TouchableOpacity>
+        </Modal>
       </View>
     </View>
   );
