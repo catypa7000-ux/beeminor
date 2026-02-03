@@ -19,18 +19,28 @@ export default function CompteScreen() {
     filleuls: referrals.length,
   };
 
-  const handleLogout = () => {
-    const confirmLogout = () => {
-      // Perform logout
-      // setUserId(null); // Context update handled by useAuth
-      AsyncStorage.removeItem("USER_ID_KEY"); // Clear storage
+  const handleLogout = async () => {
+    const confirmLogout = async () => {
+      try {
+        // Call the logout function from AuthContext
+        await logout();
+        // Clear storage
+        await AsyncStorage.removeItem("USER_ID_KEY");
 
-      if (Platform.OS === 'web') {
-        window.alert("Logged out successfully!");
-      } else {
-        Alert.alert("Succès", "Déconnexion réussie !");
+        if (Platform.OS === 'web') {
+          window.alert("Logged out successfully!");
+        } else {
+          Alert.alert("Succès", "Déconnexion réussie !");
+        }
+        router.replace("/auth");
+      } catch (error) {
+        console.error("Logout error:", error);
+        if (Platform.OS === 'web') {
+          window.alert("Error during logout");
+        } else {
+          Alert.alert("Erreur", "Une erreur est survenue lors de la déconnexion");
+        }
       }
-      router.replace("/auth");
     };
 
     if (Platform.OS === 'web') {
