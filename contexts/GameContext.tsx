@@ -19,7 +19,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "baby",
     name: "Baby Bee",
     nameFr: "Abeille 1",
-    honeyPerHour: 416.67, // Original rate restored
+    honeyPerHour: 0.01 / 24, // 0.01 USDT/day
     cost: 24990,
     emoji: "🐝",
     imageUrl:
@@ -29,7 +29,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "worker",
     name: "Worker Bee",
     nameFr: "Abeille 2",
-    honeyPerHour: 833.33, // Original rate restored
+    honeyPerHour: 0.02 / 24, // 0.02 USDT/day
     cost: 49990,
     emoji: "🐝",
   },
@@ -37,7 +37,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "elite",
     name: "Elite Bee",
     nameFr: "Abeille 3",
-    honeyPerHour: 2083.33, // Original rate restored
+    honeyPerHour: 0.05 / 24, // 0.05 USDT/day
     cost: 99990,
     emoji: "🐝",
     imageUrl:
@@ -47,7 +47,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "royal",
     name: "Royal Bee",
     nameFr: "Abeille 4",
-    honeyPerHour: 4583.33, // Original rate restored
+    honeyPerHour: 0.11 / 24, // 0.11 USDT/day
     cost: 199000,
     emoji: "🐝",
     imageUrl:
@@ -57,7 +57,7 @@ export const BEE_TYPES: BeeType[] = [
     id: "queen",
     name: "Queen Bee",
     nameFr: "Abeille 5",
-    honeyPerHour: 8750.0, // Original rate restored
+    honeyPerHour: 0.25 / 24, // 0.25 USDT/day
     cost: 389000,
     emoji: "🐝",
     imageUrl:
@@ -65,12 +65,13 @@ export const BEE_TYPES: BeeType[] = [
   },
 ];
 
+// Virtual bees: USDT/day
 export const VIRTUAL_BEE_TYPES: BeeType[] = [
   {
     id: "virtual1",
     name: "Virtual Bee 1",
     nameFr: "Abeille Virtuelle 1",
-    honeyPerHour: 10, // Original rate restored
+    honeyPerHour: 0.0005 / 24, // 0.0005 USDT/day
     cost: 0,
     emoji: "🐝",
   },
@@ -78,7 +79,7 @@ export const VIRTUAL_BEE_TYPES: BeeType[] = [
     id: "virtual2",
     name: "Virtual Bee 2",
     nameFr: "Abeille Virtuelle 2",
-    honeyPerHour: 20, // Original rate restored
+    honeyPerHour: 0.001 / 24, // 0.001 USDT/day
     cost: 0,
     emoji: "🐝",
   },
@@ -86,7 +87,7 @@ export const VIRTUAL_BEE_TYPES: BeeType[] = [
     id: "virtual3",
     name: "Virtual Bee 3",
     nameFr: "Abeille Virtuelle 3",
-    honeyPerHour: 30, // Original rate restored
+    honeyPerHour: 0.003 / 24, // 0.003 USDT/day
     cost: 0,
     emoji: "🐝",
   },
@@ -1424,22 +1425,22 @@ export const [GameProvider, useGame] = createContextHook(() => {
       const currentHoney = honeyRef.current;
 
       // Basic validation based on LATEST known value
-      if (currentHoney < 100) return false;
+      if (currentHoney < 1) return false;
 
       // 2. Calculate actual sellable amount locally
       // We process the sell LOCALLY immediately to prevent double-clicks
       const actualAmount = Math.min(amount, Math.floor(currentHoney));
 
-      if (actualAmount < 100) {
-        console.warn(`Cannot sell: only ${currentHoney} honey available, need at least 100`);
+      if (actualAmount < 1) {
+        console.warn(`Cannot sell: only ${currentHoney} miel available, need at least 1`);
         return false;
       }
 
       // 3. Optimistic Update - Apply changes immediately to UI
-      // 100 miel = 1 diamant + 0.10 fleurs + 0.5 BVR
-      const diamondsEarned = Math.floor(actualAmount / 100);
-      const flowersEarned = diamondsEarned * 0.1;
-      const bvrEarned = diamondsEarned * 0.5;
+      // 1 miel (USDT) = 1 diamant
+      const diamondsEarned = Math.floor(actualAmount);
+      const flowersEarned = 0;
+      const bvrEarned = 0;
 
       // Backup state in case we need to revert
       const previousState = {

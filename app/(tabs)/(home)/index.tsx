@@ -140,23 +140,23 @@ export default function HomeScreen() {
           <View style={styles.honeyDisplayContainer}>
             <View style={styles.honeyDisplay}>
               <Text style={styles.honeyEmoji}>🍯</Text>
-              <Text style={styles.honeyAmount}>{formatNumber(honey)}</Text>
+              <Text style={styles.honeyAmount}>{formatNumber(honey)} USDT</Text>
             </View>
             <TouchableOpacity
               style={styles.sellButton}
               onPress={async () => {
-                if (honey < 100) {
+                if (honey < 1) {
                   if (isWeb) {
-                    window.alert("Error: You need at least 100 honey to sell!");
+                    window.alert("Error: You need at least 1 miel (USDT) to sell!");
                   } else {
-                    Alert.alert("Error", "You need at least 100 honey to sell!");
+                    Alert.alert("Error", "You need at least 1 miel (USDT) to sell!");
                   }
                   return;
                 }
 
                 // Cap the sell amount to available honey (safety check)
                 const sellAmount = Math.floor(Math.min(honey, honey));
-                const message = `Sell ${sellAmount.toLocaleString()} honey for diamonds and flowers?`;
+                const message = `Vendre ${sellAmount.toLocaleString()} miel (USDT) pour ${sellAmount.toLocaleString()} diamants ? (1 miel = 1 diamant)`;
 
                 const handleSell = async () => {
                   const success = await sellHoney(sellAmount);

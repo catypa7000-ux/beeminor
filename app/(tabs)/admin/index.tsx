@@ -15,6 +15,7 @@ import { useAdmin } from '../../../contexts/AdminContext';
 import { useGame, BEE_TYPES } from '../../../contexts/GameContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import * as Clipboard from 'expo-clipboard';
 import { Shield, LogOut, Database, Settings, TrendingUp, Receipt, Mail } from 'lucide-react-native';
 import type { SupportMessage } from '../../../contexts/AdminContext';
 
@@ -898,14 +899,21 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
               <Text style={styles.transactionValue}>{txn.network}</Text>
             </View>
 
-            {txn.type !== 'deposit_crypto' && (
-              <View style={styles.transactionDetail}>
-                <Text style={styles.transactionLabel}>Adresse:</Text>
-                <Text style={styles.transactionValueSmall} numberOfLines={1}>
-                  {txn.walletAddress}
-                </Text>
-              </View>
-            )}
+            {txn.type !== 'deposit_crypto' && (() => {
+              const addr = txn.walletAddress || txn.address || txn.cryptoAddress || '';
+              return addr ? (
+                <View style={styles.transactionDetailColumn}>
+                  <Text style={styles.transactionLabel}>Adresse:</Text>
+                  <Text style={styles.transactionAddressFull} selectable>{addr}</Text>
+                  <TouchableOpacity
+                    style={styles.copyAddressButton}
+                    onPress={() => Clipboard.setStringAsync(addr).then(() => Alert.alert('Copié', 'Adresse copiée dans le presse-papier'))}
+                  >
+                    <Text style={styles.copyAddressButtonText}>📋 Copier l&apos;adresse</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null;
+            })()}
 
             <View style={styles.transactionDetail}>
               <Text style={styles.transactionLabel}>Date:</Text>
@@ -971,14 +979,21 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
               </Text>
             </View>
 
-            {txn.address && (
-              <View style={styles.transactionDetail}>
-                <Text style={styles.transactionLabel}>Adresse:</Text>
-                <Text style={styles.transactionValueSmall} numberOfLines={1}>
-                  {txn.address}
-                </Text>
-              </View>
-            )}
+            {(() => {
+              const addr = txn.walletAddress || txn.address || txn.cryptoAddress || '';
+              return addr ? (
+                <View style={styles.transactionDetailColumn}>
+                  <Text style={styles.transactionLabel}>Adresse:</Text>
+                  <Text style={styles.transactionAddressFull} selectable>{addr}</Text>
+                  <TouchableOpacity
+                    style={styles.copyAddressButton}
+                    onPress={() => Clipboard.setStringAsync(addr).then(() => Alert.alert('Copié', 'Adresse copiée dans le presse-papier'))}
+                  >
+                    <Text style={styles.copyAddressButtonText}>📋 Copier l&apos;adresse</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null;
+            })()}
 
             <View style={styles.transactionDetail}>
               <Text style={styles.transactionLabel}>Date création:</Text>
@@ -1906,6 +1921,28 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     flex: 2,
     textAlign: 'right',
+  },
+  transactionDetailColumn: {
+    marginBottom: 12,
+  },
+  transactionAddressFull: {
+    fontSize: 11,
+    color: '#8B4513',
+    marginTop: 4,
+    marginBottom: 6,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  copyAddressButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#8B4513',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  copyAddressButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600' as const,
   },
   transactionActions: {
     flexDirection: 'row',

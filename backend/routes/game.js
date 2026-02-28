@@ -23,7 +23,6 @@ const createDefaultGameState = (userId) => {
       ["virtual1", 1],
       ["virtual2", 0],
       ["virtual3", 0],
-      ["virtual3", 0],
     ]),
     alveoles: new Map([
       ["1", true],
@@ -56,20 +55,20 @@ const calculateOfflineProduction = async (gameState) => {
     // Calculate production rate from bees
     let productionRate = 0;
 
-    // Physical bees production rates (per hour) - Original rates restored
+    // Physical bees production rates: USDT per hour (from USD/day: Bee1 0.01, Bee2 0.02, Bee3 0.05, Bee4 0.11, Bee5 0.25)
     const BEE_PRODUCTION_RATES = {
-      baby: 416.67,
-      worker: 833.33,
-      elite: 2083.33,
-      royal: 4583.33,
-      queen: 8750.0,
+      baby: 0.01 / 24,
+      worker: 0.02 / 24,
+      elite: 0.05 / 24,
+      royal: 0.11 / 24,
+      queen: 0.25 / 24,
     };
 
-    // Virtual bees production rates (per hour) - Original rates restored
+    // Virtual bees: USDT/day (virtual1 0.0005, virtual2 0.001, virtual3 0.003)
     const VIRTUAL_BEE_PRODUCTION_RATES = {
-      virtual1: 10,
-      virtual2: 20,
-      virtual3: 30,
+      virtual1: 0.0005 / 24,
+      virtual2: 0.001 / 24,
+      virtual3: 0.003 / 24,
     };
 
     // Calculate from physical bees
@@ -124,7 +123,7 @@ const calculateOfflineProduction = async (gameState) => {
 
       if (added > 0) {
         console.log(
-          `🕒 Backend offline production: +${added.toFixed(2)} honey over ${secondsPassed}s (${(secondsPassed / 3600).toFixed(2)} hours) for user ${gameState.userId}`
+          `🕒 Backend offline production: +${added.toFixed(4)} miel (USDT) over ${secondsPassed}s (${(secondsPassed / 3600).toFixed(2)} hours) for user ${gameState.userId}`
         );
       }
     } else if (secondsPassed > 60) {
@@ -458,12 +457,12 @@ router.post("/:userId/sell-honey", async (req, res) => {
       });
     }
 
-    // Minimum honey requirement
-    const MIN_HONEY = 100;
+    // Minimum honey requirement (1 miel = 1 diamant)
+    const MIN_HONEY = 1;
     if (amount < MIN_HONEY) {
       return res.status(400).json({
         success: false,
-        message: `Minimum ${MIN_HONEY} honey required to sell`,
+        message: `Minimum ${MIN_HONEY} miel required to sell`,
       });
     }
 
@@ -485,19 +484,19 @@ router.post("/:userId/sell-honey", async (req, res) => {
       console.log(`⚠️  User trying to sell ${amount} but only has ${gameState.honey}. Capping to available amount.`);
       actualAmount = Math.floor(gameState.honey);
 
-      // Still need minimum 100 honey
-      if (actualAmount < 100) {
+      // Still need minimum 1 miel
+      if (actualAmount < 1) {
         return res.status(400).json({
           success: false,
-          message: `Not enough honey. Have ${gameState.honey}, minimum ${MIN_HONEY} required to sell`,
+          message: `Not enough miel. Have ${gameState.honey}, minimum ${MIN_HONEY} required to sell`,
         });
       }
     }
 
-    // Calculate rewards (100 honey = 1 diamond + 0.10 flower + 0.5 BVR)
-    const diamondsEarned = Math.floor(actualAmount / 100);
-    const flowersEarned = diamondsEarned * 0.1;
-    const bvrEarned = diamondsEarned * 0.5;
+    // 1 miel (USDT) = 1 diamond
+    const diamondsEarned = Math.floor(actualAmount);
+    const flowersEarned = 0;
+    const bvrEarned = 0;
 
     // Update game state
     gameState.honey -= actualAmount;
@@ -512,8 +511,8 @@ router.post("/:userId/sell-honey", async (req, res) => {
     res.json({
       success: true,
       message: actualAmount < amount
-        ? `Successfully sold ${actualAmount} honey (requested ${amount}, but only ${gameState.honey + actualAmount} available)`
-        : `Successfully sold ${actualAmount} honey`,
+        ? `Successfully sold ${actualAmount} miel (USDT) (requested ${amount}, but only ${gameState.honey + actualAmount} available)`
+        : `Successfully sold ${actualAmount} miel (USDT)`,
       rewards: {
         diamonds: diamondsEarned,
         flowers: flowersEarned,
