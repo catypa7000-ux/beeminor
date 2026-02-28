@@ -80,12 +80,14 @@ export default function AlveoleScreen() {
       return;
     }
 
-    // 1 miel = 1 diamant
+    // 1 miel = 1 diamant + 0.001 fleurs + 0.005 BVR par miel
     const diamondsEarned = Math.floor(amount);
+    const flowersEarned = amount * 0.001;
+    const bvrEarned = amount * 0.005;
 
     const confirmMsg = `${t.sellHoney} ${formatNumber(amount)} ${t.honey.toLowerCase()} (USDT) (${
       percentage * 100
-    }%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n\nConfirmer?`;
+    }%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n🌸 ${flowersEarned.toFixed(2)} ${t.flowers.toLowerCase()}\n🐝 ${bvrEarned.toFixed(2)} BVR\n\nConfirmer?`;
 
     if (Platform.OS === 'web') {
       if (window.confirm(confirmMsg)) {

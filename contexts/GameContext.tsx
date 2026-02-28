@@ -1437,10 +1437,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
       }
 
       // 3. Optimistic Update - Apply changes immediately to UI
-      // 1 miel (USDT) = 1 diamant
+      // 1 miel (USDT) = 1 diamant + bonus flowers + BVR (per miel: 0.001 fleurs, 0.005 BVR)
       const diamondsEarned = Math.floor(actualAmount);
-      const flowersEarned = 0;
-      const bvrEarned = 0;
+      const flowersEarned = actualAmount * 0.001;
+      const bvrEarned = actualAmount * 0.005;
 
       // Backup state in case we need to revert
       const previousState = {

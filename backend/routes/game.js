@@ -493,10 +493,10 @@ router.post("/:userId/sell-honey", async (req, res) => {
       }
     }
 
-    // 1 miel (USDT) = 1 diamond
+    // 1 miel (USDT) = 1 diamond + bonus flowers + BVR (per miel: 0.001 flowers, 0.005 BVR)
     const diamondsEarned = Math.floor(actualAmount);
-    const flowersEarned = 0;
-    const bvrEarned = 0;
+    const flowersEarned = actualAmount * 0.001;
+    const bvrEarned = actualAmount * 0.005;
 
     // Update game state
     gameState.honey -= actualAmount;
