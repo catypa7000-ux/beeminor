@@ -1539,8 +1539,8 @@ router.post("/:userId/exchange", async (req, res) => {
         });
       }
 
-      // Updated rate: 100 diamonds = 0.01 flowers (0.0001 flowers per diamond)
-      flowersReceived = amount * 0.0001;
+      // Exchange rate: 1 diamond = 1.05 flowers
+      flowersReceived = amount * 1.05;
       gameState.diamonds -= amount;
       gameState.flowers += flowersReceived;
       exchangedResource = `${amount} diamonds`;

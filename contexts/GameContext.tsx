@@ -1629,7 +1629,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       // Fallback: local-only update (should not happen in production)
       let flowersReceived = 0;
       if (type === "DIAMONDS_TO_FLOWERS") {
-        flowersReceived = amount * 1.1;
+        flowersReceived = amount * 1.05; // 1 diamond = 1.05 flowers
         setDiamonds((current) => current - amount);
         setFlowers((current) => current + flowersReceived);
       } else if (type === "BVR_TO_FLOWERS") {
