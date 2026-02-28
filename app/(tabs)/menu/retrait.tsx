@@ -27,18 +27,19 @@ const NETWORKS: NetworkOption[] = [
     id: "TON",
     name: "TON (The Open Network)",
     color: "#0088CC",
-    minWithdraw: 20000,
+    minWithdraw: 2,
   },
-  { id: "SOL", name: "Solana", color: "#14F195", minWithdraw: 20000 },
+  { id: "SOL", name: "Solana", color: "#14F195", minWithdraw: 2 },
   {
     id: "BNB",
     name: "Binance Smart Chain",
     color: "#F3BA2F",
-    minWithdraw: 20000,
+    minWithdraw: 2,
   },
 ];
 
-const DIAMOND_TO_USD = 0.1 / 1000;
+// 1 diamond = $1
+const DIAMOND_TO_USD = 1;
 
 export default function RetraitScreen() {
   const game = useGame();
@@ -448,7 +449,7 @@ export default function RetraitScreen() {
           </View>
           <Text style={styles.inputHint}>
             {withdrawType === "diamonds"
-              ? "10000 diamants = 1$ (1000 fleurs) • Min: 20000 diamants (2$)"
+              ? "1 diamant = 1$ • Min: 2 diamants (2$)"
               : "Retrait BVR sur Solana uniquement"}
           </Text>
         </View>
@@ -507,8 +508,8 @@ export default function RetraitScreen() {
           <Text style={styles.infoTitle}>ℹ️ Informations importantes</Text>
           {withdrawType === "diamonds" ? (
             <Text style={styles.infoText}>
-              • Taux de conversion: 10000 diamants = 1${"\n"}• Minimum de
-              retrait: 20000 diamants (2$){"\n"}• Frais: 1$ fixe pour les
+              • Taux de conversion: 1 diamant = 1${"\n"}• Minimum de
+              retrait: 2 diamants (2$){"\n"}• Frais: 1$ fixe pour les
               retraits {"<"} 10${"\n"}• Frais: 10% pour les retraits ≥ 10${"\n"}
               • Réseaux disponibles: TON, Solana, BSC{"\n"}• Délai de
               traitement: 24-48 heures{"\n"}• Vérifiez bien votre adresse avant

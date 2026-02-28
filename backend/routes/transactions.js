@@ -65,6 +65,15 @@ router.post('/withdraw', async (req, res) => {
 
     // Determine what to deduct based on transaction type and currency
     if (type === 'withdrawal_diamond' || currency === 'Diamond' || currency === 'DIAMOND') {
+      // Min withdrawal: 2 diamonds ($2) — 1 diamond = $1
+      const MIN_DIAMOND_WITHDRAWAL = 2;
+      if (amount < MIN_DIAMOND_WITHDRAWAL) {
+        return res.status(400).json({
+          success: false,
+          message: `Minimum withdrawal is ${MIN_DIAMOND_WITHDRAWAL} diamonds ($2)`,
+          minimum: MIN_DIAMOND_WITHDRAWAL
+        });
+      }
       // For diamond withdrawals, deduct diamonds
       if (gameState.diamonds < amount) {
         return res.status(400).json({
