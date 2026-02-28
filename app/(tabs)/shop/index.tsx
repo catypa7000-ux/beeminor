@@ -235,7 +235,7 @@ export default function ShopScreen() {
                       </View>
                     </View>
                     <Text style={styles.beeProduction}>
-                      +{beeType.honeyPerHour} miel/h
+                      +{(beeType.honeyPerHour * 24).toFixed(2)} USDT/j
                     </Text>
                   </View>
                 </View>
@@ -270,7 +270,7 @@ export default function ShopScreen() {
                   <View style={styles.beeTitleContainer}>
                     <Text style={styles.beeName}>{beeType.nameFr}</Text>
                     <Text style={styles.beeProduction}>
-                      +{formatNumber(beeType.honeyPerHour)} miel/h
+                      +{(beeType.honeyPerHour * 24).toFixed(2)} USDT/j
                     </Text>
                   </View>
                 </View>

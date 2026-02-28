@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -57,45 +58,40 @@ export default function AlveoleScreen() {
           if (Platform.OS === 'web') {
             window.alert(`${t.sold}\n\n${t.transactionSuccess}`);
           } else {
-            const { Alert } = require('react-native');
             Alert.alert(t.sold, t.transactionSuccess);
           }
         } else {
           if (Platform.OS === 'web') {
             window.alert(`${t.error}\n\n${t.transactionFailed}`);
           } else {
-            const { Alert } = require('react-native');
             Alert.alert(t.error, t.transactionFailed);
           }
         }
       });
     };
 
-    if (amount < 100) {
-      const msg = `${t.insufficientHoney}\n\nVous avez besoin d'au moins 100 miel pour vendre.`;
+    if (amount < 1) {
+      const msg = `${t.insufficientHoney}\n\nVous avez besoin d'au moins 1 miel (USDT) pour vendre.`;
       if (Platform.OS === 'web') {
         window.alert(msg);
       } else {
-        const { Alert } = require('react-native');
-        Alert.alert(t.insufficientHoney, "Vous avez besoin d'au moins 100 miel pour vendre.");
+        Alert.alert(t.insufficientHoney, "Vous avez besoin d'au moins 1 miel (USDT) pour vendre.");
       }
       return;
     }
 
-    const diamondsEarned = Math.floor(amount / 100);
-    const flowersEarned = Math.floor((amount / 100) * 0.01 * 100) / 100;
-    const bvrEarned = Math.floor((amount / 100) * 0.5 * 100) / 100;
+    // 1 miel = 1 diamant
+    const diamondsEarned = Math.floor(amount);
 
-    const confirmMsg = `${t.sellHoney} ${formatNumber(amount)} ${t.honey.toLowerCase()} (${
+    const confirmMsg = `${t.sellHoney} ${formatNumber(amount)} ${t.honey.toLowerCase()} (USDT) (${
       percentage * 100
-    }%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n🌸 ${flowersEarned} ${t.flowers.toLowerCase()}\n🐝 ${bvrEarned} BVR\n\nConfirmer?`;
+    }%) pour:\n\n💎 ${diamondsEarned} ${t.diamonds.toLowerCase()}\n\nConfirmer?`;
 
     if (Platform.OS === 'web') {
       if (window.confirm(confirmMsg)) {
         performSell();
       }
     } else {
-      const { Alert } = require('react-native');
       Alert.alert(
         "Confirmation",
         confirmMsg,

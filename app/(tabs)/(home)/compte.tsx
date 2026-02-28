@@ -139,7 +139,7 @@ export default function CompteScreen() {
             <View style={styles.resourceCard}>
               <Text style={styles.resourceEmoji}>🍯</Text>
               <View style={styles.resourceInfo}>
-                <Text style={styles.resourceLabel}>Miel</Text>
+                <Text style={styles.resourceLabel}>Miel (USDT)</Text>
                 <Text style={styles.resourceAmount}>{formatNumber(honey)}</Text>
               </View>
             </View>
