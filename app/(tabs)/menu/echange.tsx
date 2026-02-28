@@ -24,9 +24,11 @@ export default function EchangeScreen() {
   const [exchangeAmount, setExchangeAmount] = useState<string>("");
   const insets = useSafeAreaInsets();
 
+  // 1 diamond = 1.05 flowers (exchange only)
+  const DIAMOND_TO_FLOWER_RATE = 1.05;
   const calculateReceived = (type: ExchangeType, amount: number): number => {
     if (type === "DIAMONDS_TO_FLOWERS") {
-      return amount * 0.0001;
+      return amount * DIAMOND_TO_FLOWER_RATE;
     } else if (type === "BVR_TO_FLOWERS") {
       return amount / 10000; // 100 BVR = 0.01 flower
     }
