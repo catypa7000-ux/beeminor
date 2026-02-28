@@ -94,6 +94,10 @@ export default function ShopScreen() {
     return num.toFixed(0);
   };
 
+  // Show enough decimals for small USDT/day (e.g. virtual bees 0.0005, 0.001, 0.003)
+  const formatUsdtPerDay = (usdtPerDay: number) =>
+    usdtPerDay < 0.01 ? usdtPerDay.toFixed(4) : usdtPerDay.toFixed(2);
+
   return (
     <View style={styles.background}>
       <ScrollView
@@ -235,7 +239,7 @@ export default function ShopScreen() {
                       </View>
                     </View>
                     <Text style={styles.beeProduction}>
-                      +{(beeType.honeyPerHour * 24).toFixed(2)} USDT/j
+                      +{formatUsdtPerDay(beeType.honeyPerHour * 24)} USDT/j
                     </Text>
                   </View>
                 </View>
@@ -270,7 +274,7 @@ export default function ShopScreen() {
                   <View style={styles.beeTitleContainer}>
                     <Text style={styles.beeName}>{beeType.nameFr}</Text>
                     <Text style={styles.beeProduction}>
-                      +{(beeType.honeyPerHour * 24).toFixed(2)} USDT/j
+                      +{formatUsdtPerDay(beeType.honeyPerHour * 24)} USDT/j
                     </Text>
                   </View>
                 </View>
