@@ -22,24 +22,25 @@ type NetworkOption = {
   minWithdraw: number;
 };
 
+// Withdrawal only: 1 diamond = 1 USDT, min 2 diamonds (do not use elsewhere — other prices/cells unchanged)
+const DIAMOND_TO_USD = 1;
+const MIN_DIAMONDS_WITHDRAWAL = 2;
+
 const NETWORKS: NetworkOption[] = [
   {
     id: "TON",
     name: "TON (The Open Network)",
     color: "#0088CC",
-    minWithdraw: 2,
+    minWithdraw: MIN_DIAMONDS_WITHDRAWAL,
   },
-  { id: "SOL", name: "Solana", color: "#14F195", minWithdraw: 2 },
+  { id: "SOL", name: "Solana", color: "#14F195", minWithdraw: MIN_DIAMONDS_WITHDRAWAL },
   {
     id: "BNB",
     name: "Binance Smart Chain",
     color: "#F3BA2F",
-    minWithdraw: 2,
+    minWithdraw: MIN_DIAMONDS_WITHDRAWAL,
   },
 ];
-
-// 1 diamond = $1
-const DIAMOND_TO_USD = 1;
 
 export default function RetraitScreen() {
   const game = useGame();
