@@ -337,7 +337,7 @@ const translations: Record<Language, Translations> = {
     history: "Historique",
     sellHoney: "Vendre du miel",
     honeyExchange: "Échange de miel",
-    honeyExchangeRate: "1 miel (USDT) = 1 💎 diamant",
+    honeyExchangeRate: "1 miel = 1 💎 diamant + 0.001 🌸 fleurs + 0.005 🐝 BVR",
     quickSell: "Vente rapide",
     sellAllHoney: "Vendre tout le miel",
     alveoleLevels: "Niveaux d'Alvéoles",
@@ -558,7 +558,7 @@ const translations: Record<Language, Translations> = {
     sellHoney: "Sell Honey",
     honeyExchange: "Honey Exchange",
     honeyExchangeRate:
-      "1 miel (USDT) = 1 💎 diamond",
+      "1 miel = 1 💎 diamond + 0.001 🌸 flowers + 0.005 🐝 BVR",
     quickSell: "Quick Sell",
     sellAllHoney: "Sell All Honey",
     alveoleLevels: "Alveole Levels",

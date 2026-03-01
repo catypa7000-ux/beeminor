@@ -156,15 +156,21 @@ export default function HomeScreen() {
 
                 // Cap the sell amount to available honey (safety check)
                 const sellAmount = Math.floor(Math.min(honey, honey));
-                const message = `Vendre ${sellAmount.toLocaleString()} miel (USDT) pour ${sellAmount.toLocaleString()} diamants ? (1 miel = 1 diamant)`;
+                const diamondsPreview = sellAmount;
+                const flowersPreview = (sellAmount * 0.001).toFixed(2);
+                const bvrPreview = (sellAmount * 0.005).toFixed(2);
+                const message = `Vendre ${sellAmount.toLocaleString()} miel (USDT) pour:\n💎 ${diamondsPreview.toLocaleString()} diamants\n🌸 ${flowersPreview} fleurs\n🐝 ${bvrPreview} BVR\n\nConfirmer ?`;
 
                 const handleSell = async () => {
                   const success = await sellHoney(sellAmount);
                   if (success) {
+                    const flowersGot = (sellAmount * 0.001).toFixed(2);
+                    const bvrGot = (sellAmount * 0.005).toFixed(2);
+                    const successMsg = `Vendu ! Vous avez reçu ${sellAmount.toLocaleString()} 💎 diamants, ${flowersGot} 🌸 fleurs et ${bvrGot} 🐝 BVR.`;
                     if (isWeb) {
-                      window.alert("Success: Honey sold successfully!");
+                      window.alert(successMsg);
                     } else {
-                      Alert.alert("Success", "Honey sold successfully!");
+                      Alert.alert("Succès", successMsg);
                     }
                   } else {
                     if (isWeb) {
