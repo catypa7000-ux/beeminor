@@ -498,11 +498,11 @@ router.post("/:userId/sell-honey", async (req, res) => {
     const flowersEarned = actualAmount * 0.001;
     const bvrEarned = actualAmount * 0.005;
 
-    // Update game state
+    // Update game state (ensure bvrCoins exists for older saves)
     gameState.honey -= actualAmount;
     gameState.diamonds += diamondsEarned;
     gameState.flowers += flowersEarned;
-    gameState.bvrCoins += bvrEarned;
+    gameState.bvrCoins = (gameState.bvrCoins ?? 0) + bvrEarned;
     gameState.diamondsThisYear += diamondsEarned;
     gameState.lastUpdated = new Date();
 
