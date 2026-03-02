@@ -10,7 +10,7 @@ const gameStateSchema = new mongoose.Schema({
   },
   honey: {
     type: Number,
-    default: 100
+    default: 0
   },
   flowers: {
     type: Number,

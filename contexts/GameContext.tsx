@@ -175,7 +175,7 @@ const STORAGE_KEY = "bee_game_state";
 const USER_ID_KEY = "current_user_id";
 
 export const [GameProvider, useGame] = createContextHook(() => {
-  const [honey, setHoney] = useState<number>(100);
+  const [honey, setHoney] = useState<number>(0);
   const [flowers, setFlowers] = useState<number>(0);
   const [diamonds, setDiamonds] = useState<number>(0);
   const [tickets, setTickets] = useState<number>(0);
