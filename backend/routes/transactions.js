@@ -271,7 +271,7 @@ router.put('/:id/status', async (req, res) => {
         
         gameState = new GameState({
           userId: transaction.userId,
-          honey: 100,
+          honey: 0,
           flowers: 0,
           diamonds: 0,
           tickets: 0,
