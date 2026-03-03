@@ -65,13 +65,13 @@ export const BEE_TYPES: BeeType[] = [
   },
 ];
 
-// Virtual bees: USDT/day
+// Virtual bees: USDT/day (1: 0.0001, 2: 0.0005, 3: 0.0010)
 export const VIRTUAL_BEE_TYPES: BeeType[] = [
   {
     id: "virtual1",
     name: "Virtual Bee 1",
     nameFr: "Abeille Virtuelle 1",
-    honeyPerHour: 0.0001 / 24, // 0.0001 USDT/day (reduced to discourage multi-accounting)
+    honeyPerHour: 0.0001 / 24,
     cost: 0,
     emoji: "🐝",
   },
@@ -79,7 +79,7 @@ export const VIRTUAL_BEE_TYPES: BeeType[] = [
     id: "virtual2",
     name: "Virtual Bee 2",
     nameFr: "Abeille Virtuelle 2",
-    honeyPerHour: 0.001 / 24, // 0.001 USDT/day
+    honeyPerHour: 0.0005 / 24,
     cost: 0,
     emoji: "🐝",
   },
@@ -87,7 +87,7 @@ export const VIRTUAL_BEE_TYPES: BeeType[] = [
     id: "virtual3",
     name: "Virtual Bee 3",
     nameFr: "Abeille Virtuelle 3",
-    honeyPerHour: 0.003 / 24, // 0.003 USDT/day
+    honeyPerHour: 0.001 / 24,
     cost: 0,
     emoji: "🐝",
   },
