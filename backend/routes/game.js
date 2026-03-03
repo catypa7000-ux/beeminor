@@ -64,9 +64,9 @@ const calculateOfflineProduction = async (gameState) => {
       queen: 0.25 / 24,
     };
 
-    // Virtual bees: USDT/day (virtual1 0.0005, virtual2 0.001, virtual3 0.003)
+    // Virtual bees: USDT/day (virtual1 0.0001 to discourage multi-accounting, virtual2 0.001, virtual3 0.003)
     const VIRTUAL_BEE_PRODUCTION_RATES = {
-      virtual1: 0.0005 / 24,
+      virtual1: 0.0001 / 24,
       virtual2: 0.001 / 24,
       virtual3: 0.003 / 24,
     };

@@ -441,18 +441,23 @@ router.get('/pending/all', async (req, res) => {
 
     res.json({
       success: true,
-      transactions: transactions.map(t => ({
-        id: t._id.toString(),
-        userId: t.userId._id.toString(),
-        userEmail: t.userId.email,
-        type: t.type,
-        amount: t.amount,
-        currency: t.currency,
-        address: t.address,
-        cryptoAddress: t.cryptoAddress,
-        notes: t.notes,
-        createdAt: t.createdAt
-      }))
+      transactions: transactions.map(t => {
+        const uid = t.userId;
+        const userIdStr = uid && uid._id ? uid._id.toString() : (t.userId ? String(t.userId) : '');
+        const userEmail = (uid && uid.email) ? uid.email : '';
+        return {
+          id: t._id.toString(),
+          userId: userIdStr,
+          userEmail,
+          type: t.type,
+          amount: t.amount,
+          currency: t.currency,
+          address: t.address,
+          cryptoAddress: t.cryptoAddress,
+          notes: t.notes,
+          createdAt: t.createdAt
+        };
+      })
     });
   } catch (error) {
     console.error('Get pending transactions error:', error);

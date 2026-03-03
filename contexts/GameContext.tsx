@@ -71,7 +71,7 @@ export const VIRTUAL_BEE_TYPES: BeeType[] = [
     id: "virtual1",
     name: "Virtual Bee 1",
     nameFr: "Abeille Virtuelle 1",
-    honeyPerHour: 0.0005 / 24, // 0.0005 USDT/day
+    honeyPerHour: 0.0001 / 24, // 0.0001 USDT/day (reduced to discourage multi-accounting)
     cost: 0,
     emoji: "🐝",
   },
