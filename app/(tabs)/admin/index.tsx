@@ -766,15 +766,28 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
     }
   };
 
+  const refreshPendingList = async () => {
+    try {
+      const txns = await game.getPendingTransactions();
+      setPendingTransactions(Array.isArray(txns) ? txns : []);
+    } catch (e) {
+      console.error('Refresh pending transactions failed:', e);
+      setPendingTransactions([]);
+    }
+  };
+
   const handleApprove = async (transactionId: string) => {
     if (Platform.OS === 'web') {
       const confirmed = window.confirm('Êtes-vous sûr de vouloir approuver cette transaction?');
       if (confirmed) {
-        await game.approveTransaction(transactionId);
-        alert('Transaction approuvée!');
-        // Refresh transactions list
-        const txns = await game.getPendingTransactions();
-        setPendingTransactions(txns);
+        try {
+          await game.approveTransaction(transactionId);
+          alert('Transaction approuvée!');
+        } catch (e) {
+          console.error('Approve failed:', e);
+          alert('Erreur lors de l\'approbation. Réessayez.');
+        }
+        await refreshPendingList();
       }
     } else {
       Alert.alert(
@@ -785,11 +798,14 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
           {
             text: 'Approuver',
             onPress: async () => {
-              await game.approveTransaction(transactionId);
-              Alert.alert('Succès', 'Transaction approuvée!');
-              // Refresh transactions list
-              const txns = await game.getPendingTransactions();
-              setPendingTransactions(txns);
+              try {
+                await game.approveTransaction(transactionId);
+                Alert.alert('Succès', 'Transaction approuvée!');
+              } catch (e) {
+                console.error('Approve failed:', e);
+                Alert.alert('Erreur', 'Erreur lors de l\'approbation. Réessayez.');
+              }
+              await refreshPendingList();
             },
           },
         ]
@@ -799,24 +815,17 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
 
   const handleReject = async (transactionId: string) => {
     if (Platform.OS === 'web') {
-      Alert.alert(
-        'Rejeter la transaction',
-        'Êtes-vous sûr de vouloir rejeter cette transaction?',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Rejeter',
-            style: 'destructive',
-            onPress: async () => {
-              await game.rejectTransaction(transactionId);
-              Alert.alert('Succès', 'Transaction rejetée!');
-              // Refresh transactions list
-              const txns = await game.getPendingTransactions();
-              setPendingTransactions(txns);
-            },
-          },
-        ]
-      );
+      const confirmed = window.confirm('Êtes-vous sûr de vouloir rejeter cette transaction?');
+      if (confirmed) {
+        try {
+          await game.rejectTransaction(transactionId);
+          alert('Transaction rejetée!');
+        } catch (e) {
+          console.error('Reject failed:', e);
+          alert('Erreur lors du rejet. Réessayez.');
+        }
+        await refreshPendingList();
+      }
     } else {
       Alert.alert(
         'Rejeter la transaction',
@@ -827,11 +836,14 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
             text: 'Rejeter',
             style: 'destructive',
             onPress: async () => {
-              await game.rejectTransaction(transactionId);
-              Alert.alert('Succès', 'Transaction rejetée!');
-              // Refresh transactions list
-              const txns = await game.getPendingTransactions();
-              setPendingTransactions(txns);
+              try {
+                await game.rejectTransaction(transactionId);
+                Alert.alert('Succès', 'Transaction rejetée!');
+              } catch (e) {
+                console.error('Reject failed:', e);
+                Alert.alert('Erreur', 'Erreur lors du rejet. Réessayez.');
+              }
+              await refreshPendingList();
             },
           },
         ]
