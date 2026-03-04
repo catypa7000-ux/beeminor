@@ -1,15 +1,223 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Transaction = require('../models/Transaction');
 const GameState = require('../models/GameState');
 const User = require('../models/User');
-const { 
+const {
   sendWithdrawalSubmittedNotification
 } = require('../services/notificationService');
 
+// --- Specific routes first so they are not matched by GET /:userId ---
+
+// @route   GET /api/transactions/pending/all
+// @desc    Get all pending transactions (admin)
+router.get('/pending/all', async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
+      .populate('userId', 'email referralCode')
+      .limit(100);
+
+    res.json({
+      success: true,
+      transactions: transactions.map(t => {
+        const uid = t.userId;
+        const userIdStr = uid && uid._id ? uid._id.toString() : (t.userId ? String(t.userId) : '');
+        const userEmail = (uid && uid.email) ? uid.email : '';
+        return {
+          id: t._id.toString(),
+          userId: userIdStr,
+          userEmail,
+          type: t.type,
+          amount: t.amount,
+          currency: t.currency,
+          address: t.address,
+          cryptoAddress: t.cryptoAddress,
+          notes: t.notes,
+          createdAt: t.createdAt
+        };
+      })
+    });
+  } catch (error) {
+    console.error('Get pending transactions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching pending transactions',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/transactions/history/all
+// @desc    Get all processed transactions (admin)
+router.get('/history/all', async (req, res) => {
+  try {
+    const transactions = await Transaction.find({
+      status: { $in: ['completed', 'cancelled'] }
+    })
+      .sort({ updatedAt: -1 })
+      .populate('userId', 'email referralCode')
+      .limit(100);
+
+    res.json({
+      success: true,
+      transactions: transactions.map(t => ({
+        id: t._id.toString(),
+        userId: t.userId ? t.userId._id.toString() : 'Unknown',
+        userEmail: t.userId ? t.userId.email : 'Unknown',
+        type: t.type,
+        amount: t.amount,
+        currency: t.currency,
+        status: t.status,
+        address: t.address,
+        cryptoAddress: t.cryptoAddress,
+        notes: t.notes,
+        processedAt: t.processedAt,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt
+      }))
+    });
+  } catch (error) {
+    console.error('Get transaction history error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching transaction history',
+      error: error.message
+    });
+  }
+});
+
+// @route   PUT /api/transactions/:id/status
+// @desc    Update transaction status (admin)
+router.put('/:id/status', async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid transaction ID'
+      });
+    }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid transaction ID format'
+      });
+    }
+
+    const { status, adminNotes } = req.body || {};
+    if (!status || typeof status !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Status is required in request body'
+      });
+    }
+
+    const transaction = await Transaction.findById(id);
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found'
+      });
+    }
+
+    // If deposit is being approved, award flowers and tickets
+    if (transaction.type === 'deposit_crypto' &&
+        transaction.status === 'pending' &&
+        status === 'completed') {
+      let gameState = await GameState.findOne({ userId: transaction.userId });
+
+      if (!gameState) {
+        gameState = new GameState({
+          userId: transaction.userId,
+          honey: 0,
+          flowers: 0,
+          diamonds: 0,
+          tickets: 0,
+          bvrCoins: 0,
+          bees: new Map(),
+          alveoles: new Map([[1, true]]),
+          invitedFriends: 0,
+          claimedMissions: [],
+          referrals: [],
+          totalReferralEarnings: 0,
+          hasPendingFunds: false,
+          transactions: [],
+          diamondsThisYear: 0,
+          yearStartDate: new Date().getFullYear().toString()
+        });
+        await gameState.save();
+      }
+
+      let flowersToAward = 0;
+      let ticketsToAward = 0;
+      let usdAmount = transaction.amount || 0;
+
+      if (transaction.notes) {
+        try {
+          const depositInfo = JSON.parse(transaction.notes);
+          usdAmount = depositInfo.usdAmount || transaction.amount || 0;
+          flowersToAward = depositInfo.flowersAmount ?? Math.floor(Math.max(0, usdAmount - 1) * 1000);
+        } catch (_) {
+          flowersToAward = Math.floor(Math.max(0, usdAmount - 1) * 1000);
+        }
+      } else {
+        flowersToAward = Math.floor(Math.max(0, usdAmount - 1) * 1000);
+      }
+      ticketsToAward = Math.floor(usdAmount / 10);
+
+      gameState.flowers = (gameState.flowers || 0) + flowersToAward;
+      gameState.tickets = (gameState.tickets || 0) + ticketsToAward;
+      await gameState.save();
+    }
+
+    // If withdrawal is being cancelled/failed, refund
+    if ((transaction.type === 'withdrawal' || transaction.type === 'withdrawal_diamond' || transaction.type === 'withdrawal_bvr') &&
+        transaction.status === 'pending' &&
+        (status === 'cancelled' || status === 'failed')) {
+      const gameState = await GameState.findOne({ userId: transaction.userId });
+      if (gameState) {
+        if (transaction.type === 'withdrawal_bvr' || transaction.currency === 'BVR') {
+          const coinsToRefund = transaction.amount * 100;
+          gameState.bvrCoins = (gameState.bvrCoins || 0) + coinsToRefund;
+        } else if (transaction.type === 'withdrawal_diamond' || transaction.currency === 'Diamond' || transaction.currency === 'DIAMOND') {
+          gameState.diamonds = (gameState.diamonds || 0) + transaction.amount;
+        } else {
+          gameState.flowers = (gameState.flowers || 0) + transaction.amount;
+        }
+        await gameState.save();
+      }
+    }
+
+    transaction.status = status;
+    transaction.adminNotes = adminNotes || null;
+    if (status === 'completed' || status === 'cancelled') {
+      transaction.processedAt = new Date();
+    }
+    await transaction.save();
+
+    res.json({
+      success: true,
+      message: 'Transaction status updated',
+      transaction: {
+        id: transaction._id.toString(),
+        status: transaction.status,
+        adminNotes: transaction.adminNotes
+      }
+    });
+  } catch (error) {
+    console.error('Update transaction status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating transaction',
+      error: error.message
+    });
+  }
+});
+
 // @route   GET /api/transactions/:userId
 // @desc    Get transactions for user
-// @access  Public (should be protected in production)
 router.get('/:userId', async (req, res) => {
   try {
     const transactions = await Transaction.find({ userId: req.params.userId })
@@ -221,289 +429,6 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating transaction',
-      error: error.message
-    });
-  }
-});
-
-// @route   PUT /api/transactions/:id/status
-// @desc    Update transaction status (admin function)
-// @access  Public (should be protected and admin-only in production)
-router.put('/:id/status', async (req, res) => {
-  try {
-    const { status, adminNotes } = req.body;
-
-    if (!status) {
-      return res.status(400).json({
-        success: false,
-        message: 'Status is required'
-      });
-    }
-
-    const transaction = await Transaction.findById(req.params.id);
-
-    if (!transaction) {
-      return res.status(404).json({
-        success: false,
-        message: 'Transaction not found'
-      });
-    }
-
-    // Note: refund tracking could be used for future email notifications
-
-    // If deposit is being approved, award flowers and tickets
-    if (transaction.type === 'deposit_crypto' && 
-        transaction.status === 'pending' && 
-        status === 'completed') {
-      console.log('=== DEPOSIT APPROVAL DEBUG ===');
-      console.log('Transaction ID:', transaction._id);
-      console.log('Transaction type:', transaction.type);
-      console.log('Transaction userId:', transaction.userId);
-      console.log('Transaction amount:', transaction.amount);
-      console.log('Transaction notes:', transaction.notes);
-      
-      let gameState = await GameState.findOne({ userId: transaction.userId });
-      
-      // Create game state if it doesn't exist (e.g., new user depositing before playing)
-      if (!gameState) {
-        console.log('⚠️  GameState not found for userId:', transaction.userId);
-        console.log('✓ Creating new GameState for user...');
-        
-        gameState = new GameState({
-          userId: transaction.userId,
-          honey: 0,
-          flowers: 0,
-          diamonds: 0,
-          tickets: 0,
-          bvrCoins: 0,
-          bees: new Map(),
-          alveoles: new Map([[1, true]]),
-          invitedFriends: 0,
-          claimedMissions: [],
-          referrals: [],
-          totalReferralEarnings: 0,
-          hasPendingFunds: false,
-          transactions: [],
-          diamondsThisYear: 0,
-          yearStartDate: new Date().getFullYear().toString()
-        });
-        
-        try {
-          await gameState.save();
-          console.log('✅ New GameState created successfully!');
-        } catch (createError) {
-          console.error('❌ ERROR creating GameState:', createError);
-          return res.status(500).json({
-            success: false,
-            message: 'Failed to create game state for user',
-            error: createError.message
-          });
-        }
-      }
-      
-      console.log('✓ GameState found for user:', transaction.userId);
-      
-      let flowersToAward = 0;
-      let ticketsToAward = 0;
-      let usdAmount = transaction.amount || 0;
-      
-      // Try to parse notes for detailed deposit information
-      if (transaction.notes) {
-        try {
-          const depositInfo = JSON.parse(transaction.notes);
-          usdAmount = depositInfo.usdAmount || transaction.amount || 0;
-          
-          // Use pre-calculated flowers amount if available
-          if (depositInfo.flowersAmount) {
-            flowersToAward = depositInfo.flowersAmount;
-          } else {
-            // Fallback calculation: 1000 flowers per $1 USD, minus $1 fee
-            const netAmount = Math.max(0, usdAmount - 1);
-            flowersToAward = Math.floor(netAmount * 1000);
-          }
-          
-          console.log('✓ Parsed deposit info from notes:', depositInfo);
-        } catch (_parseError) {
-          console.log('⚠️  Could not parse notes, using default calculation');
-          // Fallback calculation
-          const netAmount = Math.max(0, usdAmount - 1);
-          flowersToAward = Math.floor(netAmount * 1000);
-        }
-      } else {
-        console.log('⚠️  No notes found, using default calculation');
-        // No notes, use default calculation
-        const netAmount = Math.max(0, usdAmount - 1);
-        flowersToAward = Math.floor(netAmount * 1000);
-      }
-      
-      // Calculate tickets (1 ticket per $10 spent)
-      ticketsToAward = Math.floor(usdAmount / 10);
-      
-      console.log('📊 Before approval:');
-      console.log('   - Flowers:', gameState.flowers);
-      console.log('   - Tickets:', gameState.tickets);
-      console.log('📊 Processing:');
-      console.log('   - USD Amount:', usdAmount);
-      console.log('   - Flowers to award:', flowersToAward);
-      console.log('   - Tickets to award:', ticketsToAward);
-      
-      // Award flowers and tickets
-      gameState.flowers = (gameState.flowers || 0) + flowersToAward;
-      gameState.tickets = (gameState.tickets || 0) + ticketsToAward;
-      
-      try {
-        await gameState.save();
-        console.log('✅ GameState saved successfully!');
-        console.log('📊 After approval:');
-        console.log('   - Flowers:', gameState.flowers);
-        console.log('   - Tickets:', gameState.tickets);
-        console.log('=== DEPOSIT APPROVAL COMPLETE ===');
-      } catch (saveError) {
-        console.error('❌ ERROR saving GameState:', saveError);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to save game state after awarding flowers',
-          error: saveError.message
-        });
-      }
-    }
-
-    // If withdrawal is being cancelled/failed, refund the resources
-    if ((transaction.type === 'withdrawal' || transaction.type === 'withdrawal_diamond' || transaction.type === 'withdrawal_bvr') && 
-        transaction.status === 'pending' && 
-        (status === 'cancelled' || status === 'failed')) {
-      console.log('=== REFUND DEBUG ===');
-      console.log('Transaction type:', transaction.type);
-      console.log('Transaction currency:', transaction.currency);
-      console.log('Transaction amount:', transaction.amount);
-      
-      const gameState = await GameState.findOne({ userId: transaction.userId });
-      if (gameState) {
-        console.log('Before refund - bvrCoins:', gameState.bvrCoins, 'flowers:', gameState.flowers);
-        
-        // Refund based on currency type
-        if (transaction.currency === 'BVR') {
-          // Convert token amount back to coins: 1 token = 100 coins
-          const coinsToRefund = transaction.amount * 100;
-          gameState.bvrCoins += coinsToRefund;
-          console.log('Refunding BVR:', transaction.amount, 'tokens =', coinsToRefund, 'coins');
-        } else {
-          gameState.flowers += transaction.amount;
-          console.log('Refunding flowers:', transaction.amount);
-        }
-        
-        await gameState.save();
-        console.log('After refund - bvrCoins:', gameState.bvrCoins, 'flowers:', gameState.flowers);
-        console.log('=== REFUND COMPLETE ===');
-      } else {
-        console.log('ERROR: GameState not found for refund');
-      }
-    }
-
-    transaction.status = status;
-    transaction.adminNotes = adminNotes || null;
-    // Set processedAt when transaction is completed or cancelled
-    if (status === 'completed' || status === 'cancelled') {
-      transaction.processedAt = new Date();
-    }
-    await transaction.save();
-
-    // No email notifications on approval/rejection - only on withdrawal request submission
-
-    res.json({
-      success: true,
-      message: 'Transaction status updated',
-      transaction: {
-        id: transaction._id.toString(),
-        status: transaction.status,
-        adminNotes: transaction.adminNotes
-      }
-    });
-  } catch (error) {
-    console.error('Update transaction status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error updating transaction',
-      error: error.message
-    });
-  }
-});
-
-// @route   GET /api/transactions/pending/all
-// @desc    Get all pending transactions (admin)
-// @access  Public (should be protected and admin-only in production)
-router.get('/pending/all', async (req, res) => {
-  try {
-    const transactions = await Transaction.find({ status: 'pending' })
-      .sort({ createdAt: -1 })
-      .populate('userId', 'email referralCode')
-      .limit(100);
-
-    res.json({
-      success: true,
-      transactions: transactions.map(t => {
-        const uid = t.userId;
-        const userIdStr = uid && uid._id ? uid._id.toString() : (t.userId ? String(t.userId) : '');
-        const userEmail = (uid && uid.email) ? uid.email : '';
-        return {
-          id: t._id.toString(),
-          userId: userIdStr,
-          userEmail,
-          type: t.type,
-          amount: t.amount,
-          currency: t.currency,
-          address: t.address,
-          cryptoAddress: t.cryptoAddress,
-          notes: t.notes,
-          createdAt: t.createdAt
-        };
-      })
-    });
-  } catch (error) {
-    console.error('Get pending transactions error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching pending transactions',
-      error: error.message
-    });
-  }
-});
-
-// @route   GET /api/transactions/history/all
-// @desc    Get all processed transactions (completed/cancelled) (admin)
-// @access  Public (should be protected and admin-only in production)
-router.get('/history/all', async (req, res) => {
-  try {
-    const transactions = await Transaction.find({ 
-      status: { $in: ['completed', 'cancelled'] } 
-    })
-      .sort({ updatedAt: -1 })
-      .populate('userId', 'email referralCode')
-      .limit(100);
-
-    res.json({
-      success: true,
-      transactions: transactions.map(t => ({
-        id: t._id.toString(),
-        userId: t.userId ? t.userId._id.toString() : 'Unknown',
-        userEmail: t.userId ? t.userId.email : 'Unknown',
-        type: t.type,
-        amount: t.amount,
-        currency: t.currency,
-        status: t.status,
-        address: t.address,
-        cryptoAddress: t.cryptoAddress,
-        notes: t.notes,
-        processedAt: t.processedAt,
-        createdAt: t.createdAt,
-        updatedAt: t.updatedAt
-      }))
-    });
-  } catch (error) {
-    console.error('Get transaction history error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching transaction history',
       error: error.message
     });
   }

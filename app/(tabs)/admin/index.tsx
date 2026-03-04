@@ -91,23 +91,25 @@ function AdminDashboard({ logout }: { logout: () => Promise<void> }) {
   const [activeTab, setActiveTab] = useState<'stats' | 'resources' | 'config' | 'transactions' | 'messages'>('stats');
   const [pendingTransactions, setPendingTransactions] = useState<any[]>([]);
 
-  // Load pending transactions from backend
-  useEffect(() => {
-    const loadTransactions = async () => {
+  const refreshPendingTransactions = useCallback(async () => {
+    try {
       const txns = await game.getPendingTransactions();
-      setPendingTransactions(txns);
-    };
-    loadTransactions();
+      setPendingTransactions(Array.isArray(txns) ? txns : []);
+    } catch (e) {
+      console.error('Refresh pending transactions failed:', e);
+      setPendingTransactions([]);
+    }
+  }, [game]);
 
-    // Refresh every 30 seconds when on transactions tab (reduced from 10s)
+  useEffect(() => {
+    refreshPendingTransactions();
     const interval = setInterval(() => {
       if (activeTab === 'transactions') {
-        loadTransactions();
+        refreshPendingTransactions();
       }
     }, 30000);
-
     return () => clearInterval(interval);
-  }, [activeTab, game]);
+  }, [activeTab, refreshPendingTransactions]);
 
   const handleLogout = async () => {
     await logout();
@@ -200,7 +202,13 @@ function AdminDashboard({ logout }: { logout: () => Promise<void> }) {
       <ScrollView style={styles.content}>
         {activeTab === 'stats' && <StatsTab game={game} />}
         {activeTab === 'resources' && <ResourcesTab game={game} />}
-        {activeTab === 'transactions' && <TransactionsTab game={game} />}
+        {activeTab === 'transactions' && (
+          <TransactionsTab
+            game={game}
+            pendingTransactions={pendingTransactions}
+            refreshPending={refreshPendingTransactions}
+          />
+        )}
         {activeTab === 'messages' && <MessagesTab admin={admin} />}
         {activeTab === 'config' && <ConfigTab game={game} admin={admin} currentLanguage={currentLanguage} changeLanguage={changeLanguage} />}
       </ScrollView>
@@ -684,48 +692,51 @@ function ResourcesTab({ game }: { game: ReturnType<typeof useGame> }) {
 
 
 
-function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
-  const [pendingTransactions, setPendingTransactions] = useState<any[]>([]);
+function TransactionsTab({
+  game,
+  pendingTransactions,
+  refreshPending,
+}: {
+  game: ReturnType<typeof useGame>;
+  pendingTransactions: any[];
+  refreshPending: () => Promise<void>;
+}) {
   const [processedTransactions, setProcessedTransactions] = useState<any[]>([]);
+  const [actingTransactionId, setActingTransactionId] = useState<string | null>(null);
 
-  // Load transactions from backend
+  // Load processed transaction history from backend
   useEffect(() => {
-    const loadTransactions = async () => {
-      // Load pending transactions
-      const pending = await game.getPendingTransactions();
-      setPendingTransactions(pending);
-
-      // Load processed transaction history from backend
+    const loadHistory = async () => {
       try {
         const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001';
         const response = await fetch(`${apiBaseUrl}/api/transactions/history/all`);
         const data = await response.json();
         if (data.success) {
-          setProcessedTransactions(data.transactions.map((txn: any) => ({
-            id: txn.id,
-            userId: txn.userId,
-            userEmail: txn.userEmail,
-            type: txn.type,
-            amount: txn.amount,
-            currency: txn.currency,
-            status: txn.status,
-            address: txn.address || txn.cryptoAddress,
-            notes: txn.notes,
-            processedAt: txn.processedAt,
-            createdAt: txn.createdAt,
-            updatedAt: txn.updatedAt
-          })));
+          setProcessedTransactions(
+            data.transactions.map((txn: any) => ({
+              id: txn.id,
+              userId: txn.userId,
+              userEmail: txn.userEmail,
+              type: txn.type,
+              amount: txn.amount,
+              currency: txn.currency,
+              status: txn.status,
+              address: txn.address || txn.cryptoAddress,
+              notes: txn.notes,
+              processedAt: txn.processedAt,
+              createdAt: txn.createdAt,
+              updatedAt: txn.updatedAt,
+            }))
+          );
         }
       } catch (error) {
         console.error('Error loading transaction history:', error);
       }
     };
-    loadTransactions();
-
-    // Refresh every 30 seconds (reduced from 5s)
-    const interval = setInterval(loadTransactions, 30000);
+    loadHistory();
+    const interval = setInterval(loadHistory, 30000);
     return () => clearInterval(interval);
-  }, [game]);
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -766,28 +777,66 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
     }
   };
 
-  const refreshPendingList = async () => {
-    try {
-      const txns = await game.getPendingTransactions();
-      setPendingTransactions(Array.isArray(txns) ? txns : []);
-    } catch (e) {
-      console.error('Refresh pending transactions failed:', e);
-      setPendingTransactions([]);
+  const showError = (message: string) => {
+    if (Platform.OS === 'web') {
+      alert(message);
+    } else {
+      Alert.alert('Erreur', message);
     }
   };
 
-  const handleApprove = async (transactionId: string) => {
+  const runApprove = async (transactionId: string) => {
+    if (!transactionId || typeof transactionId !== 'string') {
+      showError('ID de transaction invalide.');
+      return;
+    }
+    setActingTransactionId(transactionId);
+    try {
+      await game.approveTransaction(transactionId);
+      await refreshPending();
+      if (Platform.OS === 'web') {
+        alert('Transaction approuvée!');
+      } else {
+        Alert.alert('Succès', 'Transaction approuvée!');
+      }
+    } catch (e: any) {
+      const msg = e?.message || 'Erreur lors de l\'approbation. Réessayez.';
+      console.error('Approve failed:', e);
+      await refreshPending();
+      showError(msg);
+    } finally {
+      setActingTransactionId(null);
+    }
+  };
+
+  const runReject = async (transactionId: string) => {
+    if (!transactionId || typeof transactionId !== 'string') {
+      showError('ID de transaction invalide.');
+      return;
+    }
+    setActingTransactionId(transactionId);
+    try {
+      await game.rejectTransaction(transactionId);
+      await refreshPending();
+      if (Platform.OS === 'web') {
+        alert('Transaction rejetée!');
+      } else {
+        Alert.alert('Succès', 'Transaction rejetée!');
+      }
+    } catch (e: any) {
+      const msg = e?.message || 'Erreur lors du rejet. Réessayez.';
+      console.error('Reject failed:', e);
+      await refreshPending();
+      showError(msg);
+    } finally {
+      setActingTransactionId(null);
+    }
+  };
+
+  const handleApprove = (transactionId: string) => {
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Êtes-vous sûr de vouloir approuver cette transaction?');
-      if (confirmed) {
-        try {
-          await game.approveTransaction(transactionId);
-          alert('Transaction approuvée!');
-        } catch (e) {
-          console.error('Approve failed:', e);
-          alert('Erreur lors de l\'approbation. Réessayez.');
-        }
-        await refreshPendingList();
+      if (window.confirm('Êtes-vous sûr de vouloir approuver cette transaction?')) {
+        runApprove(transactionId);
       }
     } else {
       Alert.alert(
@@ -795,36 +844,16 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
         'Êtes-vous sûr de vouloir approuver cette transaction?',
         [
           { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Approuver',
-            onPress: async () => {
-              try {
-                await game.approveTransaction(transactionId);
-                Alert.alert('Succès', 'Transaction approuvée!');
-              } catch (e) {
-                console.error('Approve failed:', e);
-                Alert.alert('Erreur', 'Erreur lors de l\'approbation. Réessayez.');
-              }
-              await refreshPendingList();
-            },
-          },
+          { text: 'Approuver', onPress: () => runApprove(transactionId) },
         ]
       );
     }
   };
 
-  const handleReject = async (transactionId: string) => {
+  const handleReject = (transactionId: string) => {
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Êtes-vous sûr de vouloir rejeter cette transaction?');
-      if (confirmed) {
-        try {
-          await game.rejectTransaction(transactionId);
-          alert('Transaction rejetée!');
-        } catch (e) {
-          console.error('Reject failed:', e);
-          alert('Erreur lors du rejet. Réessayez.');
-        }
-        await refreshPendingList();
+      if (window.confirm('Êtes-vous sûr de vouloir rejeter cette transaction?')) {
+        runReject(transactionId);
       }
     } else {
       Alert.alert(
@@ -832,20 +861,7 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
         'Êtes-vous sûr de vouloir rejeter cette transaction?',
         [
           { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Rejeter',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await game.rejectTransaction(transactionId);
-                Alert.alert('Succès', 'Transaction rejetée!');
-              } catch (e) {
-                console.error('Reject failed:', e);
-                Alert.alert('Erreur', 'Erreur lors du rejet. Réessayez.');
-              }
-              await refreshPendingList();
-            },
-          },
+          { text: 'Rejeter', style: 'destructive', onPress: () => runReject(transactionId) },
         ]
       );
     }
@@ -854,6 +870,14 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>💳 Transactions en attente ({pendingTransactions.length})</Text>
+
+      <TouchableOpacity
+        style={[styles.actionButton, styles.refreshButton]}
+        onPress={() => refreshPending()}
+        disabled={actingTransactionId !== null}
+      >
+        <Text style={styles.actionButtonText}>🔄 Rafraîchir la liste</Text>
+      </TouchableOpacity>
 
       {pendingTransactions.length === 0 ? (
         <View style={styles.emptyCard}>
@@ -951,16 +975,22 @@ function TransactionsTab({ game }: { game: ReturnType<typeof useGame> }) {
             {txn.status === 'pending' && (
               <View style={styles.transactionActions}>
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.approveButton]}
+                  style={[styles.actionButton, styles.approveButton, actingTransactionId !== null && styles.actionButtonDisabled]}
                   onPress={() => handleApprove(txn.id)}
+                  disabled={actingTransactionId !== null}
                 >
-                  <Text style={styles.actionButtonText}>✅ Approuver</Text>
+                  <Text style={styles.actionButtonText}>
+                    {actingTransactionId === txn.id ? '⏳ En cours...' : '✅ Approuver'}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.rejectButton]}
+                  style={[styles.actionButton, styles.rejectButton, actingTransactionId !== null && styles.actionButtonDisabled]}
                   onPress={() => handleReject(txn.id)}
+                  disabled={actingTransactionId !== null}
                 >
-                  <Text style={styles.actionButtonText}>❌ Rejeter</Text>
+                  <Text style={styles.actionButtonText}>
+                    {actingTransactionId === txn.id ? '⏳ En cours...' : '❌ Rejeter'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1969,6 +1999,10 @@ const styles = StyleSheet.create({
   },
   rejectButton: {
     backgroundColor: '#DC143C',
+  },
+  refreshButton: {
+    backgroundColor: '#8B4513',
+    marginBottom: 16,
   },
   emptyCard: {
     backgroundColor: '#FFF',
