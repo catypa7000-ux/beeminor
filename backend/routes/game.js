@@ -92,13 +92,13 @@ const calculateOfflineProduction = async (gameState) => {
     // Calculate offline honey earned
     const offlineHoney = (productionRate / 3600) * secondsPassed;
 
-    // Apply capacity limit
+    // Apply capacity limit (honey per cell)
     const ALVEOLE_CAPACITIES = {
-      1: 1000000,
-      2: 3000000,
-      3: 6000000,
-      4: 14000000,
-      5: 30000000,
+      1: 5,
+      2: 30,
+      3: 70,
+      4: 160,
+      5: 400,
       6: 48000000,
     };
 
@@ -570,13 +570,13 @@ router.post("/:userId/upgrade-alveole", async (req, res) => {
       });
     }
 
-    // Alveole levels with costs and capacities
+    // Alveole levels with costs and capacities (Cell 1–5 new capacities; Cell 6 unchanged)
     const ALVEOLE_LEVELS = [
-      { level: 1, capacity: 1000000, cost: 0 },
-      { level: 2, capacity: 3000000, cost: 200000 },
-      { level: 3, capacity: 6000000, cost: 500000 },
-      { level: 4, capacity: 14000000, cost: 1250000 },
-      { level: 5, capacity: 30000000, cost: 3500000 },
+      { level: 1, capacity: 5, cost: 0 },
+      { level: 2, capacity: 30, cost: 200000 },
+      { level: 3, capacity: 70, cost: 500000 },
+      { level: 4, capacity: 160, cost: 1250000 },
+      { level: 5, capacity: 400, cost: 3500000 },
       { level: 6, capacity: 48000000, cost: 8000000 },
     ];
 
@@ -933,15 +933,15 @@ router.post("/:userId/claim-mission", async (req, res) => {
       });
     }
 
-    // Mission configuration (server-side)
+    // Mission configuration (server-side): friends → flowers
     const MISSIONS = [
-      { id: 1, friendsRequired: 1, flowersReward: 50, ticketsReward: 0 },
-      { id: 2, friendsRequired: 3, flowersReward: 150, ticketsReward: 0 },
-      { id: 3, friendsRequired: 10, flowersReward: 400, ticketsReward: 0 },
-      { id: 4, friendsRequired: 50, flowersReward: 1200, ticketsReward: 1 },
-      { id: 5, friendsRequired: 100, flowersReward: 3000, ticketsReward: 2 },
-      { id: 6, friendsRequired: 300, flowersReward: 7000, ticketsReward: 3 },
-      { id: 7, friendsRequired: 500, flowersReward: 16000, ticketsReward: 5 },
+      { id: 1, friendsRequired: 1, flowersReward: 20, ticketsReward: 0 },
+      { id: 2, friendsRequired: 3, flowersReward: 30, ticketsReward: 0 },
+      { id: 3, friendsRequired: 10, flowersReward: 100, ticketsReward: 0 },
+      { id: 4, friendsRequired: 50, flowersReward: 500, ticketsReward: 1 },
+      { id: 5, friendsRequired: 100, flowersReward: 1000, ticketsReward: 2 },
+      { id: 6, friendsRequired: 300, flowersReward: 3000, ticketsReward: 3 },
+      { id: 7, friendsRequired: 500, flowersReward: 5000, ticketsReward: 5 },
     ];
 
     const mission = MISSIONS.find((m) => m.id === missionId);
