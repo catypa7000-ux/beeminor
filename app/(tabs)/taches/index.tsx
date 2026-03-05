@@ -35,13 +35,13 @@ type Mission = {
 };
 
 const MISSIONS: Mission[] = [
-  { id: 1, friendsRequired: 1, flowersReward: 50, ticketsReward: 0 },
-  { id: 2, friendsRequired: 3, flowersReward: 150, ticketsReward: 0 },
-  { id: 3, friendsRequired: 10, flowersReward: 400, ticketsReward: 0 },
-  { id: 4, friendsRequired: 50, flowersReward: 1200, ticketsReward: 1 },
-  { id: 5, friendsRequired: 100, flowersReward: 3000, ticketsReward: 2 },
-  { id: 6, friendsRequired: 300, flowersReward: 7000, ticketsReward: 3 },
-  { id: 7, friendsRequired: 500, flowersReward: 16000, ticketsReward: 5 },
+  { id: 1, friendsRequired: 1, flowersReward: 20, ticketsReward: 0 },
+  { id: 2, friendsRequired: 3, flowersReward: 30, ticketsReward: 0 },
+  { id: 3, friendsRequired: 10, flowersReward: 100, ticketsReward: 0 },
+  { id: 4, friendsRequired: 50, flowersReward: 500, ticketsReward: 1 },
+  { id: 5, friendsRequired: 100, flowersReward: 1000, ticketsReward: 2 },
+  { id: 6, friendsRequired: 300, flowersReward: 3000, ticketsReward: 3 },
+  { id: 7, friendsRequired: 500, flowersReward: 5000, ticketsReward: 5 },
 ];
 
 export default function TachesScreen() {
