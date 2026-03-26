@@ -40,12 +40,20 @@ const createDefaultGameState = (userId) => {
     transactions: [],
     diamondsThisYear: 0,
     yearStartDate: new Date().getFullYear().toString(),
+    lastActivityAt: new Date(),
+    productionPaused: false,
   });
 };
 
 // Helper function to calculate offline production and update state
 const calculateOfflineProduction = async (gameState) => {
   if (!gameState.lastUpdated) return;
+
+  if (gameState.productionPaused) {
+    gameState.lastUpdated = new Date();
+    await gameState.save();
+    return;
+  }
 
   const lastUpdateTime = new Date(gameState.lastUpdated).getTime();
   const now = new Date().getTime();
@@ -158,6 +166,18 @@ router.get("/:userId", async (req, res) => {
       );
     }
 
+    // 24h without loading game state → pause miel production (user must resume in app)
+    const MS_DAY = 24 * 60 * 60 * 1000;
+    const nowMs = Date.now();
+    const activityMs = gameState.lastActivityAt
+      ? new Date(gameState.lastActivityAt).getTime()
+      : new Date(gameState.createdAt || nowMs).getTime();
+    if (nowMs - activityMs > MS_DAY) {
+      gameState.productionPaused = true;
+    }
+    gameState.lastActivityAt = new Date();
+    await gameState.save();
+
     // Calculate and apply offline production if lastUpdated exists
     if (gameState.lastUpdated) {
       await calculateOfflineProduction(gameState);
@@ -258,6 +278,8 @@ router.get("/:userId", async (req, res) => {
         diamondsThisYear: gameState.diamondsThisYear,
         yearStartDate: gameState.yearStartDate,
         lastUpdated: gameState.lastUpdated, // Include lastUpdated for offline production calculation
+        productionPaused: !!gameState.productionPaused,
+        lastActivityAt: gameState.lastActivityAt,
         referralCode: user ? user.referralCode : null,
         sponsorCode: user ? user.sponsorCode : null,
         email: user ? user.email : null,
@@ -268,6 +290,68 @@ router.get("/:userId", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error fetching game state",
+      error: error.message,
+    });
+  }
+});
+
+// @route   POST /api/game/:userId/resume-production
+// @desc    Clear production pause after user confirms (miel production restarts)
+router.post("/:userId/resume-production", async (req, res) => {
+  try {
+    let gameState = await GameState.findOne({ userId: req.params.userId });
+    if (!gameState) {
+      return res.status(404).json({
+        success: false,
+        message: "Game state not found",
+      });
+    }
+
+    gameState.productionPaused = false;
+    gameState.lastActivityAt = new Date();
+    gameState.lastUpdated = new Date();
+    await gameState.save();
+
+    await calculateOfflineProduction(gameState);
+
+    const user = await User.findById(req.params.userId).select(
+      "referralCode sponsorCode email"
+    );
+
+    res.json({
+      success: true,
+      message: "Production resumed",
+      gameState: {
+        userId: gameState.userId.toString(),
+        honey: gameState.honey,
+        flowers: gameState.flowers,
+        diamonds: gameState.diamonds,
+        tickets: gameState.tickets,
+        bvrCoins: gameState.bvrCoins,
+        bees: Object.fromEntries(gameState.bees),
+        virtualBees: Object.fromEntries(gameState.virtualBees || new Map()),
+        alveoles: Object.fromEntries(gameState.alveoles),
+        invitedFriends: gameState.invitedFriends,
+        claimedMissions: gameState.claimedMissions,
+        referrals: gameState.referrals,
+        totalReferralEarnings: gameState.totalReferralEarnings,
+        hasPendingFunds: gameState.hasPendingFunds,
+        transactions: gameState.transactions,
+        diamondsThisYear: gameState.diamondsThisYear,
+        yearStartDate: gameState.yearStartDate,
+        lastUpdated: gameState.lastUpdated,
+        productionPaused: !!gameState.productionPaused,
+        lastActivityAt: gameState.lastActivityAt,
+        referralCode: user ? user.referralCode : null,
+        sponsorCode: user ? user.sponsorCode : null,
+        email: user ? user.email : null,
+      },
+    });
+  } catch (error) {
+    console.error("Resume production error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error resuming production",
       error: error.message,
     });
   }
@@ -284,6 +368,8 @@ router.put("/:userId", async (req, res) => {
     delete updates.referrals;
     delete updates.invitedFriends;
     delete updates.totalReferralEarnings;
+    delete updates.productionPaused;
+    delete updates.lastActivityAt;
     delete updates.userId; // Safety
 
     const gameState = await GameState.findOneAndUpdate(
@@ -328,6 +414,8 @@ router.put("/:userId", async (req, res) => {
         diamondsThisYear: gameState.diamondsThisYear,
         yearStartDate: gameState.yearStartDate,
         lastUpdated: gameState.lastUpdated, // Include lastUpdated in response
+        productionPaused: !!gameState.productionPaused,
+        lastActivityAt: gameState.lastActivityAt,
         referralCode: user ? user.referralCode : null,
         sponsorCode: user ? user.sponsorCode : null,
         email: user ? user.email : null,

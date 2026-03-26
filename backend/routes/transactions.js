@@ -262,6 +262,38 @@ router.post('/withdraw', async (req, res) => {
       });
     }
 
+    const MS_24H = 24 * 60 * 60 * 1000;
+
+    const pendingWithdrawal = await Transaction.findOne({
+      userId,
+      type: { $in: ['withdrawal_diamond', 'withdrawal_bvr', 'withdrawal'] },
+      status: 'pending',
+    });
+    if (pendingWithdrawal) {
+      return res.status(400).json({
+        success: false,
+        message: 'You already have a pending withdrawal. Wait until it is processed.',
+      });
+    }
+
+    const lastCompletedWithdrawal = await Transaction.findOne({
+      userId,
+      type: { $in: ['withdrawal_diamond', 'withdrawal_bvr', 'withdrawal'] },
+      status: 'completed',
+    }).sort({ processedAt: -1 });
+
+    if (lastCompletedWithdrawal && lastCompletedWithdrawal.processedAt) {
+      const elapsed = Date.now() - new Date(lastCompletedWithdrawal.processedAt).getTime();
+      if (elapsed < MS_24H) {
+        const waitMs = MS_24H - elapsed;
+        return res.status(429).json({
+          success: false,
+          message: 'You can submit a new withdrawal request 24 hours after the last one was validated.',
+          retryAfterMs: waitMs,
+        });
+      }
+    }
+
     // Get game state to check balance and deduct resources
     const gameState = await GameState.findOne({ userId });
     if (!gameState) {
@@ -394,6 +426,25 @@ router.post('/', async (req, res) => {
         success: false,
         message: 'Missing required fields'
       });
+    }
+
+    if (type === 'deposit_crypto') {
+      const MS_1H = 60 * 60 * 1000;
+      const lastDeposit = await Transaction.findOne({
+        userId,
+        type: 'deposit_crypto',
+      }).sort({ createdAt: -1 });
+
+      if (lastDeposit && lastDeposit.createdAt) {
+        const elapsed = Date.now() - new Date(lastDeposit.createdAt).getTime();
+        if (elapsed < MS_1H) {
+          return res.status(429).json({
+            success: false,
+            message: 'Please wait at least 1 hour between fund transfer (deposit) requests.',
+            retryAfterMs: MS_1H - elapsed,
+          });
+        }
+      }
     }
 
     const transaction = new Transaction({
