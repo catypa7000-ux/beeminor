@@ -17,6 +17,7 @@ import { useGame, Transaction } from '../../../contexts/GameContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAdmin } from '../../../contexts/AdminContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { WebAdsterraSmartLink } from '../../../components/WebAdsterraSmartLink';
 
 type CryptoNetwork = {
   id: string;
@@ -95,7 +96,7 @@ export default function WalletScreen() {
 
     const cryptoSymbol = selectedNetworkData?.symbol || selectedNetwork.toUpperCase();
 
-    const performExchange = () => {
+    const performExchange = async () => {
       const transaction: Omit<Transaction, 'id' | 'status' | 'createdAt'> = {
         userId: currentUser?.id || 'unknown',
         userEmail: currentUser?.email || 'unknown',
@@ -109,19 +110,25 @@ export default function WalletScreen() {
         flowersAmount: flowersToAdd,
       };
 
-      submitWithdrawal(transaction);
-      setUsdAmount('');
-      setSelectedNetwork('');
+      try {
+        await submitWithdrawal(transaction);
+        setUsdAmount('');
+        setSelectedNetwork('');
 
-      const successMsg = `Demande envoyée!\n\n` +
-        `Votre dépôt de ${usdValue.toFixed(2)}$ en ${cryptoSymbol} a été soumis.\n\n` +
-        `Les ${flowersToAdd.toLocaleString()} fleurs seront ajoutées après validation par l'admin.\n\n` +
-        `Vous recevrez une notification une fois la transaction validée ou rejetée.`;
+        const successMsg = `Demande envoyée!\n\n` +
+          `Votre dépôt de ${usdValue.toFixed(2)}$ en ${cryptoSymbol} a été soumis.\n\n` +
+          `Les ${flowersToAdd.toLocaleString()} fleurs seront ajoutées après validation par l'admin.\n\n` +
+          `Vous recevrez une notification une fois la transaction validée ou rejetée.`;
 
-      if (Platform.OS === 'web') {
-        window.alert(successMsg);
-      } else {
-        Alert.alert('Succès', successMsg);
+        if (Platform.OS === 'web') {
+          window.alert(successMsg);
+        } else {
+          Alert.alert('Succès', successMsg);
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (Platform.OS === 'web') window.alert(msg);
+        else Alert.alert('Erreur', msg);
       }
     };
 
@@ -298,6 +305,8 @@ export default function WalletScreen() {
           <Text style={styles.warningText}>• 🔔 Vous recevrez une notification quand le dev validera votre transaction</Text>
           <Text style={styles.warningText}>• L&apos;admin vérifiera le montant reçu avant validation</Text>
         </View>
+
+        <WebAdsterraSmartLink />
       </ScrollView>
     </View>
   );

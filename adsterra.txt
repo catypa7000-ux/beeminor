@@ -1,0 +1,14 @@
+Adsterra / ProfitableCPM network — web integration
+
+Popunder (JS sync, before closing </body>)
+Implemented in: app/+html.tsx
+
+<script src="https://pl28951061.profitablecpmratenetwork.com/45/02/20/4502205103ed25db71eb6aa696f1338f.js"></script>
+
+SmartLink (standard hyperlink)
+URL: https://www.profitablecpmratenetwork.com/gt4rsy3c5e?key=805445ad63b0dd24d450c75c44fc9dd6
+Implemented in: components/WebAdsterraSmartLink.tsx (wallet screen, web only)
+
+Notes:
+- Popunder runs on web builds only; native iOS/Android do not execute app/+html.tsx the same way — use network SDKs or WebView if you need ads on mobile.
+- Social bar: if the network provides a separate social bar snippet, add it next to the popunder script in app/+html.tsx.

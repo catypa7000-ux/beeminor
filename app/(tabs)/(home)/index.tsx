@@ -33,6 +33,8 @@ export default function HomeScreen() {
     getMaxCapacity,
     isLoaded,
     sellHoney,
+    productionPaused,
+    resumeProduction,
   } = useGame();
   const { t } = useLanguage();
   const beesAnimated = useRef<AnimatedBee[]>([]);
@@ -207,6 +209,16 @@ export default function HomeScreen() {
             >
               <Text style={styles.sellButtonText}>{t.sellHoney}</Text>
             </TouchableOpacity>
+            {productionPaused && (
+              <TouchableOpacity
+                style={styles.resumeProductionButton}
+                onPress={() => resumeProduction()}
+              >
+                <Text style={styles.resumeProductionText}>
+                  {t.resumeProduction}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </LinearGradient>
 
@@ -487,5 +499,18 @@ const styles = StyleSheet.create({
     fontSize: isWeb ? 14 : 16,
     fontWeight: "bold" as const,
     color: "#FFF",
+  },
+  resumeProductionButton: {
+    marginTop: 12,
+    backgroundColor: "#8B4513",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignSelf: "center",
+  },
+  resumeProductionText: {
+    color: "#fff",
+    fontWeight: "700" as const,
+    fontSize: 14,
   },
 });

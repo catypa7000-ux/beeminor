@@ -170,6 +170,7 @@ type GameState = {
   allUsersLeaderboard: LeaderboardUser[];
   virtualBeeStartTime?: string | null;
   lastUpdated?: string | null;
+  productionPaused?: boolean;
 };
 
 const STORAGE_KEY = "bee_game_state";
@@ -223,6 +224,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
   >([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [productionPaused, setProductionPaused] = useState(false);
+  const productionPausedRef = useRef(false);
   const honeyRef = useRef<number>(honey);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const beesRef = useRef<Record<string, number>>(bees);
@@ -238,6 +241,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
   useEffect(() => {
     honeyRef.current = honey;
   }, [honey]);
+
+  useEffect(() => {
+    productionPausedRef.current = productionPaused;
+  }, [productionPaused]);
 
   useEffect(() => {
     beesRef.current = bees;
@@ -431,6 +438,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
         if (state.lastUpdated) {
           setLastUpdated(state.lastUpdated);
         }
+        setProductionPaused(!!(state as any).productionPaused);
       }
     } catch (error) {
       console.error("Failed to sync game state from backend:", error);
@@ -577,6 +585,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
             if (state.lastUpdated) {
               setLastUpdated(state.lastUpdated);
             }
+
+            setProductionPaused(!!(state as any).productionPaused);
 
             setHoney(backendTotalHoney);
             console.log(`🍯 Loaded honey from backend: ${backendTotalHoney} (offline production already calculated server-side)`);
@@ -996,6 +1006,9 @@ export const [GameProvider, useGame] = createContextHook(() => {
       if (elapsedSeconds <= 0) return;
 
       setHoney((current) => {
+        if (productionPausedRef.current) {
+          return current;
+        }
         // Calculate production from refs (always current, no dependency issues)
         let production = 0;
         BEE_TYPES.forEach((beeType) => {
@@ -1746,39 +1759,34 @@ export const [GameProvider, useGame] = createContextHook(() => {
           });
         }
 
-        if (response.success) {
-          // Update local state with backend response
-          // For BVR withdrawals: backend stores token amount, frontend should use it for consistency
-          const newTransaction: Transaction = {
-            ...transaction,
-            id: response.transaction.id,
-            status: "pending",
-            createdAt: response.transaction.createdAt,
-            // For BVR withdrawals, use backend token amount; for others, keep original
-            amount: (transaction.type === "withdrawal_bvr")
-              ? response.transaction.amount  // Backend returns token amount
-              : transaction.amount,           // Keep original for other types
-          };
-          setTransactions((current) => [newTransaction, ...current]);
-
-          // Sync game state to get updated balance (flowers or bvrCoins)
-          if (currentUserId) {
-            await syncGameStateFromBackend(currentUserId);
-          }
-
-          return newTransaction;
+        if (!response.success) {
+          throw new Error(
+            (response as { message?: string }).message ||
+              "Transaction submission failed"
+          );
         }
-      } catch (error) {
-        console.error("Transaction submission failed:", error);
-        // Fallback to local-only for backwards compatibility
+
+        // Update local state with backend response
         const newTransaction: Transaction = {
           ...transaction,
-          id: `txn_${Date.now()}`,
+          id: response.transaction.id,
           status: "pending",
-          createdAt: new Date().toISOString(),
+          createdAt: response.transaction.createdAt,
+          amount:
+            transaction.type === "withdrawal_bvr"
+              ? response.transaction.amount
+              : transaction.amount,
         };
         setTransactions((current) => [newTransaction, ...current]);
+
+        if (currentUserId) {
+          await syncGameStateFromBackend(currentUserId);
+        }
+
         return newTransaction;
+      } catch (error) {
+        console.error("Transaction submission failed:", error);
+        throw error;
       }
     },
     [currentUserId, syncGameStateFromBackend]
@@ -1954,6 +1962,28 @@ export const [GameProvider, useGame] = createContextHook(() => {
     }
   }, [currentUserId, syncGameStateFromBackend]);
 
+  const resumeProduction = useCallback(async () => {
+    if (!currentUserId) {
+      return { success: false as const };
+    }
+    try {
+      const res = await gameAPI.resumeProduction(currentUserId);
+      if (res.success && res.gameState) {
+        setProductionPaused(!!res.gameState.productionPaused);
+        if (typeof res.gameState.honey === "number") {
+          setHoney(res.gameState.honey);
+          honeyRef.current = res.gameState.honey;
+        }
+        if (res.gameState.lastUpdated) {
+          setLastUpdated(res.gameState.lastUpdated as unknown as string);
+        }
+      }
+      return res;
+    } catch {
+      return { success: false as const };
+    }
+  }, [currentUserId]);
+
   const addVirtualBee = useCallback((virtualBeeId: string) => {
     setVirtualBees((current) => ({
       ...current,
@@ -2015,6 +2045,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
       setUserId, // Expose setUserId to connect with AuthContext
       refreshGameState, // Manual refresh for cross-device sync
       addVirtualBee,
+      productionPaused,
+      resumeProduction,
     }),
     [
       honey,
@@ -2066,6 +2098,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
       addVirtualBee,
       exchangeResource,
       spinRoulette,
+      productionPaused,
+      resumeProduction,
     ]
   );
 });

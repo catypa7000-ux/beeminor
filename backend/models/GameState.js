@@ -102,6 +102,16 @@ const gameStateSchema = new mongoose.Schema({
   lastUpdated: {
     type: Date,
     default: Date.now
+  },
+  /** Last time the user loaded game state (activity heartbeat) */
+  lastActivityAt: {
+    type: Date,
+    default: null
+  },
+  /** When true, honey/miel production is frozen until the user resumes */
+  productionPaused: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

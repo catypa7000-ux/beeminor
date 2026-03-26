@@ -143,10 +143,14 @@ export default function RetraitScreen() {
             setWithdrawAmount("");
             setWalletAddress("");
           })
-          .catch((error) => {
+          .catch((error: unknown) => {
             console.error("Withdrawal error:", error);
-            if (Platform.OS === 'web') window.alert("Erreur lors de la soumission du retrait");
-            else Alert.alert("Erreur", "Erreur lors de la soumission du retrait");
+            const msg =
+              error instanceof Error
+                ? error.message
+                : "Erreur lors de la soumission du retrait";
+            if (Platform.OS === 'web') window.alert(msg);
+            else Alert.alert("Erreur", msg);
           })
           .finally(() => {
             setIsSubmitting(false);
@@ -212,10 +216,14 @@ export default function RetraitScreen() {
             setWithdrawAmount("");
             setWalletAddress("");
           })
-          .catch((error) => {
+          .catch((error: unknown) => {
             console.error("Withdrawal error:", error);
-            if (Platform.OS === 'web') window.alert("Erreur lors de la soumission du retrait");
-            else Alert.alert("Erreur", "Erreur lors de la soumission du retrait");
+            const msg =
+              error instanceof Error
+                ? error.message
+                : "Erreur lors de la soumission du retrait";
+            if (Platform.OS === 'web') window.alert(msg);
+            else Alert.alert("Erreur", msg);
           })
           .finally(() => {
             setIsSubmitting(false);
