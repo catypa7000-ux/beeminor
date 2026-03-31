@@ -38,6 +38,9 @@ export default function AlveoleScreen() {
   }
 
   const formatNumber = (num: number) => {
+    if (Math.abs(num) < 1) {
+      return num.toFixed(5);
+    }
     if (num >= 1000000) {
       return (num / 1000000).toFixed(2) + "M";
     }

@@ -57,7 +57,12 @@ const calculateOfflineProduction = async (gameState) => {
 
   const lastUpdateTime = new Date(gameState.lastUpdated).getTime();
   const now = new Date().getTime();
-  const secondsPassed = Math.floor((now - lastUpdateTime) / 1000);
+  let secondsPassed = Math.floor((now - lastUpdateTime) / 1000);
+  const MS_DAY_SECONDS = 24 * 60 * 60;
+
+  if (secondsPassed > MS_DAY_SECONDS) {
+    secondsPassed = MS_DAY_SECONDS;
+  }
 
   if (secondsPassed > 0) {
     // Calculate production rate from bees

@@ -89,7 +89,7 @@ export default function HomeScreen() {
     if (val >= 1000) {
       return (val / 1000).toFixed(2) + "K";
     }
-    return val.toFixed(2);
+    return val.toFixed(5);
   };
 
   return (
