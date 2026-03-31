@@ -136,7 +136,7 @@ const calculateOfflineProduction = async (gameState) => {
 
       if (added > 0) {
         console.log(
-          `🕒 Backend offline production: +${added.toFixed(4)} miel (USDT) over ${secondsPassed}s (${(secondsPassed / 3600).toFixed(2)} hours) for user ${gameState.userId}`
+          `🕒 Backend offline production: +${added.toFixed(8)} miel (USDT) over ${secondsPassed}s (${(secondsPassed / 3600).toFixed(2)} hours) for user ${gameState.userId}`
         );
       }
     } else if (secondsPassed > 60) {
