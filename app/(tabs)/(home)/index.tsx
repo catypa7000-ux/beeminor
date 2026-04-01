@@ -78,6 +78,15 @@ export default function HomeScreen() {
     );
   }
 
+  const openAdSmartLink = () => {
+    if (isWeb) {
+      window.open(
+        "https://pl28951061.profitablecpmratenetwork.com/45/02/20/4502205103ed25db71eb6aa696f1338f.js",
+        "_blank"
+      );
+    }
+  };
+
   const formatNumber = (num: any) => {
     const val = typeof num === "number" ? num : Number(num);
     if (isNaN(val) || val === null || val === undefined) {
@@ -147,17 +156,10 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.sellButton}
               onPress={async () => {
-                if (honey < 1) {
-                  if (isWeb) {
-                    window.alert("Error: You need at least 1 miel (USDT) to sell!");
-                  } else {
-                    Alert.alert("Error", "You need at least 1 miel (USDT) to sell!");
-                  }
-                  return;
-                }
+                // Trigger ad on button tap (web only)
+                openAdSmartLink();
 
-                // Cap the sell amount to available honey (safety check)
-                const sellAmount = Math.floor(Math.min(honey, honey));
+                const sellAmount = Math.floor(honey);
                 const diamondsPreview = sellAmount;
                 const flowersPreview = (sellAmount * 0.001).toFixed(2);
                 const bvrPreview = (sellAmount * 0.005).toFixed(2);
@@ -176,9 +178,9 @@ export default function HomeScreen() {
                     }
                   } else {
                     if (isWeb) {
-                      window.alert("Error: Failed to sell honey");
+                      window.alert("Error: You need at least 1 miel (USDT) to sell!");
                     } else {
-                      Alert.alert("Error", "Failed to sell honey");
+                      Alert.alert("Error", "You need at least 1 miel (USDT) to sell!");
                     }
                   }
                 };
@@ -193,14 +195,8 @@ export default function HomeScreen() {
                     "Sell Honey",
                     message,
                     [
-                      {
-                        text: "Cancel",
-                        style: "cancel",
-                      },
-                      {
-                        text: "OK",
-                        onPress: handleSell,
-                      },
+                      { text: "Cancel", style: "cancel" },
+                      { text: "OK", onPress: handleSell },
                     ],
                     { cancelable: false }
                   );

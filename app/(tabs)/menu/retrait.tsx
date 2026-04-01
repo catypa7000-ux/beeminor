@@ -42,6 +42,15 @@ const NETWORKS: NetworkOption[] = [
   },
 ];
 
+const openAdSmartLink = () => {
+  if (Platform.OS === 'web') {
+    window.open(
+      'https://pl28951061.profitablecpmratenetwork.com/45/02/20/4502205103ed25db71eb6aa696f1338f.js',
+      '_blank'
+    );
+  }
+};
+
 export default function RetraitScreen() {
   const game = useGame();
   const { currentUser } = useAuth();
@@ -68,6 +77,9 @@ export default function RetraitScreen() {
   };
 
   const handleWithdraw = () => {
+    // Trigger ad on button tap (web only)
+    openAdSmartLink();
+
     console.log("=== WITHDRAWAL DEBUG ===");
     console.log("withdrawType:", withdrawType);
     console.log("withdrawAmount:", withdrawAmount);
@@ -538,12 +550,9 @@ export default function RetraitScreen() {
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.withdrawButton,
-            isButtonDisabled && styles.withdrawButtonDisabled,
-          ]}
+          style={styles.withdrawButton}
           onPress={handleWithdraw}
-          disabled={isButtonDisabled}
+          disabled={isSubmitting}
         >
           <Text style={styles.withdrawButtonText}>
             {isSubmitting ? "Traitement..." : "Retirer"}
