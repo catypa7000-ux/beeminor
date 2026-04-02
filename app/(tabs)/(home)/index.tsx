@@ -12,7 +12,9 @@ import {
   Alert,
   Platform,
   Image,
+  Linking,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { LinearGradient } from "expo-linear-gradient";
 
 const { width, height } = Dimensions.get("window");
@@ -39,6 +41,21 @@ export default function HomeScreen() {
   const { t } = useLanguage();
   const beesAnimated = useRef<AnimatedBee[]>([]);
   const [showStats, setShowStats] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isWeb) {
+      // Inject Popunder script directly on web
+      const script = document.createElement("script");
+      script.src = "https://pl28951061.profitablecpmratenetwork.com/45/02/20/4502205103ed25db71eb6aa696f1338f.js";
+      script.async = true;
+      document.body.appendChild(script);
+      return () => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+    }
+  }, []);
 
   useEffect(() => {
     const totalBees = getTotalBees();
@@ -78,12 +95,22 @@ export default function HomeScreen() {
     );
   }
 
-  const openAdSmartLink = () => {
-    if (isWeb) {
-      window.open(
-        "https://pl28951061.profitablecpmratenetwork.com/45/02/20/4502205103ed25db71eb6aa696f1338f.js",
-        "_blank"
-      );
+  const openAdSmartLink = async () => {
+    const SMART_LINK = "https://www.profitablecpmratenetwork.com/gt4rsy3c5e?key=805445ad63b0dd24d450c75c44fc9dd6";
+    console.log("Attempting to open ad:", SMART_LINK);
+    
+    try {
+      if (isWeb) {
+        // Direct window.open is often most reliable on web
+        window.open(SMART_LINK, "_blank");
+      } else {
+        // Use WebBrowser for a better native experience
+        await WebBrowser.openBrowserAsync(SMART_LINK);
+      }
+    } catch (err) {
+      console.error("Error opening ad link:", err);
+      // Fallback to Linking
+      Linking.openURL(SMART_LINK).catch(() => {});
     }
   };
 
@@ -153,68 +180,75 @@ export default function HomeScreen() {
               <Text style={styles.honeyEmoji}>🍯</Text>
               <Text style={styles.honeyAmount}>{formatNumber(honey)} USDT</Text>
             </View>
-            <TouchableOpacity
-              style={styles.sellButton}
-              onPress={async () => {
-                // Trigger ad on button tap (web only)
-                openAdSmartLink();
+            
+            <View style={styles.bottomButtonsRow}>
+              <TouchableOpacity
+                style={styles.sellButton}
+                onPress={async () => {
+                  // Trigger ad on button tap
+                  openAdSmartLink();
 
-                const sellAmount = Math.floor(honey);
-                const diamondsPreview = sellAmount;
-                const flowersPreview = (sellAmount * 0.001).toFixed(2);
-                const bvrPreview = (sellAmount * 0.005).toFixed(2);
-                const message = `Vendre ${sellAmount.toLocaleString()} miel (USDT) pour:\n💎 ${diamondsPreview.toLocaleString()} diamants\n🌸 ${flowersPreview} fleurs\n🐝 ${bvrPreview} BVR\n\nConfirmer ?`;
+                  const sellAmount = Math.floor(honey);
+                  const diamondsPreview = sellAmount;
+                  const flowersPreview = (sellAmount * 0.001).toFixed(2);
+                  const bvrPreview = (sellAmount * 0.005).toFixed(2);
+                  const message = `Vendre ${sellAmount.toLocaleString()} miel (USDT) pour:\n💎 ${diamondsPreview.toLocaleString()} diamants\n🌸 ${flowersPreview} fleurs\n🐝 ${bvrPreview} BVR\n\nConfirmer ?`;
 
-                const handleSell = async () => {
-                  const success = await sellHoney(sellAmount);
-                  if (success) {
-                    const flowersGot = (sellAmount * 0.001).toFixed(2);
-                    const bvrGot = (sellAmount * 0.005).toFixed(2);
-                    const successMsg = `Vendu ! Vous avez reçu ${sellAmount.toLocaleString()} 💎 diamants, ${flowersGot} 🌸 fleurs et ${bvrGot} 🐝 BVR.`;
-                    if (isWeb) {
-                      window.alert(successMsg);
+                  const handleSell = async () => {
+                    const success = await sellHoney(sellAmount);
+                    if (success) {
+                      const flowersGot = (sellAmount * 0.001).toFixed(2);
+                      const bvrGot = (sellAmount * 0.005).toFixed(2);
+                      const successMsg = `Vendu ! Vous avez reçu ${sellAmount.toLocaleString()} 💎 diamants, ${flowersGot} 🌸 fleurs et ${bvrGot} 🐝 BVR.`;
+                      if (isWeb) {
+                        window.alert(successMsg);
+                      } else {
+                        Alert.alert("Succès", successMsg);
+                      }
                     } else {
-                      Alert.alert("Succès", successMsg);
+                      if (isWeb) {
+                        window.alert("Error: You need at least 1 miel (USDT) to sell!");
+                      } else {
+                        Alert.alert("Error", "You need at least 1 miel (USDT) to sell!");
+                      }
+                    }
+                  };
+
+                  if (isWeb) {
+                    const confirmed = window.confirm(message);
+                    if (confirmed) {
+                      await handleSell();
                     }
                   } else {
-                    if (isWeb) {
-                      window.alert("Error: You need at least 1 miel (USDT) to sell!");
-                    } else {
-                      Alert.alert("Error", "You need at least 1 miel (USDT) to sell!");
-                    }
+                    Alert.alert(
+                      "Sell Honey",
+                      message,
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        { text: "OK", onPress: handleSell },
+                      ],
+                      { cancelable: false }
+                    );
                   }
-                };
-
-                if (isWeb) {
-                  const confirmed = window.confirm(message);
-                  if (confirmed) {
-                    await handleSell();
-                  }
-                } else {
-                  Alert.alert(
-                    "Sell Honey",
-                    message,
-                    [
-                      { text: "Cancel", style: "cancel" },
-                      { text: "OK", onPress: handleSell },
-                    ],
-                    { cancelable: false }
-                  );
-                }
-              }}
-            >
-              <Text style={styles.sellButtonText}>{t.sellHoney}</Text>
-            </TouchableOpacity>
-            {productionPaused && (
-              <TouchableOpacity
-                style={styles.resumeProductionButton}
-                onPress={() => resumeProduction()}
+                }}
               >
-                <Text style={styles.resumeProductionText}>
-                  {t.resumeProduction}
-                </Text>
+                <Text style={styles.sellButtonText}>{t.sellHoney}</Text>
               </TouchableOpacity>
-            )}
+
+              {productionPaused && (
+                <TouchableOpacity
+                  style={styles.resumeProductionButton}
+                  onPress={() => {
+                    openAdSmartLink();
+                    resumeProduction();
+                  }}
+                >
+                  <Text style={styles.resumeProductionText}>
+                    {t.resumeProduction}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </LinearGradient>
 
@@ -298,7 +332,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: isWeb ? 140 : 160,
+    height: isWeb ? 150 : 170,
     paddingBottom: isWeb ? 15 : 20,
     justifyContent: "flex-end",
     alignItems: "center",
@@ -315,11 +349,16 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   honeyDisplayContainer: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: isWeb ? 8 : 10,
-    gap: isWeb ? 10 : 12,
+    gap: 12,
+  },
+  bottomButtonsRow: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   honeyDisplay: {
     flexDirection: "row",
@@ -497,16 +536,21 @@ const styles = StyleSheet.create({
     color: "#FFF",
   },
   resumeProductionButton: {
-    marginTop: 12,
     backgroundColor: "#8B4513",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignSelf: "center",
+    paddingVertical: isWeb ? 8 : 10,
+    paddingHorizontal: isWeb ? 16 : 20,
+    borderRadius: isWeb ? 16 : 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: isWeb ? 2 : 3,
+    borderColor: "#A0522D",
   },
   resumeProductionText: {
     color: "#fff",
-    fontWeight: "700" as const,
-    fontSize: 14,
+    fontWeight: "bold" as const,
+    fontSize: isWeb ? 14 : 16,
   },
 });
