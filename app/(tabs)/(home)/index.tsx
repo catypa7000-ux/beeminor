@@ -13,7 +13,9 @@ import {
   Platform,
   Image,
   Linking,
+  Switch,
 } from "react-native";
+import { Power, Play } from "lucide-react-native";
 import * as WebBrowser from "expo-web-browser";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -37,6 +39,7 @@ export default function HomeScreen() {
     sellHoney,
     productionPaused,
     resumeProduction,
+    toggleProduction,
   } = useGame();
   const { t } = useLanguage();
   const beesAnimated = useRef<AnimatedBee[]>([]);
@@ -180,6 +183,26 @@ export default function HomeScreen() {
               <Text style={styles.honeyEmoji}>🍯</Text>
               <Text style={styles.honeyAmount}>{formatNumber(honey)} USDT</Text>
             </View>
+
+            {/* Production Control Section */}
+            <View style={styles.productionControl}>
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleInfo}>
+                  <Power color={productionPaused ? "#FF4500" : "#32CD32"} size={20} />
+                  <Text style={styles.toggleLabel}>
+                    {productionPaused ? t.productionOff : t.productionOn}
+                  </Text>
+                </View>
+                <Switch
+                  value={!productionPaused}
+                  onValueChange={(value) => {
+                    toggleProduction(!value);
+                  }}
+                  trackColor={{ false: "#767577", true: "#FFD700" }}
+                  thumbColor={!productionPaused ? "#FF8C00" : "#f4f3f4"}
+                />
+              </View>
+            </View>
             
             <View style={styles.bottomButtonsRow}>
               <TouchableOpacity
@@ -238,13 +261,14 @@ export default function HomeScreen() {
               {productionPaused && (
                 <TouchableOpacity
                   style={styles.resumeProductionButton}
-                  onPress={() => {
-                    openAdSmartLink();
-                    resumeProduction();
+                  onPress={async () => {
+                    await openAdSmartLink();
+                    await resumeProduction();
                   }}
                 >
+                  <Play color="#FFF" size={18} />
                   <Text style={styles.resumeProductionText}>
-                    {t.resumeProduction}
+                    {t.reactivate}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -552,5 +576,30 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold" as const,
     fontSize: isWeb ? 14 : 16,
+  },
+  productionControl: {
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: 15,
+    padding: 12,
+    width: "100%",
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.5)",
+  },
+  toggleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  toggleInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#8B4513",
   },
 });

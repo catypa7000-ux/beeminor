@@ -208,6 +208,38 @@ export const gameAPI = {
     });
   },
 
+  toggleProduction: async (userId: string, paused: boolean) => {
+    return apiRequest<{
+      success: boolean;
+      message: string;
+      gameState: {
+        userId: string;
+        honey: number;
+        flowers: number;
+        diamonds: number;
+        tickets: number;
+        bvrCoins: number;
+        bees: Record<string, number>;
+        virtualBees?: Record<string, number>;
+        alveoles: Record<number, boolean>;
+        invitedFriends: number;
+        claimedMissions: number[];
+        referrals: any[];
+        totalReferralEarnings: number;
+        hasPendingFunds: boolean;
+        transactions: any[];
+        diamondsThisYear: number;
+        yearStartDate: string;
+        lastUpdated?: string;
+        productionPaused?: boolean;
+        lastActivityAt?: string;
+      };
+    }>(`/api/game/${userId}/toggle-production`, {
+      method: "POST",
+      body: JSON.stringify({ paused }),
+    });
+  },
+
   updateGameState: async (userId: string, updates: any) => {
     return apiRequest<{
       success: boolean;

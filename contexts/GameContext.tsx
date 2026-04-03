@@ -224,6 +224,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
   >([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [lastActivityAt, setLastActivityAt] = useState<string | null>(null);
   const [productionPaused, setProductionPaused] = useState(false);
   const productionPausedRef = useRef(false);
   const honeyRef = useRef<number>(honey);
@@ -438,6 +439,9 @@ export const [GameProvider, useGame] = createContextHook(() => {
         if (state.lastUpdated) {
           setLastUpdated(state.lastUpdated);
         }
+        if ((state as any).lastActivityAt) {
+          setLastActivityAt((state as any).lastActivityAt);
+        }
         setProductionPaused(!!(state as any).productionPaused);
       }
     } catch (error) {
@@ -584,6 +588,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
 
             if (state.lastUpdated) {
               setLastUpdated(state.lastUpdated);
+            }
+
+            if ((state as any).lastActivityAt) {
+              setLastActivityAt((state as any).lastActivityAt);
             }
 
             setProductionPaused(!!(state as any).productionPaused);
@@ -1984,6 +1992,29 @@ export const [GameProvider, useGame] = createContextHook(() => {
     }
   }, [currentUserId]);
 
+  const toggleProduction = useCallback(async (paused: boolean) => {
+    if (!currentUserId) {
+      setProductionPaused(paused);
+      return { success: true };
+    }
+    try {
+      const res = await gameAPI.toggleProduction(currentUserId, paused);
+      if (res.success && res.gameState) {
+        setProductionPaused(!!res.gameState.productionPaused);
+        if (typeof res.gameState.honey === "number") {
+          setHoney(res.gameState.honey);
+          honeyRef.current = res.gameState.honey;
+        }
+        if (res.gameState.lastActivityAt) {
+          setLastActivityAt(res.gameState.lastActivityAt);
+        }
+      }
+      return res;
+    } catch {
+      return { success: false };
+    }
+  }, [currentUserId]);
+
   const addVirtualBee = useCallback((virtualBeeId: string) => {
     setVirtualBees((current) => ({
       ...current,
@@ -2047,6 +2078,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       addVirtualBee,
       productionPaused,
       resumeProduction,
+      toggleProduction,
     }),
     [
       honey,
@@ -2100,6 +2132,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       spinRoulette,
       productionPaused,
       resumeProduction,
+      toggleProduction,
     ]
   );
 });

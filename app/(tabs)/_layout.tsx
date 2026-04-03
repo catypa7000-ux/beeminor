@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, ShoppingBag, Hexagon, ListTodo } from 'lucide-react-native';
+import { Home, ShoppingBag, Hexagon, ListTodo, Play } from 'lucide-react-native';
 import { View, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TopBar from '../../components/TopBar';
@@ -69,6 +69,13 @@ export default function TabsLayout() {
         options={{
           title: t.tasks,
           tabBarIcon: ({ color, size }) => <ListTodo color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="ads"
+        options={{
+          title: t.ads,
+          tabBarIcon: ({ color, size }) => <Play color={color} size={size} />,
         }}
       />
       <Tabs.Screen

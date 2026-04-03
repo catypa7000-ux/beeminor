@@ -58,10 +58,10 @@ const calculateOfflineProduction = async (gameState) => {
   const lastUpdateTime = new Date(gameState.lastUpdated).getTime();
   const now = new Date().getTime();
   let secondsPassed = Math.floor((now - lastUpdateTime) / 1000);
-  const MS_DAY_SECONDS = 24 * 60 * 60;
+  const MS_48H_SECONDS = 48 * 60 * 60; // 48 hours
 
-  if (secondsPassed > MS_DAY_SECONDS) {
-    secondsPassed = MS_DAY_SECONDS;
+  if (secondsPassed > MS_48H_SECONDS) {
+    secondsPassed = MS_48H_SECONDS;
   }
 
   if (secondsPassed > 0) {
@@ -171,13 +171,13 @@ router.get("/:userId", async (req, res) => {
       );
     }
 
-    // 24h without loading game state → pause miel production (user must resume in app)
-    const MS_DAY = 24 * 60 * 60 * 1000;
+    // 48h without loading game state → pause miel production (user must resume in app)
+    const MS_48H = 48 * 60 * 60 * 1000;
     const nowMs = Date.now();
     const activityMs = gameState.lastActivityAt
       ? new Date(gameState.lastActivityAt).getTime()
       : new Date(gameState.createdAt || nowMs).getTime();
-    if (nowMs - activityMs > MS_DAY) {
+    if (nowMs - activityMs > MS_48H) {
       gameState.productionPaused = true;
     }
     gameState.lastActivityAt = new Date();
@@ -295,6 +295,72 @@ router.get("/:userId", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error fetching game state",
+      error: error.message,
+    });
+  }
+});
+
+// @route   POST /api/game/:userId/toggle-production
+// @desc    Manually toggle production on/off
+router.post("/:userId/toggle-production", async (req, res) => {
+  try {
+    const { paused } = req.body;
+    let gameState = await GameState.findOne({ userId: req.params.userId });
+    if (!gameState) {
+      return res.status(404).json({
+        success: false,
+        message: "Game state not found",
+      });
+    }
+
+    // If we're resuming, calculate production up to now
+    if (gameState.productionPaused && paused === false) {
+      await calculateOfflineProduction(gameState);
+    }
+
+    gameState.productionPaused = paused;
+    gameState.lastActivityAt = new Date();
+    gameState.lastUpdated = new Date();
+    await gameState.save();
+
+    const user = await User.findById(req.params.userId).select(
+      "referralCode sponsorCode email"
+    );
+
+    res.json({
+      success: true,
+      message: `Production ${paused ? "paused" : "resumed"}`,
+      gameState: {
+        userId: gameState.userId.toString(),
+        honey: gameState.honey,
+        flowers: gameState.flowers,
+        diamonds: gameState.diamonds,
+        tickets: gameState.tickets,
+        bvrCoins: gameState.bvrCoins,
+        bees: Object.fromEntries(gameState.bees),
+        virtualBees: Object.fromEntries(gameState.virtualBees || new Map()),
+        alveoles: Object.fromEntries(gameState.alveoles),
+        invitedFriends: gameState.invitedFriends,
+        claimedMissions: gameState.claimedMissions,
+        referrals: gameState.referrals,
+        totalReferralEarnings: gameState.totalReferralEarnings,
+        hasPendingFunds: gameState.hasPendingFunds,
+        transactions: gameState.transactions,
+        diamondsThisYear: gameState.diamondsThisYear,
+        yearStartDate: gameState.yearStartDate,
+        lastUpdated: gameState.lastUpdated,
+        productionPaused: !!gameState.productionPaused,
+        lastActivityAt: gameState.lastActivityAt,
+        referralCode: user ? user.referralCode : null,
+        sponsorCode: user ? user.sponsorCode : null,
+        email: user ? user.email : null,
+      },
+    });
+  } catch (error) {
+    console.error("Toggle production error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error toggling production",
       error: error.message,
     });
   }

@@ -232,6 +232,11 @@ export type Translations = {
   canNowLogin: string;
   winChances: string;
   claimFailed: string;
+  production: string;
+  productionOn: string;
+  productionOff: string;
+  reactivate: string;
+  ads: string;
 };
 
 const translations: Record<Language, Translations> = {
@@ -461,6 +466,11 @@ const translations: Record<Language, Translations> = {
     canNowLogin: "Vous pouvez maintenant vous connecter",
     winChances: "Chances de gagner",
     claimFailed: "Échec de la réclamation",
+    production: "Production",
+    productionOn: "Production ACTIVÉE",
+    productionOff: "Production DÉSACTIVÉE",
+    reactivate: "Réactiver",
+    ads: "Pubs",
   },
   en: {
     home: "Home",
@@ -686,6 +696,11 @@ const translations: Record<Language, Translations> = {
     canNowLogin: "You can now log in",
     winChances: "Win Chances",
     claimFailed: "Claim failed",
+    production: "Production",
+    productionOn: "Production ON",
+    productionOff: "Production OFF",
+    reactivate: "Reactivate",
+    ads: "Ads",
   },
   es: {
     home: "Inicio",
@@ -912,6 +927,11 @@ const translations: Record<Language, Translations> = {
     canNowLogin: "Ahora puedes iniciar sesión",
     winChances: "Probabilidades de ganar",
     claimFailed: "Fallo al reclamar",
+    production: "Producción",
+    productionOn: "Producción ACTIVADA",
+    productionOff: "Producción DESACTIVADA",
+    reactivate: "Reactivar",
+    ads: "Anuncios",
   },
   de: {
     home: "Startseite",
@@ -1138,6 +1158,11 @@ const translations: Record<Language, Translations> = {
     canNowLogin: "Sie können sich jetzt anmelden",
     winChances: "Gewinnchancen",
     claimFailed: "Anspruch fehlgeschlagen",
+    production: "Produktion",
+    productionOn: "Produktion AN",
+    productionOff: "Produktion AUS",
+    reactivate: "Reaktivieren",
+    ads: "Anzeigen",
   },
   it: {
     home: "Home",
@@ -1363,6 +1388,11 @@ const translations: Record<Language, Translations> = {
     canNowLogin: "Ora puoi accedere",
     winChances: "Probabilità di vincita",
     claimFailed: "Richiesta fallita",
+    production: "Produzione",
+    productionOn: "Produzione ATTIVA",
+    productionOff: "Produzione DISATTIVATA",
+    reactivate: "Riattiva",
+    ads: "Annunci",
   },
   pt: {
     home: "Início",
@@ -1585,8 +1615,13 @@ const translations: Record<Language, Translations> = {
     passwordResetSuccess:
       "Sua senha foi redefinida com sucesso. Você pode fazer login agora.",
     canNowLogin: "Você pode fazer login agora",
-    winChances: "Chances de ganhar",
-    claimFailed: "Falha ao reivindicar",
+    winChances: "Ganhos em potencial",
+    claimFailed: "Falha na reivindicação",
+    production: "Produção",
+    productionOn: "Produção ATIVADA",
+    productionOff: "Produção DESATIVADA",
+    reactivate: "Reativar",
+    ads: "Anúncios",
   },
   ru: {
     home: "Главная",
@@ -1810,7 +1845,12 @@ const translations: Record<Language, Translations> = {
       "Ваш пароль был успешно сброшен. Теперь вы можете войти.",
     canNowLogin: "Теперь вы можете войти",
     winChances: "Шансы на выигрыш",
-    claimFailed: "Не удалось получить",
+    claimFailed: "Ошибка получения",
+    production: "Производство",
+    productionOn: "Производство ВКЛ",
+    productionOff: "Производство ВЫКЛ",
+    reactivate: "Реактивировать",
+    ads: "Реклама",
   },
   ar: {
     home: "الرئيسية",
@@ -2034,7 +2074,12 @@ const translations: Record<Language, Translations> = {
       "تمت إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.",
     canNowLogin: "يمكنك الآن تسجيل الدخول",
     winChances: "فرص الفوز",
-    claimFailed: "فشل الاستحقاق",
+    claimFailed: "فشل المطالبة",
+    production: "الإنتاج",
+    productionOn: "تشغيل الإنتاج",
+    productionOff: "إيقاف الإنتاج",
+    reactivate: "إعادة تفعيل",
+    ads: "إعلانات",
   },
   id: {
     home: "Beranda",
@@ -2260,6 +2305,11 @@ const translations: Record<Language, Translations> = {
     canNowLogin: "Anda sekarang dapat masuk",
     winChances: "Peluang Menang",
     claimFailed: "Klaim gagal",
+    production: "Produksi",
+    productionOn: "Produksi AKTIF",
+    productionOff: "Produksi MATI",
+    reactivate: "Reaktivasi",
+    ads: "Iklan",
   },
 };
 
